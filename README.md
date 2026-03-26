@@ -1,2 +1,2 @@
-# gpc
+# GPC
 Dashboard GPC
