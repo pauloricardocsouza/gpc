@@ -188,6 +188,35 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 /* ════ EXPORT ════ */
 pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:var(--gray1);border-radius:var(--radius-sm);padding:14px;overflow-y:auto;max-height:380px;font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word}
 
+/* ════ EDIÇÃO INLINE ════ */
+.edit-inline{display:none;align-items:center;gap:4px;width:100%}
+.edit-inline.open{display:flex}
+.edit-inline input{font-family:'Sora',sans-serif;font-size:inherit;font-weight:inherit;color:inherit;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);border-radius:5px;padding:3px 7px;outline:none;flex:1;min-width:0}
+.edit-inline input:focus{border-color:rgba(255,255,255,0.7);background:rgba(255,255,255,0.22)}
+.edit-inline.dark input{background:rgba(255,255,255,0.12);border-color:rgba(255,255,255,0.3);color:#fff}
+.edit-inline.light input{background:#fff;border:1px solid var(--navy3);color:var(--navy);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border-radius:5px;padding:2px 7px}
+.edit-inline.ativ input{background:#fff;border:1px solid var(--navy3);color:var(--text);font-size:12px;font-weight:400;border-radius:5px;padding:3px 7px;flex:1}
+.edit-ok{background:var(--green);color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:11px;padding:3px 7px;font-weight:600;font-family:'Sora',sans-serif;white-space:nowrap;flex-shrink:0}
+.edit-ok:hover{opacity:.85}
+.edit-cancel{background:transparent;border:none;border-radius:4px;cursor:pointer;font-size:12px;color:rgba(255,255,255,0.5);padding:3px 5px;flex-shrink:0}
+.edit-cancel.light{color:var(--muted)}
+.edit-cancel:hover{color:#fff}
+.edit-cancel.light:hover{color:var(--danger)}
+
+/* botão de lápis — Pessoa */
+.pessoa-edit-btn{background:rgba(255,255,255,0.08);border:none;border-radius:5px;color:rgba(255,255,255,0.4);font-size:11px;cursor:pointer;width:22px;height:22px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;opacity:0}
+.pessoa-head:hover .pessoa-edit-btn{opacity:1}
+.pessoa-edit-btn:hover{background:rgba(255,255,255,0.18);color:#fff}
+
+/* botão de lápis — Função */
+.funcao-edit-btn{background:transparent;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:var(--muted);width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.funcao-edit-btn:hover{background:var(--gray2);color:var(--navy)}
+
+/* botão de lápis — Atividade */
+.ativ-edit-btn{opacity:0;font-size:10px;color:var(--muted);cursor:pointer;padding:2px 5px;border-radius:4px;border:none;background:transparent;transition:opacity .12s;flex-shrink:0;line-height:1}
+.ativ-item:hover .ativ-edit-btn{opacity:1}
+.ativ-edit-btn:hover{background:var(--gray1);color:var(--navy)}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 </style>
 </head>
@@ -372,9 +401,20 @@ function render(){
     col.id='col-'+p.id;
     col.innerHTML=`
       <div class="pessoa-head">
-        <div class="pessoa-head-info">
-          <div class="pessoa-name">${esc(p.name)}</div>
-          ${p.role?`<div class="pessoa-role">${esc(p.role)}</div>`:''}
+        <div class="pessoa-head-info" style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="pessoa-name" id="pname-${p.id}">${esc(p.name)}</div>
+            <button class="pessoa-edit-btn" onclick="startEditPessoa('${p.id}')" title="Editar">✏️</button>
+          </div>
+          <div class="edit-inline dark" id="pedit-${p.id}">
+            <input id="pedit-name-${p.id}" value="${esc(p.name)}" placeholder="Nome" style="font-size:12px;font-weight:700" />
+            <button class="edit-ok" onclick="confirmEditPessoa('${p.id}')">✓</button>
+            <button class="edit-cancel" onclick="cancelEditPessoa('${p.id}')">✕</button>
+          </div>
+          ${p.role?`<div class="pessoa-role" id="prole-${p.id}">${esc(p.role)}</div>`:`<div class="pessoa-role" id="prole-${p.id}" style="font-style:italic;opacity:.5">sem cargo</div>`}
+          <div class="edit-inline dark" id="proleedit-${p.id}" style="display:none">
+            <input id="pedit-role-${p.id}" value="${esc(p.role)}" placeholder="Cargo / Setor" style="font-size:10px" />
+          </div>
         </div>
         <div class="pessoa-head-right">
           <span class="pessoa-badge">${p.funcoes.length} função${p.funcoes.length!==1?'es':''} · ${totalAtiv} ativ.</span>
@@ -415,8 +455,14 @@ function funcaoHtml(pessoaId, f){
   const atvHtml = f.atividades.map(a=>`
     <div class="ativ-item" id="ativ-${a.id}">
       <div class="ativ-dot"></div>
-      <span class="ativ-text">${esc(a.text)}</span>
-      <button class="ativ-del" onclick="trashAtiv('${pessoaId}','${f.id}','${a.id}')" title="Lixeira">✕</button>
+      <span class="ativ-text" id="atext-${a.id}">${esc(a.text)}</span>
+      <div class="edit-inline ativ" id="aedit-${a.id}">
+        <input id="aedit-inp-${a.id}" value="${esc(a.text)}" />
+        <button class="edit-ok" style="font-size:10px;padding:2px 6px" onclick="confirmEditAtiv('${pessoaId}','${f.id}','${a.id}')">✓</button>
+        <button class="edit-cancel light" onclick="cancelEditAtiv('${a.id}')">✕</button>
+      </div>
+      <button class="ativ-edit-btn" onclick="startEditAtiv('${a.id}')" title="Editar">✏️</button>
+      <button class="ativ-del" onclick="trashAtiv('${pessoaId}','${f.id}','${a.id}')" title="Lixeira">🗑</button>
     </div>`).join('');
 
   return `
@@ -424,10 +470,16 @@ function funcaoHtml(pessoaId, f){
       <div class="funcao-head" onclick="toggleFuncao('${f.id}')">
         <div class="funcao-head-left">
           <span class="funcao-chevron open" id="fchev-${f.id}">▶</span>
-          <span class="funcao-name">${esc(f.name)}</span>
+          <span class="funcao-name" id="fname-${f.id}">${esc(f.name)}</span>
+          <div class="edit-inline light" id="fedit-${f.id}" onclick="event.stopPropagation()">
+            <input id="fedit-inp-${f.id}" value="${esc(f.name)}" />
+            <button class="edit-ok" style="font-size:10px;padding:2px 6px" onclick="confirmEditFuncao('${pessoaId}','${f.id}')">✓</button>
+            <button class="edit-cancel light" onclick="cancelEditFuncao('${f.id}')">✕</button>
+          </div>
           <span class="funcao-count">${f.atividades.length}</span>
         </div>
         <div class="funcao-head-right" onclick="event.stopPropagation()">
+          <button class="funcao-edit-btn" onclick="startEditFuncao('${f.id}')" title="Editar">✏️</button>
           <button class="funcao-btn del" onclick="trashFuncao('${pessoaId}','${f.id}')" title="Lixeira">🗑</button>
         </div>
       </div>
@@ -565,6 +617,92 @@ function trashAtiv(pid, fid, aid){
 }
 
 // ════════════════════════════════════════
+// EDIÇÃO INLINE — PESSOA
+// ════════════════════════════════════════
+function startEditPessoa(pid){
+  document.getElementById('pname-'+pid).style.display='none';
+  document.getElementById('pedit-'+pid).classList.add('open');
+  document.getElementById('prole-'+pid).style.display='none';
+  document.getElementById('proleedit-'+pid).style.display='flex';
+  const inp=document.getElementById('pedit-name-'+pid);
+  inp.focus(); inp.select();
+}
+function cancelEditPessoa(pid){
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  document.getElementById('pedit-name-'+pid).value=p.name;
+  document.getElementById('pedit-role-'+pid).value=p.role||'';
+  document.getElementById('pname-'+pid).style.display='';
+  document.getElementById('pedit-'+pid).classList.remove('open');
+  document.getElementById('prole-'+pid).style.display='';
+  document.getElementById('proleedit-'+pid).style.display='none';
+}
+function confirmEditPessoa(pid){
+  const name=document.getElementById('pedit-name-'+pid).value.trim();
+  if(!name) return;
+  const role=document.getElementById('pedit-role-'+pid).value.trim();
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  p.name=name; p.role=role;
+  save(); render();
+}
+
+// ════════════════════════════════════════
+// EDIÇÃO INLINE — FUNÇÃO
+// ════════════════════════════════════════
+function startEditFuncao(fid){
+  document.getElementById('fname-'+fid).style.display='none';
+  document.getElementById('fedit-'+fid).classList.add('open');
+  const inp=document.getElementById('fedit-inp-'+fid);
+  inp.focus(); inp.select();
+}
+function cancelEditFuncao(fid){
+  // busca nome atual
+  let nome='';
+  pessoas.forEach(p=>p.funcoes.forEach(f=>{ if(f.id===fid) nome=f.name; }));
+  document.getElementById('fedit-inp-'+fid).value=nome;
+  document.getElementById('fname-'+fid).style.display='';
+  document.getElementById('fedit-'+fid).classList.remove('open');
+}
+function confirmEditFuncao(pid, fid){
+  const name=document.getElementById('fedit-inp-'+fid).value.trim();
+  if(!name) return;
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  const f=p.funcoes.find(x=>x.id===fid); if(!f) return;
+  f.name=name;
+  save(); render();
+}
+
+// ════════════════════════════════════════
+// EDIÇÃO INLINE — ATIVIDADE
+// ════════════════════════════════════════
+function startEditAtiv(aid){
+  document.getElementById('atext-'+aid).style.display='none';
+  document.getElementById('aedit-'+aid).classList.add('open');
+  // esconde botões de ação enquanto edita
+  const item=document.getElementById('ativ-'+aid);
+  item.querySelectorAll('.ativ-edit-btn,.ativ-del').forEach(b=>b.style.display='none');
+  const inp=document.getElementById('aedit-inp-'+aid);
+  inp.focus(); inp.select();
+}
+function cancelEditAtiv(aid){
+  let txt='';
+  pessoas.forEach(p=>p.funcoes.forEach(f=>f.atividades.forEach(a=>{ if(a.id===aid) txt=a.text; })));
+  document.getElementById('aedit-inp-'+aid).value=txt;
+  document.getElementById('atext-'+aid).style.display='';
+  document.getElementById('aedit-'+aid).classList.remove('open');
+  const item=document.getElementById('ativ-'+aid);
+  item.querySelectorAll('.ativ-edit-btn,.ativ-del').forEach(b=>b.style.display='');
+}
+function confirmEditAtiv(pid, fid, aid){
+  const text=document.getElementById('aedit-inp-'+aid).value.trim();
+  if(!text) return;
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  const f=p.funcoes.find(x=>x.id===fid); if(!f) return;
+  const a=f.atividades.find(x=>x.id===aid); if(!a) return;
+  a.text=text;
+  save(); render();
+}
+
+// ════════════════════════════════════════
 // LIXEIRA
 // ════════════════════════════════════════
 function renderTrash(){
@@ -683,19 +821,19 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // delegação de eventos para inputs dinâmicos (função e atividade)
   document.getElementById('board').addEventListener('keydown', e=>{
-    if(e.key!=='Enter') return;
     const id=e.target.id||'';
-    // af-inp-{pid}
-    if(id.startsWith('af-inp-')){
-      const pid=id.replace('af-inp-','');
-      confirmAddFuncao(pid);
+    if(e.key==='Enter'){
+      if(id.startsWith('af-inp-'))  confirmAddFuncao(id.replace('af-inp-',''));
+      if(id.startsWith('aa-inp-')){ const fid=id.replace('aa-inp-',''); const pid=e.target.dataset.pid||''; if(pid) confirmAddAtiv(pid,fid); }
+      if(id.startsWith('pedit-name-')){ const pid=id.replace('pedit-name-',''); confirmEditPessoa(pid); }
+      if(id.startsWith('pedit-role-')){ const pid=id.replace('pedit-role-',''); confirmEditPessoa(pid); }
+      if(id.startsWith('fedit-inp-')){ const parts=id.replace('fedit-inp-',''); let pid=''; pessoas.forEach(p=>p.funcoes.forEach(f=>{ if(f.id===parts) pid=p.id; })); if(pid) confirmEditFuncao(pid,parts); }
+      if(id.startsWith('aedit-inp-')){ const aid=id.replace('aedit-inp-',''); let pid='',fid=''; pessoas.forEach(p=>p.funcoes.forEach(f=>f.atividades.forEach(a=>{ if(a.id===aid){pid=p.id;fid=f.id;} }))); if(pid) confirmEditAtiv(pid,fid,aid); }
     }
-    // aa-inp-{fid}
-    if(id.startsWith('aa-inp-')){
-      // precisamos do pid — guardamos no dataset do input
-      const fid=id.replace('aa-inp-','');
-      const pid=e.target.dataset.pid||'';
-      if(pid) confirmAddAtiv(pid,fid);
+    if(e.key==='Escape'){
+      if(id.startsWith('pedit-name-')||id.startsWith('pedit-role-')) cancelEditPessoa(id.replace('pedit-name-','').replace('pedit-role-',''));
+      if(id.startsWith('fedit-inp-')) cancelEditFuncao(id.replace('fedit-inp-',''));
+      if(id.startsWith('aedit-inp-')) cancelEditAtiv(id.replace('aedit-inp-',''));
     }
   });
 
