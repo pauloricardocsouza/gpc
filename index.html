@@ -152,6 +152,35 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:3px}
 .stat-value{font-size:20px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace}
 
+/* ── PANEL SYSTEM ── */
+.panel{display:none}.panel.active{display:block}
+.page-cat{padding:24px}
+.page-cat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.page-cat-title{font-size:15px;font-weight:700;color:var(--navy)}
+
+/* ── CAT MANAGEMENT ── */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px}
+.cat-item-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;position:relative}
+.cat-item-card .accent-bar{width:4px;height:40px;border-radius:3px;flex-shrink:0}
+.cat-item-info{flex:1;min-width:0}
+.cat-item-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.cat-item-slug{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.cat-item-actions{display:flex;gap:4px;flex-shrink:0}
+.cat-act-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--gray2);background:transparent;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.cat-act-btn:hover{background:var(--gray1);border-color:var(--navy)}
+.cat-act-btn.del:hover{background:var(--danger2);border-color:var(--danger);color:var(--danger)}
+.cat-pill-preview{display:inline-block;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-top:4px}
+
+/* ── ADD CAT FORM ── */
+.add-cat-box{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);max-width:480px}
+.add-cat-box-title{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gray1)}
+.color-picker-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
+.color-opt:hover{transform:scale(1.15)}
+.color-opt.selected{border-color:var(--navy);transform:scale(1.15)}
+.cat-warning{font-size:11px;color:var(--amber);background:var(--amber2);border-radius:6px;padding:8px 12px;margin-top:10px;display:none}
+.cat-warning.show{display:block}
+
 /* ── DELETE COL ── */
 .k-col-del{opacity:0;background:rgba(255,255,255,0.08);border:none;border-radius:5px;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:opacity .15s,background .15s;flex-shrink:0}
 .k-col-head:hover .k-col-del{opacity:1}
@@ -174,8 +203,11 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
     <div class="sidebar-tag">Gestão de Atividades</div>
   </div>
   <div class="sidebar-section">Quadros</div>
-  <div class="nav-item active">
+  <div class="nav-item active" id="nav-board" onclick="showView('board')">
     <span class="nav-icon">📋</span> Divisão de Tarefas
+  </div>
+  <div class="nav-item" id="nav-cats" onclick="showView('cats')">
+    <span class="nav-icon">🏷️</span> Categorias
   </div>
   <div class="nav-item" onclick="openExportModal()">
     <span class="nav-icon">📤</span> Exportar
@@ -194,9 +226,9 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
   <div class="topbar">
     <div class="topbar-title">
       <span class="dot-live"></span>
-      Divisão de Atividades
+      <span id="topbar-title-text">Divisão de Atividades</span>
     </div>
-    <div class="topbar-right">
+    <div class="topbar-right" id="topbar-actions">
       <button class="btn-top" onclick="openAddPersonModal()">
         + Pessoa
       </button>
@@ -206,6 +238,8 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
     </div>
   </div>
 
+  <!-- PANEL: BOARD -->
+  <div class="panel active" id="panel-board">
   <div class="content">
     <!-- STATS -->
     <div class="stats-bar" id="stats-bar">
@@ -247,7 +281,38 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
       </div>
     </div>
   </div>
-</div>
+  </div>
+
+  <!-- PANEL: CATEGORIAS -->
+  <div class="panel" id="panel-cats">
+  <div class="page-cat">
+    <div class="page-cat-header">
+      <div class="page-cat-title">Categorias de Atividades</div>
+    </div>
+
+    <!-- lista de categorias -->
+    <div class="cat-grid" id="cat-grid"></div>
+
+    <!-- formulário de nova/edição -->
+    <div class="add-cat-box">
+      <div class="add-cat-box-title" id="cat-form-title">Nova categoria</div>
+      <input type="hidden" id="cat-edit-id" value="" />
+      <div class="modal-field">
+        <label>Nome da categoria</label>
+        <input id="cat-name-inp" placeholder="Ex: RH, Compras, TI..." />
+      </div>
+      <div class="modal-field">
+        <label>Cor</label>
+        <div class="color-picker-row" id="color-picker-row"></div>
+      </div>
+      <div class="cat-warning" id="cat-warning">Já existe uma categoria com esse nome.</div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn-modal ok" style="height:34px;font-size:12px" onclick="confirmSaveCat()">Salvar categoria</button>
+        <button class="btn-modal cancel" style="height:34px;font-size:12px" id="cat-cancel-btn" onclick="cancelEditCat()" style="display:none">Cancelar edição</button>
+      </div>
+    </div>
+  </div>
+  </div>
 
 <!-- MODAL: Add Person -->
 <div class="modal-overlay" id="modal-person">
@@ -319,10 +384,35 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 </div>
 
 <script>
-// ── STORAGE KEY ──
-const STORAGE_KEY = 'gpc_kanban_v1';
+// ── STORAGE KEYS ──
+const STORAGE_KEY     = 'gpc_kanban_v1';
+const STORAGE_KEY_CAT = 'gpc_cats_v1';
 
-// ── PESSOAS PADRÃO (carregadas apenas se não houver dados salvos) ──
+// ── PALETA DE CORES DISPONÍVEIS ──
+const COLOR_PALETTE = [
+  {id:'laranja', bg:'rgba(245,131,31,0.13)', text:'#C05A08', bar:'#F5831F', label:'Laranja'},
+  {id:'azul',    bg:'rgba(43,74,122,0.10)',  text:'#2B4A7A', bar:'#2B4A7A', label:'Azul'},
+  {id:'verde',   bg:'#D4EDDF',              text:'#1E7B4B', bar:'#1E7B4B', label:'Verde'},
+  {id:'vermelho',bg:'#FDECEA',              text:'#C0392B', bar:'#E82227', label:'Vermelho'},
+  {id:'amarelo', bg:'#FEF3E2',              text:'#854F0B', bar:'#D4960A', label:'Amarelo'},
+  {id:'cinza',   bg:'#EEF2F8',              text:'#5A7090', bar:'#8FA3BE', label:'Cinza'},
+  {id:'roxo',    bg:'rgba(120,80,200,0.11)',text:'#5B2DA6', bar:'#7B52C8', label:'Roxo'},
+  {id:'rosa',    bg:'rgba(220,80,150,0.11)',text:'#A82B72', bar:'#D0508A', label:'Rosa'},
+  {id:'ciano',   bg:'rgba(0,160,180,0.11)', text:'#0A7A8A', bar:'#0BAFC0', label:'Ciano'},
+  {id:'marrom',  bg:'rgba(130,80,40,0.12)', text:'#6B3D14', bar:'#9B5A22', label:'Marrom'},
+];
+
+// ── CATEGORIAS PADRÃO ──
+const DEFAULT_CATS = [
+  {id:'laranja', name:'Operacional', colorId:'laranja'},
+  {id:'azul',    name:'Administrativo', colorId:'azul'},
+  {id:'verde',   name:'Financeiro',  colorId:'verde'},
+  {id:'vermelho',name:'Urgente',     colorId:'vermelho'},
+  {id:'amarelo', name:'Comercial',   colorId:'amarelo'},
+  {id:'cinza',   name:'Geral',       colorId:'cinza'},
+];
+
+// ── PEOPLE DEFAULT ──
 const DEFAULT_COLS = [
   {id:'p_carlos',   name:'Carlos',    role:'', cards:[]},
   {id:'p_sandra',   name:'Sandra',    role:'', cards:[]},
@@ -334,48 +424,59 @@ const DEFAULT_COLS = [
   {id:'p_daniel',   name:'Daniel',    role:'', cards:[]}
 ];
 
-// ── LOAD: usa localStorage se existir, senão carrega o padrão ──
+// ── LOAD / SAVE ──
 function loadState(){
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw){
-      const parsed = JSON.parse(raw);
-      if(Array.isArray(parsed) && parsed.length > 0) return parsed;
-    }
-  } catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT_COLS)); // deep copy
+  try{const r=localStorage.getItem(STORAGE_KEY);if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length>0)return p;}}catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_COLS));
 }
+function saveState(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(cols));}catch(e){} }
 
-// ── SAVE: persiste toda vez que o estado muda ──
-function saveState(){
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cols)); } catch(e){}
+function loadCats(){
+  try{const r=localStorage.getItem(STORAGE_KEY_CAT);if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length>0)return p;}}catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_CATS));
 }
+function saveCats(){ try{localStorage.setItem(STORAGE_KEY_CAT,JSON.stringify(cats));}catch(e){} }
 
 let cols = loadState();
+let cats = loadCats();
 
-let dragCardId = null;
-let dragFromColId = null;
-let addCardTargetColId = null;
-let selectedTag = 'laranja';
-let editingCardColId = null;
-let editingCardId = null;
+// ── HELPERS ──
+function getColor(colorId){ return COLOR_PALETTE.find(c=>c.id===colorId)||COLOR_PALETTE[5]; }
+function getCat(catId){ return cats.find(c=>c.id===catId)||{id:'cinza',name:'Geral',colorId:'cinza'}; }
 
-// ── RENDER ──
+let dragCardId=null,dragFromColId=null,addCardTargetColId=null,selectedTag=null;
+
+// ── VIEW SWITCH ──
+function showView(view){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item[id^="nav-"]').forEach(n=>n.classList.remove('active'));
+  document.getElementById('panel-'+view).classList.add('active');
+  document.getElementById('nav-'+view).classList.add('active');
+  const titles={board:'Divisão de Atividades',cats:'Categorias de Atividades'};
+  document.getElementById('topbar-title-text').textContent=titles[view]||'';
+  const ta=document.getElementById('topbar-actions');
+  ta.innerHTML = view==='board'
+    ? `<button class="btn-top" onclick="openAddPersonModal()">+ Pessoa</button>
+       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>`
+    : '';
+  if(view==='cats') renderCats();
+}
+
+// ═══════════════════════════════════════
+// BOARD RENDER
+// ═══════════════════════════════════════
 function render(){
-  const board = document.getElementById('kanban-board');
-  const addBtn = board.querySelector('.k-add-col');
-
-  // remove existing cols
+  const board=document.getElementById('kanban-board');
+  const addBtn=board.querySelector('.k-add-col');
   board.querySelectorAll('.k-col').forEach(el=>el.remove());
-
   cols.forEach(col=>{
-    const colEl = document.createElement('div');
-    colEl.className = 'k-col';
-    colEl.innerHTML = `
+    const colEl=document.createElement('div');
+    colEl.className='k-col';
+    colEl.innerHTML=`
       <div class="k-col-head">
         <div>
           <div class="k-col-name">${esc(col.name)}</div>
-          ${col.role ? `<div class="k-col-role">${esc(col.role)}</div>` : ''}
+          ${col.role?`<div class="k-col-role">${esc(col.role)}</div>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:6px">
           <span class="k-col-badge">${col.cards.length}</span>
@@ -383,34 +484,35 @@ function render(){
         </div>
       </div>
       <div class="k-col-accent"></div>
-      <div class="k-col-body" id="body-${col.id}" 
+      <div class="k-col-body" id="body-${col.id}"
         ondragover="e_dragOver(event,'${col.id}')"
         ondragleave="e_dragLeave(event,'${col.id}')"
         ondrop="e_drop(event,'${col.id}')">
-        ${col.cards.length===0 ? `<div class="k-empty">Nenhuma atividade<br>Clique em + para adicionar</div>` : ''}
-        ${col.cards.map(card=>renderCard(card, col.id)).join('')}
+        ${col.cards.length===0?`<div class="k-empty">Nenhuma atividade<br>Clique em + para adicionar</div>`:''}
+        ${col.cards.map(card=>renderCard(card,col.id)).join('')}
         <button class="add-card-btn" onclick="openAddCardModal('${col.id}')">
           <span style="font-size:14px;line-height:1">+</span> Adicionar atividade
         </button>
       </div>`;
-    board.insertBefore(colEl, addBtn);
+    board.insertBefore(colEl,addBtn);
   });
-
   updateStats();
 }
 
-function renderCard(card, colId){
-  const pClass = {alta:'p-alta',media:'p-media',baixa:'p-baixa'}[card.priority]||'p-media';
-  const pLabel = {alta:'Alta',media:'Média',baixa:'Baixa'}[card.priority]||'Média';
-  const tagLabels = {laranja:'Operacional',azul:'Administrativo',verde:'Financeiro',vermelho:'Urgente',amarelo:'Comercial',cinza:'Geral'};
+function renderCard(card,colId){
+  const cat=getCat(card.tag);
+  const clr=getColor(cat.colorId);
+  const pClass={alta:'p-alta',media:'p-media',baixa:'p-baixa'}[card.priority]||'p-media';
+  const pLabel={alta:'Alta',media:'Média',baixa:'Baixa'}[card.priority]||'Média';
   return `
-    <div class="k-card tag-${card.tag}" id="card-${card.id}"
+    <div class="k-card" id="card-${card.id}" style="--card-bar:${clr.bar}"
       draggable="true"
       ondragstart="e_dragStart(event,'${card.id}','${colId}')"
       ondragend="e_dragEnd(event)">
-      <span class="k-card-tag tag-pill-${card.tag}">${tagLabels[card.tag]||card.tag}</span>
+      <style>#card-${card.id}::before{background:${clr.bar}}</style>
+      <span class="k-card-tag" style="background:${clr.bg};color:${clr.text}">${esc(cat.name)}</span>
       <div class="k-card-title">${esc(card.title)}</div>
-      ${card.desc ? `<div class="k-card-desc">${esc(card.desc)}</div>` : ''}
+      ${card.desc?`<div class="k-card-desc">${esc(card.desc)}</div>`:''}
       <div class="k-card-footer">
         <span class="k-card-priority ${pClass}">${pLabel}</span>
         <button class="k-card-del" onclick="deleteCard('${colId}','${card.id}')">✕</button>
@@ -418,75 +520,121 @@ function renderCard(card, colId){
     </div>`;
 }
 
-// ── DRAG & DROP ──
-function e_dragStart(e, cardId, colId){
-  dragCardId = cardId; dragFromColId = colId;
-  setTimeout(()=>{ const el=document.getElementById('card-'+cardId); if(el) el.classList.add('dragging'); },0);
-  e.dataTransfer.effectAllowed='move';
-}
-function e_dragEnd(e){
-  if(dragCardId) { const el=document.getElementById('card-'+dragCardId); if(el) el.classList.remove('dragging'); }
-  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
-}
-function e_dragOver(e, colId){
-  e.preventDefault(); e.dataTransfer.dropEffect='move';
-  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
-  const body=document.getElementById('body-'+colId);
-  if(body) body.classList.add('drag-over');
-}
-function e_dragLeave(e, colId){
-  const body=document.getElementById('body-'+colId);
-  if(body && !body.contains(e.relatedTarget)) body.classList.remove('drag-over');
-}
-function e_drop(e, toColId){
-  e.preventDefault();
-  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
-  if(!dragCardId || !dragFromColId || dragFromColId===toColId) { dragCardId=null; dragFromColId=null; return; }
-  const srcCol = cols.find(c=>c.id===dragFromColId);
-  const dstCol = cols.find(c=>c.id===toColId);
-  if(!srcCol||!dstCol) return;
-  const idx = srcCol.cards.findIndex(c=>c.id===dragCardId);
-  if(idx===-1) return;
-  const [card] = srcCol.cards.splice(idx,1);
-  dstCol.cards.push(card);
-  dragCardId=null; dragFromColId=null;
-  saveState(); render();
+// ═══════════════════════════════════════
+// CATEGORIES RENDER
+// ═══════════════════════════════════════
+function renderCats(){
+  const grid=document.getElementById('cat-grid');
+  grid.innerHTML='';
+  if(cats.length===0){
+    grid.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0">Nenhuma categoria cadastrada.</div>';
+  }
+  cats.forEach(cat=>{
+    const clr=getColor(cat.colorId);
+    const card=document.createElement('div');
+    card.className='cat-item-card';
+    card.innerHTML=`
+      <div class="accent-bar" style="background:${clr.bar}"></div>
+      <div class="cat-item-info">
+        <div class="cat-item-name">${esc(cat.name)}</div>
+        <span class="cat-pill-preview" style="background:${clr.bg};color:${clr.text}">${esc(cat.name)}</span>
+      </div>
+      <div class="cat-item-actions">
+        <button class="cat-act-btn" onclick="editCat('${cat.id}')" title="Editar">✏️</button>
+        <button class="cat-act-btn del" onclick="deleteCat('${cat.id}')" title="Remover">✕</button>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  // build color picker
+  buildColorPicker(null);
 }
 
-// ── ADD PERSON (topbar button) ──
-function openAddPersonModal(){ openModal('modal-person'); document.getElementById('mp-name').focus(); }
-function confirmAddPerson(){
-  const name=document.getElementById('mp-name').value.trim();
+let selectedColorId = COLOR_PALETTE[0].id;
+
+function buildColorPicker(selectedId){
+  selectedColorId = selectedId || COLOR_PALETTE[0].id;
+  const row=document.getElementById('color-picker-row');
+  row.innerHTML='';
+  COLOR_PALETTE.forEach(c=>{
+    const dot=document.createElement('div');
+    dot.className='color-opt'+(selectedColorId===c.id?' selected':'');
+    dot.style.background=c.bar;
+    dot.title=c.label;
+    dot.onclick=()=>{
+      selectedColorId=c.id;
+      document.querySelectorAll('.color-opt').forEach(d=>d.classList.remove('selected'));
+      dot.classList.add('selected');
+    };
+    row.appendChild(dot);
+  });
+}
+
+function confirmSaveCat(){
+  const name=document.getElementById('cat-name-inp').value.trim();
+  const editId=document.getElementById('cat-edit-id').value;
+  const warn=document.getElementById('cat-warning');
+  warn.classList.remove('show');
   if(!name) return;
-  const role=document.getElementById('mp-role').value.trim();
-  cols.push({id:'c'+Date.now(), name, role, cards:[]});
-  document.getElementById('mp-name').value='';
-  document.getElementById('mp-role').value='';
-  closeModal('modal-person'); saveState(); render();
+
+  // check duplicate name (ignoring self when editing)
+  const dup=cats.find(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==editId);
+  if(dup){ warn.classList.add('show'); return; }
+
+  if(editId){
+    // editing
+    const cat=cats.find(c=>c.id===editId);
+    if(cat){ cat.name=name; cat.colorId=selectedColorId; }
+    cancelEditCat();
+  } else {
+    // new
+    cats.push({id:'cat_'+Date.now(), name, colorId:selectedColorId});
+  }
+  saveCats();
+  document.getElementById('cat-name-inp').value='';
+  renderCats();
+  render(); // refresh cards on board
 }
 
-// ── ADD PERSON (inline form on board) ──
-function toggleAddColForm(){
-  const f=document.getElementById('add-col-form');
-  const b=document.getElementById('add-col-btn');
-  const open=f.classList.toggle('open');
-  b.style.display=open?'none':'block';
-  if(open) document.getElementById('new-col-name').focus();
-}
-function confirmAddCol(){
-  const name=document.getElementById('new-col-name').value.trim();
-  if(!name) return;
-  const role=document.getElementById('new-col-role').value.trim();
-  cols.push({id:'c'+Date.now(), name, role, cards:[]});
-  document.getElementById('new-col-name').value='';
-  document.getElementById('new-col-role').value='';
-  const f=document.getElementById('add-col-form');
-  const b=document.getElementById('add-col-btn');
-  f.classList.remove('open'); b.style.display='block';
-  saveState(); render();
+function editCat(catId){
+  const cat=cats.find(c=>c.id===catId);
+  if(!cat) return;
+  document.getElementById('cat-edit-id').value=catId;
+  document.getElementById('cat-name-inp').value=cat.name;
+  document.getElementById('cat-form-title').textContent='Editar categoria';
+  document.getElementById('cat-cancel-btn').style.display='inline-flex';
+  buildColorPicker(cat.colorId);
+  document.getElementById('cat-name-inp').focus();
 }
 
-// ── ADD CARD ──
+function cancelEditCat(){
+  document.getElementById('cat-edit-id').value='';
+  document.getElementById('cat-name-inp').value='';
+  document.getElementById('cat-form-title').textContent='Nova categoria';
+  document.getElementById('cat-cancel-btn').style.display='none';
+  document.getElementById('cat-warning').classList.remove('show');
+  buildColorPicker(null);
+}
+
+function deleteCat(catId){
+  const cat=cats.find(c=>c.id===catId);
+  if(!cat) return;
+  // check if in use
+  const inUse=cols.some(col=>col.cards.some(c=>c.tag===catId));
+  if(inUse){
+    if(!confirm(`A categoria "${cat.name}" está em uso em alguns cards. Remover mesmo assim? Os cards ficarão sem categoria.`)) return;
+    cols.forEach(col=>col.cards.forEach(c=>{ if(c.tag===catId) c.tag='cinza'; }));
+    saveState();
+  }
+  cats=cats.filter(c=>c.id!==catId);
+  saveCats();
+  renderCats();
+  render();
+}
+
+// ═══════════════════════════════════════
+// ADD CARD MODAL — tag selector dinâmico
+// ═══════════════════════════════════════
 function openAddCardModal(colId){
   addCardTargetColId=colId;
   const col=cols.find(c=>c.id===colId);
@@ -494,44 +642,115 @@ function openAddCardModal(colId){
   document.getElementById('mc-title').value='';
   document.getElementById('mc-desc').value='';
   document.getElementById('mc-priority').value='media';
-  selectedTag='laranja';
-  document.querySelectorAll('.tag-opt').forEach(el=>el.classList.remove('selected'));
-  document.querySelector('.tag-opt[data-tag="laranja"]').classList.add('selected');
+  selectedTag=cats.length>0?cats[0].id:null;
+  buildTagSelector();
   openModal('modal-card');
   setTimeout(()=>document.getElementById('mc-title').focus(),100);
 }
-function selectTag(el){
+
+function buildTagSelector(){
+  const sel=document.getElementById('tag-selector');
+  sel.innerHTML='';
+  cats.forEach(cat=>{
+    const clr=getColor(cat.colorId);
+    const sp=document.createElement('span');
+    sp.className='tag-opt'+(selectedTag===cat.id?' selected':'');
+    sp.style.background=clr.bg;
+    sp.style.color=clr.text;
+    sp.dataset.tag=cat.id;
+    sp.textContent=cat.name;
+    sp.onclick=()=>selectTagEl(sp,cat.id);
+    sel.appendChild(sp);
+  });
+}
+
+function selectTagEl(el,catId){
   document.querySelectorAll('.tag-opt').forEach(t=>t.classList.remove('selected'));
   el.classList.add('selected');
-  selectedTag=el.dataset.tag;
+  selectedTag=catId;
 }
+
+function selectTag(el){ selectTagEl(el, el.dataset.tag); }
+
 function confirmAddCard(){
   const title=document.getElementById('mc-title').value.trim();
   if(!title) return;
   const col=cols.find(c=>c.id===addCardTargetColId);
   if(!col) return;
   col.cards.push({
-    id:'card'+Date.now(),
-    title,
+    id:'card'+Date.now(), title,
     desc:document.getElementById('mc-desc').value.trim(),
     priority:document.getElementById('mc-priority').value,
-    tag:selectedTag
+    tag:selectedTag||(cats[0]?cats[0].id:'cinza')
   });
   closeModal('modal-card');
   saveState(); render();
 }
 
+// ── DRAG & DROP ──
+function e_dragStart(e,cardId,colId){
+  dragCardId=cardId;dragFromColId=colId;
+  setTimeout(()=>{const el=document.getElementById('card-'+cardId);if(el)el.classList.add('dragging');},0);
+  e.dataTransfer.effectAllowed='move';
+}
+function e_dragEnd(){
+  if(dragCardId){const el=document.getElementById('card-'+dragCardId);if(el)el.classList.remove('dragging');}
+  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
+}
+function e_dragOver(e,colId){
+  e.preventDefault();e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
+  const b=document.getElementById('body-'+colId);if(b)b.classList.add('drag-over');
+}
+function e_dragLeave(e,colId){
+  const b=document.getElementById('body-'+colId);
+  if(b&&!b.contains(e.relatedTarget))b.classList.remove('drag-over');
+}
+function e_drop(e,toColId){
+  e.preventDefault();
+  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
+  if(!dragCardId||!dragFromColId||dragFromColId===toColId){dragCardId=null;dragFromColId=null;return;}
+  const src=cols.find(c=>c.id===dragFromColId),dst=cols.find(c=>c.id===toColId);
+  if(!src||!dst)return;
+  const idx=src.cards.findIndex(c=>c.id===dragCardId);if(idx===-1)return;
+  const[card]=src.cards.splice(idx,1);dst.cards.push(card);
+  dragCardId=null;dragFromColId=null;
+  saveState();render();
+}
+
+// ── ADD PERSON ──
+function openAddPersonModal(){openModal('modal-person');document.getElementById('mp-name').focus();}
+function confirmAddPerson(){
+  const name=document.getElementById('mp-name').value.trim();if(!name)return;
+  const role=document.getElementById('mp-role').value.trim();
+  cols.push({id:'c'+Date.now(),name,role,cards:[]});
+  document.getElementById('mp-name').value='';document.getElementById('mp-role').value='';
+  closeModal('modal-person');saveState();render();
+}
+function toggleAddColForm(){
+  const f=document.getElementById('add-col-form'),b=document.getElementById('add-col-btn');
+  const open=f.classList.toggle('open');b.style.display=open?'none':'block';
+  if(open)document.getElementById('new-col-name').focus();
+}
+function confirmAddCol(){
+  const name=document.getElementById('new-col-name').value.trim();if(!name)return;
+  const role=document.getElementById('new-col-role').value.trim();
+  cols.push({id:'c'+Date.now(),name,role,cards:[]});
+  document.getElementById('new-col-name').value='';document.getElementById('new-col-role').value='';
+  const f=document.getElementById('add-col-form'),b=document.getElementById('add-col-btn');
+  f.classList.remove('open');b.style.display='block';
+  saveState();render();
+}
+
 // ── DELETE ──
-function deleteCard(colId, cardId){
-  const col=cols.find(c=>c.id===colId);
-  if(!col) return;
+function deleteCard(colId,cardId){
+  const col=cols.find(c=>c.id===colId);if(!col)return;
   col.cards=col.cards.filter(c=>c.id!==cardId);
-  saveState(); render();
+  saveState();render();
 }
 function deleteCol(colId){
-  if(!confirm('Remover esta pessoa e todas as suas atividades?')) return;
-  cols=cols.filter(c=>c.id!==colId);
-  saveState(); render();
+  if(!confirm('Remover esta pessoa e todas as suas atividades?'))return;
+  cols=cols.filter(c=>c.id!==colId);saveState();render();
 }
 
 // ── EXPORT ──
@@ -539,55 +758,56 @@ function openExportModal(){
   const lines=cols.map(col=>{
     const header=col.role?`${col.name} (${col.role})`:col.name;
     const cards=col.cards.length
-      ? col.cards.map(c=>`  • [${c.priority.toUpperCase()}] ${c.title}${c.desc?' — '+c.desc:''}`).join('\n')
-      : '  (sem atividades)';
+      ?col.cards.map(c=>{const cat=getCat(c.tag);return `  • [${c.priority.toUpperCase()}][${cat.name}] ${c.title}${c.desc?' — '+c.desc:''}`;}).join('\n')
+      :'  (sem atividades)';
     return `${header}:\n${cards}`;
   }).join('\n\n');
   document.getElementById('export-content').textContent=lines||'(nenhuma pessoa cadastrada)';
   openModal('modal-export');
 }
 function copyExport(){
-  const txt=document.getElementById('export-content').textContent;
-  navigator.clipboard.writeText(txt).catch(()=>{});
-  const btn=event.target; btn.textContent='Copiado!';
-  setTimeout(()=>btn.textContent='Copiar texto',1600);
+  navigator.clipboard.writeText(document.getElementById('export-content').textContent).catch(()=>{});
+  const btn=event.target;btn.textContent='Copiado!';setTimeout(()=>btn.textContent='Copiar texto',1600);
 }
 
 // ── STATS ──
 function updateStats(){
-  const totalCols=cols.length;
-  const totalCards=cols.reduce((s,c)=>s+c.cards.length,0);
-  const totalAlta=cols.reduce((s,c)=>s+c.cards.filter(x=>x.priority==='alta').length,0);
-  document.getElementById('stat-pessoas').textContent=totalCols;
-  document.getElementById('stat-atividades').textContent=totalCards;
-  document.getElementById('stat-alta').textContent=totalAlta;
+  document.getElementById('stat-pessoas').textContent=cols.length;
+  document.getElementById('stat-atividades').textContent=cols.reduce((s,c)=>s+c.cards.length,0);
+  document.getElementById('stat-alta').textContent=cols.reduce((s,c)=>s+c.cards.filter(x=>x.priority==='alta').length,0);
 }
 
-// ── MODAL HELPERS ──
-function openModal(id){ document.getElementById(id).classList.add('open'); }
-function closeModal(id){ document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.modal-overlay').forEach(overlay=>{
-  overlay.addEventListener('click',e=>{ if(e.target===overlay) overlay.classList.remove('open'); });
+// ── RESET ──
+function resetBoard(){
+  if(!confirm('Apagar todos os dados e voltar às 8 pessoas padrão?'))return;
+  localStorage.removeItem(STORAGE_KEY);
+  cols=JSON.parse(JSON.stringify(DEFAULT_COLS));
+  saveState();render();
+}
+
+// ── MODALS ──
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-overlay').forEach(o=>{
+  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
 });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open')); });
-// Enter confirm on person modal
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open'));
+});
+
+// ── INIT ──
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('mp-role').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAddPerson(); });
-  document.getElementById('mp-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('mp-role').focus(); });
-  document.getElementById('mc-title').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('mc-desc').focus(); });
-  document.getElementById('new-col-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('new-col-role').focus(); });
-  document.getElementById('new-col-role').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAddCol(); });
+  document.getElementById('mp-role').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddPerson();});
+  document.getElementById('mp-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('mp-role').focus();});
+  document.getElementById('mc-title').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('mc-desc').focus();});
+  document.getElementById('new-col-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('new-col-role').focus();});
+  document.getElementById('new-col-role').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddCol();});
+  document.getElementById('cat-name-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSaveCat();});
   render();
 });
 
-function resetBoard(){
-  if(!confirm('Apagar todos os dados e voltar às 8 pessoas padrão?')) return;
-  localStorage.removeItem(STORAGE_KEY);
-  cols = JSON.parse(JSON.stringify(DEFAULT_COLS));
-  saveState(); render();
-}
-
-function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 </script>
+
 </body>
 </html>
