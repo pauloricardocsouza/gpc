@@ -37,7 +37,7 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:rgba(255,255,255,0.25);line-height:1.7;flex-shrink:0}
 
 /* ════ MAIN ════ */
-.main{margin-left:230px;min-height:100vh}
+.main{margin-left:230px;min-height:100vh;overflow-x:hidden}
 .topbar{background:#fff;border-bottom:1px solid var(--gray2);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .topbar-title{font-size:14px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px}
 .topbar-right{display:flex;align-items:center;gap:10px}
@@ -54,7 +54,7 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .panel{display:none}.panel.active{display:block}
 
 /* ════ STATS ════ */
-.content{padding:20px 24px}
+.content{padding:20px 24px 0}
 .stats-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .stat-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:10px 16px;box-shadow:var(--shadow);min-width:110px;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
@@ -64,8 +64,38 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:3px}
 .stat-value{font-size:20px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace}
 
+/* ════ FLOATING SCROLLBAR ════ */
+.float-scroll-wrap{
+  position:fixed;
+  bottom:0;
+  left:230px;
+  right:0;
+  z-index:999;
+  background:var(--off);
+  border-top:1px solid var(--gray2);
+  padding:0 24px;
+  height:16px;
+  display:none;
+  align-items:center;
+}
+.float-scroll-wrap.visible{display:flex}
+.float-scroll-track{
+  flex:1;
+  overflow-x:auto;
+  overflow-y:hidden;
+  height:16px;
+  cursor:pointer;
+}
+.float-scroll-track::-webkit-scrollbar{height:8px}
+.float-scroll-track::-webkit-scrollbar-track{background:var(--gray1);border-radius:4px}
+.float-scroll-track::-webkit-scrollbar-thumb{background:var(--gray3);border-radius:4px}
+.float-scroll-track::-webkit-scrollbar-thumb:hover{background:var(--navy3)}
+.float-scroll-sizer{height:1px;display:block}
+
 /* ════ BOARD ════ */
-.board-scroll{overflow-x:auto;padding-bottom:24px}
+.board-scroll{overflow-x:auto;overflow-y:visible;padding:0 24px 32px}
+.board-scroll::-webkit-scrollbar{display:none}
+.board-scroll{-ms-overflow-style:none;scrollbar-width:none}
 .board{display:flex;gap:16px;align-items:flex-start;min-width:max-content}
 
 /* ════ PESSOA (coluna) ════ */
@@ -255,6 +285,7 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
       <span id="topbar-title-text">Divisão de Atividades</span>
     </div>
     <div class="topbar-right" id="topbar-actions">
+      <span id="conn-status"></span>
       <button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>
     </div>
@@ -268,7 +299,13 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
         <div class="stat-card s-orange"><div class="stat-label">Funções</div><div class="stat-value" id="stat-f">0</div></div>
         <div class="stat-card s-green"><div class="stat-label">Atividades</div><div class="stat-value" id="stat-a">0</div></div>
       </div>
-      <div class="board-scroll">
+      <!-- barra de rolagem flutuante (rodapé fixo) -->
+      <div class="float-scroll-wrap" id="float-scroll-wrap">
+        <div class="float-scroll-track" id="float-scroll-track">
+          <div class="float-scroll-sizer" id="float-scroll-sizer"></div>
+        </div>
+      </div>
+      <div class="board-scroll" id="board-scroll">
         <div class="board" id="board">
           <!-- colunas injetadas por JS -->
           <div class="k-add-col">
@@ -327,12 +364,138 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 
 <script>
 // ════════════════════════════════════════
-// STORAGE
+// FIREBASE — carregamento dinâmico
+// Funciona tanto em file:// quanto em servidor
 // ════════════════════════════════════════
-const SK       = 'gpc_hier_v1';
-const SK_TRASH = 'gpc_hier_trash_v1';
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCC1eN7UpKjiWzama7jmjxlLiwP4vb2p6o",
+  authDomain: "gpc---atividades.firebaseapp.com",
+  databaseURL: "https://gpc---atividades-default-rtdb.firebaseio.com",
+  projectId: "gpc---atividades",
+  storageBucket: "gpc---atividades.firebasestorage.app",
+  messagingSenderId: "1052592422530",
+  appId: "1:1052592422530:web:57b58c29e15eefd65d3e9b"
+};
+
+const SK_LOCAL  = 'gpc_hier_v1';
+const SK_TRASH  = 'gpc_hier_trash_v1';
 const lsGet = k => { try{ const r=localStorage.getItem(k); return r?JSON.parse(r):null; }catch(e){ return null; } };
 const lsSet = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
+
+let db = null;   // Firebase database instance (null = offline mode)
+let _fbReady = false;
+
+function setStatus(state){
+  const el=document.getElementById('conn-status');
+  if(!el) return;
+  const map={
+    connecting: ['🟡','Conectando...','#D4960A'],
+    online:     ['🟢','Sincronizado','#1E7B4B'],
+    offline:    ['🔴','Local — sem sincronização','#C0392B']
+  };
+  const [icon,text,color]=map[state]||map.offline;
+  el.innerHTML=`<span style="color:${color};font-size:10px;display:flex;align-items:center;gap:4px">${icon} ${text}</span>`;
+}
+
+function save(){
+  if(db){
+    db.ref('pessoas').set(pessoas);
+    db.ref('trash').set(trash);
+  } else {
+    lsSet(SK_LOCAL, pessoas);
+    lsSet(SK_TRASH, trash);
+  }
+}
+
+function initOffline(){
+  pessoas = lsGet(SK_LOCAL) || JSON.parse(JSON.stringify(DEF_PESSOAS));
+  trash   = lsGet(SK_TRASH) || [];
+  pessoas.forEach(p=>{ if(!p.funcoes) p.funcoes=[]; p.funcoes.forEach(f=>{ if(!f.atividades) f.atividades=[]; }); });
+  // merge defaults com funções pré-cadastradas
+  DEF_PESSOAS.forEach(def => {
+    if(!def.funcoes || !def.funcoes.length) return;
+    const ex = pessoas.find(p => p.id === def.id);
+    if(ex && (!ex.funcoes || !ex.funcoes.length)){
+      ex.funcoes = JSON.parse(JSON.stringify(def.funcoes));
+    }
+  });
+  _fbReady = true;
+  setStatus('offline');
+  render();
+  syncBadge();
+}
+
+function initFirebase(){
+  setStatus('connecting');
+  db.ref('pessoas').on('value', snap => {
+    const val = snap.val();
+    if(val && Array.isArray(val) && val.length > 0){
+      pessoas = val;
+      // merge: insere funções pré-cadastradas se a pessoa ainda não tiver
+      let changed = false;
+      DEF_PESSOAS.forEach(def => {
+        if(!def.funcoes || !def.funcoes.length) return;
+        const ex = pessoas.find(p => p.id === def.id);
+        if(ex && (!ex.funcoes || !ex.funcoes.length)){
+          ex.funcoes = JSON.parse(JSON.stringify(def.funcoes));
+          changed = true;
+        }
+      });
+      if(changed) db.ref('pessoas').set(pessoas);
+    } else if(!_fbReady){
+      pessoas = JSON.parse(JSON.stringify(DEF_PESSOAS));
+      db.ref('pessoas').set(pessoas);
+    }
+    pessoas.forEach(p=>{ if(!p.funcoes) p.funcoes=[]; p.funcoes.forEach(f=>{ if(!f.atividades) f.atividades=[]; }); });
+    _fbReady = true;
+    setStatus('online');
+    render();
+    syncBadge();
+  }, () => { if(!_fbReady) initOffline(); });
+
+  db.ref('trash').on('value', snap => {
+    const val = snap.val();
+    trash = val && Array.isArray(val) ? val : [];
+    syncBadge();
+  });
+}
+
+// Carrega Firebase dinamicamente — funciona em servidor/GitHub Pages
+// Em file:// o script externo pode ser bloqueado, caindo no fallback offline
+function loadFirebase(){
+  const loaded = {app: false, db: false};
+  function tryInit(){
+    if(!loaded.app || !loaded.db) return;
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database();
+      initFirebase();
+    } catch(e){
+      initOffline();
+    }
+  }
+
+  function loadScript(url, key){
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload  = () => { loaded[key]=true; tryInit(); };
+    s.onerror = () => { initOffline(); };
+    document.head.appendChild(s);
+  }
+
+  loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',      'app');
+  loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js', 'db');
+}
+
+// Detecta se está em file:// — nesse caso vai direto para offline
+// Para sincronizar, o arquivo precisa estar hospedado (GitHub Pages, etc.)
+if(location.protocol === 'file:'){
+  document.addEventListener('DOMContentLoaded', initOffline);
+} else {
+  document.addEventListener('DOMContentLoaded', loadFirebase);
+}
+</script>
+<script>
 
 // ════════════════════════════════════════
 // MODELO DE DADOS
@@ -341,21 +504,132 @@ const lsSet = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(
 const DEF_PESSOAS = [
   {id:'p_carlos',   name:'Carlos',    role:'', funcoes:[]},
   {id:'p_sandra',   name:'Sandra',    role:'', funcoes:[]},
-  {id:'p_karla',    name:'Karla',     role:'', funcoes:[]},
-  {id:'p_pedro',    name:'Pedro',     role:'', funcoes:[]},
-  {id:'p_vitor',    name:'Vitor',     role:'', funcoes:[]},
-  {id:'p_lucas',    name:'Lucas',     role:'', funcoes:[]},
+  {id:'p_karla',    name:'Karla',     role:'', funcoes:[
+    {id:'p_karla_f1', name:'ADM', atividades:[
+      {id:'p_karla_a1', text:'Análise de Rescisões'},
+      {id:'p_karla_a2', text:'Análise de Férias'},
+      {id:'p_karla_a3', text:'Validação de funções e salários'},
+      {id:'p_karla_a4', text:'Acompanhamento de banco de horas'},
+      {id:'p_karla_a5', text:'Ajustes e aprovação de fardamentos'},
+    ]},
+    {id:'p_karla_f2', name:'FINANCEIRO', atividades:[
+      {id:'p_karla_a6', text:'Liberação de pagamentos Contas a Pagar'},
+      {id:'p_karla_a7', text:'Análise de relatório Contas a Receber'},
+    ]},
+  ]},
+  {id:'p_pedro',    name:'Pedro',     role:'', funcoes:[
+    {id:'p_pedro_f1', name:'Financeiro', atividades:[
+      {id:'p_pedro_a1',  text:'Análise de Contas a Pagar'},
+      {id:'p_pedro_a2',  text:'Gestão de alguns pagamentos da Tesouraria'},
+      {id:'p_pedro_a3',  text:'Controle e auditoria de Tesouraria'},
+      {id:'p_pedro_a4',  text:'(GPC) Liberação de pagamentos'},
+      {id:'p_pedro_a5',  text:'Pagamentos de salários'},
+      {id:'p_pedro_a6',  text:'Movimento bancário'},
+      {id:'p_pedro_a7',  text:'Gestão de conciliação de cartões'},
+      {id:'p_pedro_a8',  text:'Lançamento de créditos (brinde de funcionários)'},
+      {id:'p_pedro_a9',  text:'Devolução de PIX indevido cliente'},
+      {id:'p_pedro_a10', text:'Antecipação de recebíveis (cheques e boletos)'},
+      {id:'p_pedro_a11', text:'Pagamentos de Daniel'},
+      {id:'p_pedro_a12', text:'Gestão de endividamento de terceiros'},
+      {id:'p_pedro_a13', text:'Controle de pagamentos da diretoria feitos no Expresso'},
+      {id:'p_pedro_a14', text:'Controle de recebimentos e pagamentos de Santana e Santiago'},
+      {id:'p_pedro_a15', text:'Fechamento de descontos em folha'},
+      {id:'p_pedro_a16', text:'Relacionamento bancário'},
+      {id:'p_pedro_a17', text:'Gestão de limites de cartões'},
+      {id:'p_pedro_a18', text:'Análise de despesas (combustível / manutenção de veículos)'},
+      {id:'p_pedro_a19', text:'Atendimento de alguns clientes específicos'},
+      {id:'p_pedro_a20', text:'Aprovação de limites e liberação de clientes'},
+      {id:'p_pedro_a21', text:'Gestão de pessoas do Financeiro'},
+      {id:'p_pedro_a22', text:'Lançamento de crédito de clientes ATP quando Financeiro não está'},
+      {id:'p_pedro_a23', text:'Resolução de problemas de caixas'},
+      {id:'p_pedro_a24', text:'Pagamentos pessoais Carlos'},
+      {id:'p_pedro_a25', text:'Gestão de despesas Almir, Reinaldo entre outros'},
+      {id:'p_pedro_a26', text:'Lançamento e gestão de pagamentos sensíveis'},
+    ]},
+    {id:'p_pedro_f2', name:'Prevenção de Perdas', atividades:[
+      {id:'p_pedro_a27', text:'Gestão de pessoas da Prevenção e Monitoramento'},
+      {id:'p_pedro_a28', text:'Seguranças'},
+      {id:'p_pedro_a29', text:'Compra de material CFTV'},
+      {id:'p_pedro_a30', text:'Criar e gerir demandas de CFTV e Prevenção'},
+    ]},
+    {id:'p_pedro_f3', name:'Compra de Suprimentos', atividades:[
+      {id:'p_pedro_a31', text:'Compras no Mercado Livre em geral'},
+      {id:'p_pedro_a32', text:'Compra de suprimentos de CFTV'},
+      {id:'p_pedro_a33', text:'Compra de suprimentos de segurança'},
+      {id:'p_pedro_a34', text:'Compra de material de manutenção predial'},
+    ]},
+    {id:'p_pedro_f4', name:'Gestão de Obras', atividades:[
+      {id:'p_pedro_a35', text:'Responsável por gestão da equipe de JAI'},
+      {id:'p_pedro_a36', text:'Compra de material de construção'},
+      {id:'p_pedro_a37', text:'Compra de equipamentos para pedreiros'},
+      {id:'p_pedro_a38', text:'Gestão de serralheiros'},
+      {id:'p_pedro_a39', text:'Gestão patrimonial em geral (geradores, telhas, fios, lâmpadas, energia solar)'},
+    ]},
+    {id:'p_pedro_f5', name:'Gestão Postos e Hotel', atividades:[
+      {id:'p_pedro_a40', text:'Análise de despesas'},
+      {id:'p_pedro_a41', text:'Análise de faturamento'},
+      {id:'p_pedro_a42', text:'Coordenação em geral de Antonio'},
+      {id:'p_pedro_a43', text:'Coordenação junto à Sandra do Hotel'},
+    ]},
+  ]},
+  {id:'p_vitor',    name:'Vitor',     role:'', funcoes:[
+    {id:'p_vitor_f1', name:'Demandas GPC', atividades:[
+      {id:'p_vitor_a1',  text:'Análise de Relatórios de compras'},
+      {id:'p_vitor_a2',  text:'Acompanhamento de metas'},
+      {id:'p_vitor_a3',  text:'Análise de relatório de vendas'},
+      {id:'p_vitor_a4',  text:'Fazer metas mensais'},
+      {id:'p_vitor_a5',  text:'Compras de Bebidas e pescados'},
+      {id:'p_vitor_a6',  text:'Cadastro de novos produtos e fornecedores'},
+      {id:'p_vitor_a7',  text:'Gestão de commodities'},
+      {id:'p_vitor_a8',  text:'Demandas de ADM'},
+      {id:'p_vitor_a9',  text:'Campanhas e negociações grupo'},
+      {id:'p_vitor_a10', text:'Compras Atacado Irará'},
+      {id:'p_vitor_a11', text:'Envio de mercadorias para lojas'},
+      {id:'p_vitor_a12', text:'Precificação'},
+      {id:'p_vitor_a13', text:'Acompanhamento das Entradas de mercadorias'},
+      {id:'p_vitor_a14', text:'Negociação com Supervisor e vendedores'},
+      {id:'p_vitor_a15', text:'Montagem de Promoções e encartes'},
+      {id:'p_vitor_a16', text:'Compras de pescados e bebidas'},
+      {id:'p_vitor_a17', text:'Alinhamento de volumes'},
+      {id:'p_vitor_a18', text:'Preços e entrega de licitações'},
+      {id:'p_vitor_a19', text:'Inadimplência'},
+      {id:'p_vitor_a20', text:'Cestão Irará'},
+      {id:'p_vitor_a21', text:'Promoções'},
+      {id:'p_vitor_a22', text:'Demandas de ADM'},
+      {id:'p_vitor_a23', text:'Demandas Horti'},
+      {id:'p_vitor_a24', text:'Promo Açougue e compra de dianteiros'},
+    ]},
+  ]},
+  {id:'p_lucas',    name:'Lucas',     role:'', funcoes:[
+    {id:'p_lucas_f1', name:'Vendas', atividades:[
+      {id:'p_lucas_a1',  text:'Lançamento das metas'},
+      {id:'p_lucas_a2',  text:'Gestão de Conta Corrente do RCA'},
+      {id:'p_lucas_a3',  text:'Gestão do limite de crédito do cliente'},
+      {id:'p_lucas_a4',  text:'Estratégia de remuneração de equipe'},
+      {id:'p_lucas_a5',  text:'Demandas da Licitação Bahia Sem Fome'},
+    ]},
+    {id:'p_lucas_f2', name:'Marketing', atividades:[
+      {id:'p_lucas_a6',  text:'Desenvolvimento e aprovação de campanha'},
+      {id:'p_lucas_a7',  text:'Aprovação de verbas de patrocínio'},
+      {id:'p_lucas_a8',  text:'Gestão de CRM'},
+      {id:'p_lucas_a9',  text:'Gestão do tráfego pago'},
+      {id:'p_lucas_a10', text:'Aprovação de verbas de mídia'},
+    ]},
+    {id:'p_lucas_f3', name:'Jurídico', atividades:[
+      {id:'p_lucas_a11', text:'Gestão de casos jurídicos de imóveis'},
+      {id:'p_lucas_a12', text:'Acompanhamento de outros processos'},
+    ]},
+    {id:'p_lucas_f4', name:'Logística', atividades:[
+      {id:'p_lucas_a13', text:'Implantação do projeto de reformulação da Logística'},
+      {id:'p_lucas_a14', text:'Implantação de Conferência Cega de Entradas e Saídas'},
+      {id:'p_lucas_a15', text:'Implantação de reconferência de cargas'},
+    ]},
+  ]},
   {id:'p_derivaldo',name:'Derivaldo', role:'', funcoes:[]},
-  {id:'p_daniel',   name:'Daniel',    role:'', funcoes:[]}
-];
+  {id:'p_daniel',   name:'Daniel',    role:'', funcoes:[]}];
 
-let pessoas = lsGet(SK)       || JSON.parse(JSON.stringify(DEF_PESSOAS));
-let trash   = lsGet(SK_TRASH) || [];
-
-// migração de segurança
-pessoas.forEach(p=>{ if(!p.funcoes) p.funcoes=[]; p.funcoes.forEach(f=>{ if(!f.atividades) f.atividades=[]; }); });
-
-function save(){ lsSet(SK,pessoas); lsSet(SK_TRASH,trash); }
+let pessoas = JSON.parse(JSON.stringify(DEF_PESSOAS));
+let trash   = [];
 
 // ════════════════════════════════════════
 // UTILS
@@ -381,8 +655,10 @@ function showView(v){
   document.getElementById('topbar-title-text').textContent=
     {board:'Divisão de Atividades',trash:'Lixeira'}[v]||'';
   document.getElementById('topbar-actions').innerHTML = v==='board'
-    ? `<button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
-       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>` : '';
+    ? `<span id="conn-status"></span>
+       <button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
+       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>`
+    : `<span id="conn-status"></span>`;
   if(v==='trash') renderTrash();
 }
 
@@ -449,6 +725,11 @@ function render(){
   document.getElementById('stat-f').textContent=totalF;
   document.getElementById('stat-a').textContent=totalA;
   syncBadge();
+  // stamp pid em cada aa-inp para delegação de teclado
+  pessoas.forEach(p=>p.funcoes.forEach(f=>{
+    const inp=document.getElementById('aa-inp-'+f.id);
+    if(inp) inp.dataset.pid=p.id;
+  }));
 }
 
 function funcaoHtml(pessoaId, f){
@@ -713,7 +994,7 @@ function renderTrash(){
     box.innerHTML=`<div class="trash-empty">🗑️<br><br>A lixeira está vazia.<br><span style="font-size:11px;color:var(--gray3)">Itens excluídos aparecem aqui.</span></div>`;
     lbl.textContent=''; btn.style.display='none'; return;
   }
-  lbl.textContent=`${trash.length} item${trash.length>1?'s':''} na lixeira`;
+  lbl.textContent=`${trash.length} ${trash.length===1?'item':'itens'} na lixeira`;
   btn.style.display='flex';
   const icons={pessoa:'👤',funcao:'⚙️',atividade:'📌'};
   const labels={pessoa:'Pessoas',funcao:'Funções',atividade:'Atividades'};
@@ -812,22 +1093,18 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySele
 // KEYBOARD SHORTCUTS
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
-  // modal pessoa
   document.getElementById('mp-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('mp-role').focus(); });
   document.getElementById('mp-role').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAddPessoa(); });
-  // inline col
   document.getElementById('nc-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('nc-role').focus(); });
   document.getElementById('nc-role').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAddCol(); });
-
-  // delegação de eventos para inputs dinâmicos (função e atividade)
   document.getElementById('board').addEventListener('keydown', e=>{
     const id=e.target.id||'';
     if(e.key==='Enter'){
       if(id.startsWith('af-inp-'))  confirmAddFuncao(id.replace('af-inp-',''));
       if(id.startsWith('aa-inp-')){ const fid=id.replace('aa-inp-',''); const pid=e.target.dataset.pid||''; if(pid) confirmAddAtiv(pid,fid); }
-      if(id.startsWith('pedit-name-')){ const pid=id.replace('pedit-name-',''); confirmEditPessoa(pid); }
-      if(id.startsWith('pedit-role-')){ const pid=id.replace('pedit-role-',''); confirmEditPessoa(pid); }
-      if(id.startsWith('fedit-inp-')){ const parts=id.replace('fedit-inp-',''); let pid=''; pessoas.forEach(p=>p.funcoes.forEach(f=>{ if(f.id===parts) pid=p.id; })); if(pid) confirmEditFuncao(pid,parts); }
+      if(id.startsWith('pedit-name-')){ confirmEditPessoa(id.replace('pedit-name-','')); }
+      if(id.startsWith('pedit-role-')){ confirmEditPessoa(id.replace('pedit-role-','')); }
+      if(id.startsWith('fedit-inp-')){ const fid=id.replace('fedit-inp-',''); let pid=''; pessoas.forEach(p=>p.funcoes.forEach(f=>{ if(f.id===fid) pid=p.id; })); if(pid) confirmEditFuncao(pid,fid); }
       if(id.startsWith('aedit-inp-')){ const aid=id.replace('aedit-inp-',''); let pid='',fid=''; pessoas.forEach(p=>p.funcoes.forEach(f=>f.atividades.forEach(a=>{ if(a.id===aid){pid=p.id;fid=f.id;} }))); if(pid) confirmEditAtiv(pid,fid,aid); }
     }
     if(e.key==='Escape'){
@@ -836,23 +1113,51 @@ document.addEventListener('DOMContentLoaded',()=>{
       if(id.startsWith('aedit-inp-')) cancelEditAtiv(id.replace('aedit-inp-',''));
     }
   });
-
-  render();
-  syncBadge();
 });
 
-// after render, stamp data-pid on atividade inputs
-const _origRender=render;
-window.render=function(){
-  _origRender();
-  // stamp pid em cada aa-inp
-  pessoas.forEach(p=>{
-    p.funcoes.forEach(f=>{
-      const inp=document.getElementById('aa-inp-'+f.id);
-      if(inp) inp.dataset.pid=p.id;
-    });
+// ════════════════════════════════════════
+// BARRA DE ROLAGEM FLUTUANTE (rodapé fixo)
+// ════════════════════════════════════════
+function initFloatScroll(){
+  const boardScroll = document.getElementById('board-scroll');
+  const track       = document.getElementById('float-scroll-track');
+  const sizer       = document.getElementById('float-scroll-sizer');
+  const wrap        = document.getElementById('float-scroll-wrap');
+  if(!boardScroll||!track||!sizer||!wrap) return;
+
+  let syncing = false;
+
+  function update(){
+    const sw = boardScroll.scrollWidth;
+    const cw = boardScroll.clientWidth;
+    sizer.style.width = sw + 'px';
+    wrap.classList.toggle('visible', sw > cw + 2);
+  }
+
+  // barra flutuante → board
+  track.addEventListener('scroll', ()=>{
+    if(syncing) return;
+    syncing = true;
+    boardScroll.scrollLeft = track.scrollLeft;
+    requestAnimationFrame(()=>{ syncing = false; });
   });
-};
+
+  // board → barra flutuante
+  boardScroll.addEventListener('scroll', ()=>{
+    if(syncing) return;
+    syncing = true;
+    track.scrollLeft = boardScroll.scrollLeft;
+    requestAnimationFrame(()=>{ syncing = false; });
+  });
+
+  update();
+  window.addEventListener('resize', update);
+  // re-sincroniza quando o board mudar de tamanho (novas colunas)
+  new ResizeObserver(update).observe(boardScroll);
+}
+
+document.addEventListener('DOMContentLoaded', initFloatScroll);
+
 </script>
 </body>
 </html>
