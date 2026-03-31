@@ -21,7 +21,7 @@
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden}
 
-/* ── SIDEBAR ── */
+/* ════ SIDEBAR ════ */
 .sidebar{position:fixed;top:0;left:0;width:230px;height:100vh;background:var(--dark);display:flex;flex-direction:column;z-index:100;border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto}
 .sidebar-logo{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
 .logo-text{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.5px}
@@ -36,7 +36,7 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .sidebar-spacer{flex:1}
 .sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:rgba(255,255,255,0.25);line-height:1.7;flex-shrink:0}
 
-/* ── MAIN ── */
+/* ════ MAIN ════ */
 .main{margin-left:230px;min-height:100vh}
 .topbar{background:#fff;border-bottom:1px solid var(--gray2);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
 .topbar-title{font-size:14px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:10px}
@@ -50,102 +50,102 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .btn-top.danger{color:var(--danger);border-color:rgba(192,57,43,0.3)}
 .btn-top.danger:hover{background:var(--danger2);border-color:var(--danger)}
 
-/* ── PANELS ── */
+/* ════ PANELS ════ */
 .panel{display:none}.panel.active{display:block}
 
-/* ── STATS ── */
+/* ════ STATS ════ */
 .content{padding:20px 24px}
-.stats-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.stats-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .stat-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:10px 16px;box-shadow:var(--shadow);min-width:110px;position:relative;overflow:hidden}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .stat-card.s-orange::before{background:var(--orange)}
 .stat-card.s-navy::before{background:var(--navy)}
+.stat-card.s-green::before{background:var(--green)}
 .stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:3px}
 .stat-value{font-size:20px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace}
 
-/* ══════════════════════════════════
-   KANBAN — COLUNA PRINCIPAL
-══════════════════════════════════ */
-.kanban-scroll{overflow-x:auto;padding-bottom:24px}
-.kanban-board{display:flex;gap:14px;align-items:flex-start;min-width:max-content}
+/* ════ BOARD ════ */
+.board-scroll{overflow-x:auto;padding-bottom:24px}
+.board{display:flex;gap:16px;align-items:flex-start;min-width:max-content}
 
-/* wrapper que engloba a coluna principal + subordinados */
-.k-col-group{display:flex;flex-direction:column;gap:0;flex-shrink:0}
+/* ════ PESSOA (coluna) ════ */
+.pessoa-col{width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:0}
 
-/* coluna principal */
-.k-col{width:260px;display:flex;flex-direction:column}
-.k-col-head{background:var(--dark);border-radius:var(--radius) var(--radius) 0 0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
-.k-col-name{font-size:12px;font-weight:700;color:#fff}
-.k-col-role{font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px}
-.k-col-badge{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace}
-.k-col-head-actions{display:flex;align-items:center;gap:5px}
-.k-col-accent{height:3px;background:var(--orange)}
-.k-col-body{background:#fff;border:1px solid var(--gray2);border-top:none;border-radius:0 0 0 0;padding:10px;min-height:120px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
-.k-col-body.drag-over{background:var(--gray1);border-color:var(--navy3)}
-.k-col-icon-btn{background:rgba(255,255,255,0.08);border:none;border-radius:5px;color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;width:22px;height:22px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;opacity:0}
-.k-col-head:hover .k-col-icon-btn{opacity:1}
-.k-col-icon-btn:hover{background:rgba(255,255,255,0.18);color:#fff}
-.k-col-icon-btn.del:hover{background:rgba(232,34,39,0.35);color:#fff}
+.pessoa-head{background:var(--dark);border-radius:var(--radius) var(--radius) 0 0;padding:13px 15px;display:flex;align-items:center;justify-content:space-between}
+.pessoa-head-info{min-width:0}
+.pessoa-name{font-size:13px;font-weight:700;color:#fff}
+.pessoa-role{font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px}
+.pessoa-head-right{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.pessoa-badge{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.pessoa-icon-btn{background:rgba(255,255,255,0.08);border:none;border-radius:5px;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;width:22px;height:22px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;opacity:0}
+.pessoa-head:hover .pessoa-icon-btn{opacity:1}
+.pessoa-icon-btn:hover{background:rgba(255,255,255,0.18);color:#fff}
+.pessoa-icon-btn.del:hover{background:rgba(232,34,39,0.4);color:#fff}
+.pessoa-accent{height:3px;background:var(--orange)}
 
-/* ── SUBORDINADOS ── */
-.k-sub-section{background:var(--gray1);border:1px solid var(--gray2);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
-.k-sub-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;transition:background .15s}
-.k-sub-toggle:hover{background:var(--gray2)}
-.k-sub-toggle-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;align-items:center;gap:6px}
-.k-sub-count{font-size:9px;font-weight:700;background:var(--navy);color:#fff;padding:1px 5px;border-radius:6px;font-family:'JetBrains Mono',monospace}
-.k-sub-chevron{font-size:10px;color:var(--gray3);transition:transform .2s}
-.k-sub-chevron.open{transform:rotate(180deg)}
-.k-sub-body{display:none;border-top:1px solid var(--gray2)}
-.k-sub-body.open{display:block}
+.pessoa-body{background:#fff;border:1px solid var(--gray2);border-top:none;border-radius:0 0 var(--radius) var(--radius);display:flex;flex-direction:column}
 
-/* mini-cards de subordinados */
-.k-sub-list{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.k-sub-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:9px 11px;display:flex;align-items:center;gap:8px;transition:border-color .15s,box-shadow .15s;position:relative;overflow:hidden}
-.k-sub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--navy3)}
-.k-sub-card:hover{border-color:var(--navy3);box-shadow:var(--shadow)}
-.k-sub-card-info{flex:1;min-width:0}
-.k-sub-card-name{font-size:12px;font-weight:600;color:var(--text)}
-.k-sub-card-role{font-size:10px;color:var(--muted);margin-top:1px}
-.k-sub-card-del{opacity:0;font-size:11px;color:var(--danger);cursor:pointer;padding:2px 5px;border-radius:4px;border:none;background:transparent;transition:opacity .15s;flex-shrink:0}
-.k-sub-card:hover .k-sub-card-del{opacity:1}
-.k-sub-card-del:hover{background:var(--danger2)}
+/* ── Add função inline ── */
+.add-funcao-area{padding:10px 12px;border-top:1px solid var(--gray1)}
+.add-funcao-btn{display:flex;align-items:center;gap:6px;width:100%;padding:7px 9px;border-radius:var(--radius-sm);border:1.5px dashed var(--gray2);background:transparent;cursor:pointer;font-size:11px;font-weight:600;color:var(--muted);font-family:'Sora',sans-serif;text-transform:uppercase;letter-spacing:.05em;transition:all .15s}
+.add-funcao-btn:hover{border-color:var(--navy3);color:var(--navy);background:var(--gray1)}
+.add-funcao-form{display:none;flex-direction:column;gap:6px;margin-top:6px}
+.add-funcao-form.open{display:flex}
+.add-funcao-form input{border:1px solid var(--gray2);border-radius:6px;padding:7px 10px;font-size:12px;font-family:'Sora',sans-serif;color:var(--text);outline:none;width:100%}
+.add-funcao-form input:focus{border-color:var(--navy)}
+.mini-actions{display:flex;gap:5px}
 
-/* add-subordinado inline */
-.k-sub-add-btn{display:flex;align-items:center;gap:5px;padding:6px 10px;margin:4px 10px 8px;border-radius:var(--radius-sm);border:1.5px dashed var(--gray2);background:transparent;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);font-family:'Sora',sans-serif;width:calc(100% - 20px);transition:all .15s;text-transform:uppercase;letter-spacing:.05em}
-.k-sub-add-btn:hover{border-color:var(--navy3);color:var(--navy);background:#fff}
-.k-sub-add-form{padding:0 10px 10px;display:none;flex-direction:column;gap:6px}
-.k-sub-add-form.open{display:flex}
-.k-sub-add-form input{border:1px solid var(--gray2);border-radius:6px;padding:6px 9px;font-size:11px;font-family:'Sora',sans-serif;background:#fff;color:var(--text);outline:none;width:100%}
-.k-sub-add-form input:focus{border-color:var(--navy)}
-.k-sub-add-actions{display:flex;gap:5px}
+/* ════ FUNÇÃO (bloco dentro da pessoa) ════ */
+.funcao-block{border-top:1px solid var(--gray1)}
+.funcao-block:first-child{border-top:none}
 
-/* ── CARD ── */
-.k-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:11px 12px;cursor:grab;transition:box-shadow .15s,border-color .15s,opacity .15s;position:relative;overflow:hidden}
-.k-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.k-card:hover{box-shadow:var(--shadow-md);border-color:var(--navy3)}
-.k-card.dragging{opacity:.35;cursor:grabbing}
-.k-card-tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:6px}
-.k-card-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;word-break:break-word}
-.k-card-desc{font-size:11px;color:var(--muted);line-height:1.5;word-break:break-word;margin-top:4px}
-.k-card-footer{display:flex;align-items:center;justify-content:flex-end;margin-top:8px;padding-top:6px;border-top:1px solid var(--gray1)}
-.k-card-del{opacity:0;font-size:10px;color:var(--muted);cursor:pointer;padding:3px 7px;border-radius:4px;border:1px solid transparent;background:transparent;transition:opacity .15s,background .15s;font-weight:600;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:4px}
-.k-card:hover .k-card-del{opacity:1}
-.k-card-del:hover{background:var(--danger2);color:var(--danger);border-color:var(--danger)}
-.k-empty{font-size:11px;color:var(--gray3);text-align:center;padding:18px 0;border:1.5px dashed var(--gray2);border-radius:var(--radius-sm);line-height:1.6}
-.add-card-btn{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--radius-sm);border:1.5px dashed var(--gray2);background:transparent;cursor:pointer;font-size:11px;color:var(--muted);font-family:'Sora',sans-serif;width:100%;margin-top:2px;transition:all .15s}
-.add-card-btn:hover{border-color:var(--navy3);color:var(--navy);background:var(--gray1)}
+.funcao-head{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--gray1);cursor:pointer;user-select:none;transition:background .12s;gap:8px}
+.funcao-head:hover{background:var(--gray2)}
+.funcao-head-left{display:flex;align-items:center;gap:7px;min-width:0;flex:1}
+.funcao-chevron{font-size:10px;color:var(--gray3);transition:transform .2s;flex-shrink:0}
+.funcao-chevron.open{transform:rotate(90deg)}
+.funcao-name{font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.funcao-count{font-size:9px;font-weight:700;background:var(--navy);color:#fff;padding:1px 5px;border-radius:5px;font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.funcao-head-right{display:flex;align-items:center;gap:3px;flex-shrink:0;opacity:0;transition:opacity .12s}
+.funcao-head:hover .funcao-head-right{opacity:1}
+.funcao-btn{background:transparent;border:none;border-radius:4px;cursor:pointer;font-size:11px;color:var(--muted);width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.funcao-btn:hover{background:var(--gray2);color:var(--navy)}
+.funcao-btn.del:hover{background:var(--danger2);color:var(--danger)}
 
-/* ── ADD COL ── */
+.funcao-body{display:none;padding:8px 10px;background:#fff;flex-direction:column;gap:6px}
+.funcao-body.open{display:flex}
+
+/* ── Atividade ── */
+.ativ-item{display:flex;align-items:flex-start;gap:7px;padding:7px 9px;background:var(--off);border:1px solid var(--gray2);border-radius:var(--radius-sm);transition:border-color .12s,box-shadow .12s;position:relative;overflow:hidden}
+.ativ-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--orange)}
+.ativ-item:hover{border-color:var(--navy3);box-shadow:0 1px 6px rgba(15,30,60,0.07)}
+.ativ-dot{width:6px;height:6px;border-radius:50%;background:var(--orange);flex-shrink:0;margin-top:5px}
+.ativ-text{flex:1;font-size:12px;color:var(--text);line-height:1.45;word-break:break-word}
+.ativ-del{opacity:0;font-size:10px;color:var(--danger);cursor:pointer;padding:2px 5px;border-radius:4px;border:none;background:transparent;transition:opacity .12s;flex-shrink:0;line-height:1}
+.ativ-item:hover .ativ-del{opacity:1}
+.ativ-del:hover{background:var(--danger2)}
+
+/* add atividade inline */
+.add-ativ-btn{display:flex;align-items:center;gap:5px;width:100%;padding:5px 9px;border-radius:var(--radius-sm);border:1.5px dashed var(--gray2);background:transparent;cursor:pointer;font-size:10px;color:var(--muted);font-family:'Sora',sans-serif;transition:all .15s;margin-top:2px}
+.add-ativ-btn:hover{border-color:var(--navy3);color:var(--navy);background:var(--gray1)}
+.add-ativ-form{display:none;flex-direction:column;gap:5px;margin-top:4px}
+.add-ativ-form.open{display:flex}
+.add-ativ-form input{border:1px solid var(--gray2);border-radius:6px;padding:6px 9px;font-size:11px;font-family:'Sora',sans-serif;color:var(--text);outline:none;width:100%}
+.add-ativ-form input:focus{border-color:var(--navy)}
+
+.funcao-empty{font-size:11px;color:var(--gray3);text-align:center;padding:12px 0;line-height:1.6}
+
+/* ── Add Pessoa ── */
 .k-add-col{width:260px;flex-shrink:0}
-.add-col-btn{width:100%;padding:12px;background:rgba(43,74,122,0.06);border:2px dashed var(--navy3);border-radius:var(--radius);color:var(--navy3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;text-align:center}
+.add-col-btn{width:100%;padding:13px;background:rgba(43,74,122,0.06);border:2px dashed var(--navy3);border-radius:var(--radius);color:var(--navy3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;text-align:center}
 .add-col-btn:hover{background:rgba(43,74,122,0.1);border-color:var(--navy)}
 .add-col-form{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px;display:none;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
 .add-col-form.open{display:flex}
 .add-col-form input{border:1px solid var(--gray2);border-radius:6px;padding:8px 10px;font-size:12px;font-family:'Sora',sans-serif;color:var(--text);outline:none;width:100%}
 .add-col-form input:focus{border-color:var(--navy)}
-.add-col-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
+.lbl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
 
-/* ── MODAL ── */
+/* ════ MODAL ════ */
 .modal-overlay{position:fixed;inset:0;background:rgba(10,20,45,0.45);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
 .modal{background:#fff;border-radius:var(--radius);padding:24px;width:100%;max-width:440px;box-shadow:var(--shadow-md);animation:fadeIn .18s}
@@ -160,46 +160,21 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .btn-modal.ok:hover{background:var(--navy3)}
 .btn-modal.cancel{background:var(--gray1);color:var(--muted)}
 .btn-modal.cancel:hover{background:var(--gray2)}
-.btn-modal.sm{height:28px;padding:0 10px;font-size:11px;border-radius:6px}
+.btn-modal.sm{height:28px;padding:0 11px;font-size:11px;border-radius:6px}
 
-/* ── TAG SELECTOR ── */
-.tag-selector{display:flex;flex-wrap:wrap;gap:5px}
-.tag-opt{padding:3px 9px;border-radius:10px;font-size:10px;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'JetBrains Mono',monospace;transition:all .15s;user-select:none}
-.tag-opt.selected{border-color:var(--navy)}
-
-/* ── PAGES ── */
+/* ════ PÁGINAS ════ */
 .page-inner{padding:24px}
 .page-inner-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:20px}
 
-/* ── CATEGORIAS ── */
-.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px}
-.cat-item-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
-.cat-accent-bar{width:4px;height:40px;border-radius:3px;flex-shrink:0}
-.cat-item-info{flex:1;min-width:0}
-.cat-item-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
-.cat-pill-preview{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
-.cat-item-actions{display:flex;gap:4px;flex-shrink:0}
-.cat-act-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--gray2);background:transparent;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.cat-act-btn:hover{background:var(--gray1);border-color:var(--navy)}
-.cat-act-btn.del:hover{background:var(--danger2);border-color:var(--danger)}
-.add-cat-box{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);max-width:480px}
-.add-cat-box-title{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gray1)}
-.color-picker-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
-.color-opt:hover{transform:scale(1.15)}
-.color-opt.selected{border-color:var(--navy);transform:scale(1.15)}
-.field-warn{font-size:11px;color:var(--amber);background:var(--amber2);border-radius:6px;padding:8px 12px;margin-top:10px;display:none}
-.field-warn.show{display:block}
-
-/* ── LIXEIRA ── */
+/* ════ LIXEIRA ════ */
 .trash-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
 .trash-section-title::after{content:'';flex:1;height:1px;background:var(--gray2)}
 .trash-empty{font-size:13px;color:var(--gray3);text-align:center;padding:48px 0;line-height:2}
 .trash-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .trash-toolbar-label{font-size:12px;color:var(--muted);flex:1}
-.trash-item{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;box-shadow:var(--shadow);transition:border-color .15s}
+.trash-item{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:11px 15px;display:flex;align-items:center;gap:12px;margin-bottom:8px;box-shadow:var(--shadow);transition:border-color .15s}
 .trash-item:hover{border-color:var(--navy3)}
-.trash-item-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
+.trash-item-icon{font-size:18px;flex-shrink:0;width:28px;text-align:center}
 .trash-item-info{flex:1;min-width:0}
 .trash-item-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;word-break:break-word}
 .trash-item-meta{font-size:11px;color:var(--muted)}
@@ -209,6 +184,9 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .trash-btn.restore:hover{opacity:.8}
 .trash-btn.del-perm{background:var(--danger2);color:var(--danger)}
 .trash-btn.del-perm:hover{opacity:.8}
+
+/* ════ EXPORT ════ */
+pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:var(--gray1);border-radius:var(--radius-sm);padding:14px;overflow-y:auto;max-height:380px;font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 </style>
@@ -224,9 +202,6 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
   <div class="sidebar-section">Quadros</div>
   <div class="nav-item active" id="nav-board" onclick="showView('board')">
     <span class="nav-icon">📋</span> Divisão de Tarefas
-  </div>
-  <div class="nav-item" id="nav-cats" onclick="showView('cats')">
-    <span class="nav-icon">🏷️</span> Categorias
   </div>
   <div class="nav-item" id="nav-trash" onclick="showView('trash')">
     <span class="nav-icon">🗑️</span> Lixeira
@@ -251,34 +226,30 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
       <span id="topbar-title-text">Divisão de Atividades</span>
     </div>
     <div class="topbar-right" id="topbar-actions">
-      <button class="btn-top" onclick="openAddPersonModal()">+ Pessoa</button>
+      <button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>
     </div>
   </div>
 
-  <!-- ── BOARD ── -->
+  <!-- PANEL: BOARD -->
   <div class="panel active" id="panel-board">
     <div class="content">
       <div class="stats-bar">
-        <div class="stat-card s-navy">
-          <div class="stat-label">Pessoas</div>
-          <div class="stat-value" id="stat-pessoas">0</div>
-        </div>
-        <div class="stat-card s-orange">
-          <div class="stat-label">Atividades</div>
-          <div class="stat-value" id="stat-atividades">0</div>
-        </div>
+        <div class="stat-card s-navy"><div class="stat-label">Pessoas</div><div class="stat-value" id="stat-p">0</div></div>
+        <div class="stat-card s-orange"><div class="stat-label">Funções</div><div class="stat-value" id="stat-f">0</div></div>
+        <div class="stat-card s-green"><div class="stat-label">Atividades</div><div class="stat-value" id="stat-a">0</div></div>
       </div>
-      <div class="kanban-scroll">
-        <div class="kanban-board" id="kanban-board">
+      <div class="board-scroll">
+        <div class="board" id="board">
+          <!-- colunas injetadas por JS -->
           <div class="k-add-col">
-            <button class="add-col-btn" id="add-col-btn" onclick="toggleAddColForm()">+ Adicionar pessoa</button>
+            <button class="add-col-btn" id="add-col-btn" onclick="toggleAddCol()">+ Adicionar pessoa</button>
             <div class="add-col-form" id="add-col-form">
-              <div><label class="add-col-label">Nome</label><input id="new-col-name" placeholder="Nome da pessoa" /></div>
-              <div><label class="add-col-label">Cargo / Setor</label><input id="new-col-role" placeholder="Ex: Analista · Financeiro" /></div>
-              <div style="display:flex;gap:6px;margin-top:4px">
-                <button class="btn-modal ok" style="height:32px;font-size:11px" onclick="confirmAddCol()">Adicionar</button>
-                <button class="btn-modal cancel" style="height:32px;font-size:11px" onclick="toggleAddColForm()">Cancelar</button>
+              <div><label class="lbl">Nome</label><input id="nc-name" placeholder="Nome da pessoa" /></div>
+              <div><label class="lbl">Cargo / Setor</label><input id="nc-role" placeholder="Ex: Gerente · Financeiro" /></div>
+              <div style="display:flex;gap:6px;margin-top:2px">
+                <button class="btn-modal ok sm" onclick="confirmAddCol()">Adicionar</button>
+                <button class="btn-modal cancel sm" onclick="toggleAddCol()">Cancelar</button>
               </div>
             </div>
           </div>
@@ -287,68 +258,28 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
     </div>
   </div>
 
-  <!-- ── CATEGORIAS ── -->
-  <div class="panel" id="panel-cats">
-    <div class="page-inner">
-      <div class="page-inner-title">Categorias de Atividades</div>
-      <div class="cat-grid" id="cat-grid"></div>
-      <div class="add-cat-box">
-        <div class="add-cat-box-title" id="cat-form-title">Nova categoria</div>
-        <input type="hidden" id="cat-edit-id" value="" />
-        <div class="modal-field">
-          <label>Nome da categoria</label>
-          <input id="cat-name-inp" placeholder="Ex: RH, Compras, TI..." />
-        </div>
-        <div class="modal-field">
-          <label>Cor</label>
-          <div class="color-picker-row" id="color-picker-row"></div>
-        </div>
-        <div class="field-warn" id="cat-warning">Já existe uma categoria com esse nome.</div>
-        <div style="display:flex;gap:8px;margin-top:16px">
-          <button class="btn-modal ok" style="height:34px;font-size:12px" onclick="confirmSaveCat()">Salvar categoria</button>
-          <button class="btn-modal cancel" style="height:34px;font-size:12px;display:none" id="cat-cancel-btn" onclick="cancelEditCat()">Cancelar edição</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── LIXEIRA ── -->
+  <!-- PANEL: LIXEIRA -->
   <div class="panel" id="panel-trash">
     <div class="page-inner">
       <div class="page-inner-title">Lixeira</div>
       <div class="trash-toolbar">
         <span class="trash-toolbar-label" id="trash-count-label"></span>
-        <button class="btn-top danger" id="btn-empty-trash" style="display:none" onclick="emptyTrash()">🗑️ Esvaziar lixeira</button>
+        <button class="btn-top danger" id="btn-empty-trash" style="display:none" onclick="emptyTrash()">🗑️ Esvaziar</button>
       </div>
       <div id="trash-content"></div>
     </div>
   </div>
+</div>
 
-</div><!-- /main -->
-
-<!-- MODAL: Add Person -->
-<div class="modal-overlay" id="modal-person">
+<!-- MODAL: Nova Pessoa -->
+<div class="modal-overlay" id="modal-pessoa">
   <div class="modal">
     <div class="modal-title">Nova Pessoa</div>
     <div class="modal-field"><label>Nome</label><input id="mp-name" placeholder="Nome completo" /></div>
     <div class="modal-field"><label>Cargo / Setor</label><input id="mp-role" placeholder="Ex: Gerente · Atacado" /></div>
     <div class="modal-actions">
-      <button class="btn-modal cancel" onclick="closeModal('modal-person')">Cancelar</button>
-      <button class="btn-modal ok" onclick="confirmAddPerson()">Adicionar</button>
-    </div>
-  </div>
-</div>
-
-<!-- MODAL: Add Card -->
-<div class="modal-overlay" id="modal-card">
-  <div class="modal">
-    <div class="modal-title" id="modal-card-title">Nova Atividade</div>
-    <div class="modal-field"><label>Título da atividade</label><input id="mc-title" placeholder="Descreva a atividade..." /></div>
-    <div class="modal-field"><label>Observação (opcional)</label><textarea id="mc-desc" placeholder="Detalhes, prazo, contexto..."></textarea></div>
-    <div class="modal-field"><label>Categoria</label><div class="tag-selector" id="tag-selector"></div></div>
-    <div class="modal-actions">
-      <button class="btn-modal cancel" onclick="closeModal('modal-card')">Cancelar</button>
-      <button class="btn-modal ok" onclick="confirmAddCard()">Adicionar</button>
+      <button class="btn-modal cancel" onclick="closeModal('modal-pessoa')">Cancelar</button>
+      <button class="btn-modal ok" onclick="confirmAddPessoa()">Adicionar</button>
     </div>
   </div>
 </div>
@@ -356,8 +287,8 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 <!-- MODAL: Export -->
 <div class="modal-overlay" id="modal-export">
   <div class="modal" style="max-width:520px">
-    <div class="modal-title">Exportar Divisão de Atividades</div>
-    <pre id="export-content" style="font-size:11px;line-height:1.8;color:var(--text);background:var(--gray1);border-radius:var(--radius-sm);padding:14px;overflow-y:auto;max-height:360px;font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word"></pre>
+    <div class="modal-title">Exportar</div>
+    <pre id="export-content"></pre>
     <div class="modal-actions">
       <button class="btn-modal cancel" onclick="closeModal('modal-export')">Fechar</button>
       <button class="btn-modal ok" onclick="copyExport()">Copiar texto</button>
@@ -369,72 +300,45 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 // ════════════════════════════════════════
 // STORAGE
 // ════════════════════════════════════════
-const SK       = 'gpc_kanban_v1';
-const SK_CAT   = 'gpc_cats_v1';
-const SK_TRASH = 'gpc_trash_v1';
+const SK       = 'gpc_hier_v1';
+const SK_TRASH = 'gpc_hier_trash_v1';
 const lsGet = k => { try{ const r=localStorage.getItem(k); return r?JSON.parse(r):null; }catch(e){ return null; } };
 const lsSet = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
 
 // ════════════════════════════════════════
-// DEFAULTS
+// MODELO DE DADOS
+// pessoas = [{id, name, role, funcoes:[{id, name, atividades:[{id,text}]}] }]
 // ════════════════════════════════════════
-const COLORS = [
-  {id:'laranja', bg:'rgba(245,131,31,0.13)', text:'#C05A08', bar:'#F5831F', label:'Laranja'},
-  {id:'azul',    bg:'rgba(43,74,122,0.10)',  text:'#2B4A7A', bar:'#2B4A7A', label:'Azul'},
-  {id:'verde',   bg:'#D4EDDF',              text:'#1E7B4B', bar:'#1E7B4B', label:'Verde'},
-  {id:'vermelho',bg:'#FDECEA',              text:'#C0392B', bar:'#E82227', label:'Vermelho'},
-  {id:'amarelo', bg:'#FEF3E2',              text:'#854F0B', bar:'#D4960A', label:'Amarelo'},
-  {id:'cinza',   bg:'#EEF2F8',              text:'#5A7090', bar:'#8FA3BE', label:'Cinza'},
-  {id:'roxo',    bg:'rgba(120,80,200,0.11)',text:'#5B2DA6', bar:'#7B52C8', label:'Roxo'},
-  {id:'rosa',    bg:'rgba(220,80,150,0.11)',text:'#A82B72', bar:'#D0508A', label:'Rosa'},
-  {id:'ciano',   bg:'rgba(0,160,180,0.11)', text:'#0A7A8A', bar:'#0BAFC0', label:'Ciano'},
-  {id:'marrom',  bg:'rgba(130,80,40,0.12)', text:'#6B3D14', bar:'#9B5A22', label:'Marrom'},
-];
-const DEF_CATS = [
-  {id:'laranja', name:'Operacional',   colorId:'laranja'},
-  {id:'azul',    name:'Administrativo',colorId:'azul'},
-  {id:'verde',   name:'Financeiro',    colorId:'verde'},
-  {id:'vermelho',name:'Urgente',       colorId:'vermelho'},
-  {id:'amarelo', name:'Comercial',     colorId:'amarelo'},
-  {id:'cinza',   name:'Geral',         colorId:'cinza'},
-];
-// cols agora têm campo `subs: [{id, name, role}]`
-const DEF_COLS = [
-  {id:'p_carlos',   name:'Carlos',    role:'', cards:[], subs:[]},
-  {id:'p_sandra',   name:'Sandra',    role:'', cards:[], subs:[]},
-  {id:'p_karla',    name:'Karla',     role:'', cards:[], subs:[]},
-  {id:'p_pedro',    name:'Pedro',     role:'', cards:[], subs:[]},
-  {id:'p_vitor',    name:'Vitor',     role:'', cards:[], subs:[]},
-  {id:'p_lucas',    name:'Lucas',     role:'', cards:[], subs:[]},
-  {id:'p_derivaldo',name:'Derivaldo', role:'', cards:[], subs:[]},
-  {id:'p_daniel',   name:'Daniel',    role:'', cards:[], subs:[]}
+const DEF_PESSOAS = [
+  {id:'p_carlos',   name:'Carlos',    role:'', funcoes:[]},
+  {id:'p_sandra',   name:'Sandra',    role:'', funcoes:[]},
+  {id:'p_karla',    name:'Karla',     role:'', funcoes:[]},
+  {id:'p_pedro',    name:'Pedro',     role:'', funcoes:[]},
+  {id:'p_vitor',    name:'Vitor',     role:'', funcoes:[]},
+  {id:'p_lucas',    name:'Lucas',     role:'', funcoes:[]},
+  {id:'p_derivaldo',name:'Derivaldo', role:'', funcoes:[]},
+  {id:'p_daniel',   name:'Daniel',    role:'', funcoes:[]}
 ];
 
-// ════════════════════════════════════════
-// STATE
-// ════════════════════════════════════════
-let cols  = lsGet(SK)       || JSON.parse(JSON.stringify(DEF_COLS));
-let cats  = lsGet(SK_CAT)   || JSON.parse(JSON.stringify(DEF_CATS));
-let trash = lsGet(SK_TRASH) || [];
+let pessoas = lsGet(SK)       || JSON.parse(JSON.stringify(DEF_PESSOAS));
+let trash   = lsGet(SK_TRASH) || [];
 
-// migração: garante que cols antigas tenham campo subs
-cols.forEach(c=>{ if(!c.subs) c.subs=[]; });
+// migração de segurança
+pessoas.forEach(p=>{ if(!p.funcoes) p.funcoes=[]; p.funcoes.forEach(f=>{ if(!f.atividades) f.atividades=[]; }); });
 
-function saveAll(){ lsSet(SK,cols); lsSet(SK_CAT,cats); lsSet(SK_TRASH,trash); }
+function save(){ lsSet(SK,pessoas); lsSet(SK_TRASH,trash); }
 
 // ════════════════════════════════════════
 // UTILS
 // ════════════════════════════════════════
-const getClr = id => COLORS.find(c=>c.id===id)||COLORS[5];
-const getCat = id => cats.find(c=>c.id===id)||{id:'cinza',name:'Geral',colorId:'cinza'};
-const esc    = s  => { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
-const fmtTs  = ts => new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '
-                   + new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+const esc   = s => { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
+const uid   = () => '_'+Math.random().toString(36).slice(2,9);
+const fmtTs = ts => new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '
+                  + new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
-function syncTrashBadge(){
+function syncBadge(){
   const b=document.getElementById('trash-badge');
-  if(trash.length){ b.textContent=trash.length; b.style.display='inline-block'; }
-  else b.style.display='none';
+  trash.length ? (b.textContent=trash.length, b.style.display='inline-block') : b.style.display='none';
 }
 
 // ════════════════════════════════════════
@@ -446,255 +350,239 @@ function showView(v){
   document.getElementById('panel-'+v).classList.add('active');
   document.getElementById('nav-'+v).classList.add('active');
   document.getElementById('topbar-title-text').textContent=
-    {board:'Divisão de Atividades',cats:'Categorias',trash:'Lixeira'}[v]||'';
+    {board:'Divisão de Atividades',trash:'Lixeira'}[v]||'';
   document.getElementById('topbar-actions').innerHTML = v==='board'
-    ? `<button class="btn-top" onclick="openAddPersonModal()">+ Pessoa</button>
+    ? `<button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
        <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>` : '';
-  if(v==='cats')  renderCats();
   if(v==='trash') renderTrash();
 }
 
 // ════════════════════════════════════════
-// BOARD RENDER
+// RENDER BOARD
 // ════════════════════════════════════════
-let dragCardId=null, dragFromColId=null, addCardColId=null, selTag=null;
-
 function render(){
-  const board=document.getElementById('kanban-board');
+  const board=document.getElementById('board');
   const stub=board.querySelector('.k-add-col');
-  board.querySelectorAll('.k-col-group').forEach(el=>el.remove());
+  board.querySelectorAll('.pessoa-col').forEach(el=>el.remove());
 
-  cols.forEach(col=>{
-    const group=document.createElement('div');
-    group.className='k-col-group';
-    group.id='group-'+col.id;
-
-    // ── cabeçalho + body da coluna principal ──
-    group.innerHTML=`
-      <div class="k-col">
-        <div class="k-col-head">
-          <div>
-            <div class="k-col-name">${esc(col.name)}</div>
-            ${col.role?`<div class="k-col-role">${esc(col.role)}</div>`:''}
-          </div>
-          <div class="k-col-head-actions">
-            <span class="k-col-badge">${col.cards.length}</span>
-            <button class="k-col-icon-btn del" onclick="trashPerson('${col.id}')" title="Mover para lixeira">🗑</button>
-          </div>
+  pessoas.forEach(p=>{
+    const totalAtiv=p.funcoes.reduce((s,f)=>s+f.atividades.length,0);
+    const col=document.createElement('div');
+    col.className='pessoa-col';
+    col.id='col-'+p.id;
+    col.innerHTML=`
+      <div class="pessoa-head">
+        <div class="pessoa-head-info">
+          <div class="pessoa-name">${esc(p.name)}</div>
+          ${p.role?`<div class="pessoa-role">${esc(p.role)}</div>`:''}
         </div>
-        <div class="k-col-accent"></div>
-        <div class="k-col-body" id="body-${col.id}"
-          ondragover="dOver(event,'${col.id}')"
-          ondragleave="dLeave(event,'${col.id}')"
-          ondrop="dDrop(event,'${col.id}')">
-          ${!col.cards.length?`<div class="k-empty">Nenhuma atividade<br>Clique em + para adicionar</div>`:''}
-          ${col.cards.map(c=>cardHtml(c,col.id)).join('')}
-          <button class="add-card-btn" onclick="openCardModal('${col.id}')">
-            <span style="font-size:14px;line-height:1">+</span> Adicionar atividade
-          </button>
+        <div class="pessoa-head-right">
+          <span class="pessoa-badge">${p.funcoes.length} função${p.funcoes.length!==1?'es':''} · ${totalAtiv} ativ.</span>
+          <button class="pessoa-icon-btn del" onclick="trashPessoa('${p.id}')" title="Mover para lixeira">🗑</button>
         </div>
       </div>
-      ${subSectionHtml(col)}`;
-
-    board.insertBefore(group,stub);
+      <div class="pessoa-accent"></div>
+      <div class="pessoa-body" id="pbody-${p.id}">
+        ${p.funcoes.length===0
+          ? `<div style="padding:18px 14px;font-size:11px;color:var(--gray3);text-align:center;line-height:1.7">Nenhuma função cadastrada.<br>Adicione abaixo.</div>`
+          : p.funcoes.map(f=>funcaoHtml(p.id,f)).join('')}
+        <div class="add-funcao-area">
+          <button class="add-funcao-btn" id="af-btn-${p.id}" onclick="toggleFuncaoForm('${p.id}')">
+            <span style="font-size:14px;line-height:1">+</span> Nova função
+          </button>
+          <div class="add-funcao-form" id="af-form-${p.id}">
+            <input id="af-inp-${p.id}" placeholder="Nome da função (ex: Compras, RH...)" />
+            <div class="mini-actions">
+              <button class="btn-modal ok sm" onclick="confirmAddFuncao('${p.id}')">Adicionar</button>
+              <button class="btn-modal cancel sm" onclick="toggleFuncaoForm('${p.id}')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    board.insertBefore(col,stub);
   });
 
-  document.getElementById('stat-pessoas').textContent=cols.length;
-  document.getElementById('stat-atividades').textContent=cols.reduce((s,c)=>s+c.cards.length,0);
-  syncTrashBadge();
+  // stats
+  const totalF=pessoas.reduce((s,p)=>s+p.funcoes.length,0);
+  const totalA=pessoas.reduce((s,p)=>s+p.funcoes.reduce((ss,f)=>ss+f.atividades.length,0),0);
+  document.getElementById('stat-p').textContent=pessoas.length;
+  document.getElementById('stat-f').textContent=totalF;
+  document.getElementById('stat-a').textContent=totalA;
+  syncBadge();
 }
 
-// ── HTML da seção de subordinados ──
-function subSectionHtml(col){
-  const subs = col.subs||[];
-  const subCards = subs.map(s=>`
-    <div class="k-sub-card">
-      <div class="k-sub-card-info">
-        <div class="k-sub-card-name">${esc(s.name)}</div>
-        ${s.role?`<div class="k-sub-card-role">${esc(s.role)}</div>`:''}
-      </div>
-      <button class="k-sub-card-del" onclick="trashSub('${col.id}','${s.id}')" title="Remover">✕</button>
+function funcaoHtml(pessoaId, f){
+  const atvHtml = f.atividades.map(a=>`
+    <div class="ativ-item" id="ativ-${a.id}">
+      <div class="ativ-dot"></div>
+      <span class="ativ-text">${esc(a.text)}</span>
+      <button class="ativ-del" onclick="trashAtiv('${pessoaId}','${f.id}','${a.id}')" title="Lixeira">✕</button>
     </div>`).join('');
 
   return `
-    <div class="k-sub-section">
-      <div class="k-sub-toggle" onclick="toggleSubs('${col.id}')">
-        <span class="k-sub-toggle-label">
-          Subordinados
-          <span class="k-sub-count">${subs.length}</span>
-        </span>
-        <span class="k-sub-chevron${subs.length?'':''}" id="chev-${col.id}">▾</span>
-      </div>
-      <div class="k-sub-body${subs.length?' open':''}" id="subs-${col.id}">
-        <div class="k-sub-list" id="sub-list-${col.id}">
-          ${subs.length ? subCards : '<div style="font-size:11px;color:var(--gray3);text-align:center;padding:10px 0">Nenhum subordinado</div>'}
+    <div class="funcao-block" id="fb-${f.id}">
+      <div class="funcao-head" onclick="toggleFuncao('${f.id}')">
+        <div class="funcao-head-left">
+          <span class="funcao-chevron open" id="fchev-${f.id}">▶</span>
+          <span class="funcao-name">${esc(f.name)}</span>
+          <span class="funcao-count">${f.atividades.length}</span>
         </div>
-        <button class="k-sub-add-btn" id="sub-add-btn-${col.id}" onclick="toggleSubForm('${col.id}')">
-          + Subordinado direto
+        <div class="funcao-head-right" onclick="event.stopPropagation()">
+          <button class="funcao-btn del" onclick="trashFuncao('${pessoaId}','${f.id}')" title="Lixeira">🗑</button>
+        </div>
+      </div>
+      <div class="funcao-body open" id="fbody-${f.id}">
+        ${f.atividades.length===0
+          ? `<div class="funcao-empty">Nenhuma atividade.<br>Adicione abaixo.</div>`
+          : atvHtml}
+        <button class="add-ativ-btn" id="aa-btn-${f.id}" onclick="toggleAtivForm('${f.id}')">
+          <span style="font-size:13px;line-height:1">+</span> Adicionar atividade
         </button>
-        <div class="k-sub-add-form" id="sub-form-${col.id}">
-          <input id="sub-name-${col.id}" placeholder="Nome do subordinado" />
-          <input id="sub-role-${col.id}" placeholder="Cargo / Setor" />
-          <div class="k-sub-add-actions">
-            <button class="btn-modal ok sm" onclick="confirmAddSub('${col.id}')">Adicionar</button>
-            <button class="btn-modal cancel sm" onclick="toggleSubForm('${col.id}')">Cancelar</button>
+        <div class="add-ativ-form" id="aa-form-${f.id}">
+          <input id="aa-inp-${f.id}" placeholder="Descreva a atividade..." />
+          <div class="mini-actions">
+            <button class="btn-modal ok sm" onclick="confirmAddAtiv('${pessoaId}','${f.id}')">Adicionar</button>
+            <button class="btn-modal cancel sm" onclick="toggleAtivForm('${f.id}')">Cancelar</button>
           </div>
         </div>
       </div>
     </div>`;
 }
 
-function toggleSubs(colId){
-  const body=document.getElementById('subs-'+colId);
-  const chev=document.getElementById('chev-'+colId);
+// ════════════════════════════════════════
+// TOGGLE UI
+// ════════════════════════════════════════
+function toggleFuncao(fid){
+  const body=document.getElementById('fbody-'+fid);
+  const chev=document.getElementById('fchev-'+fid);
   body.classList.toggle('open');
   chev.classList.toggle('open');
 }
 
-function toggleSubForm(colId){
-  const form=document.getElementById('sub-form-'+colId);
-  const btn=document.getElementById('sub-add-btn-'+colId);
+function toggleFuncaoForm(pid){
+  const form=document.getElementById('af-form-'+pid);
+  const btn=document.getElementById('af-btn-'+pid);
   const open=form.classList.toggle('open');
   btn.style.display=open?'none':'flex';
-  // garante seção aberta
-  const body=document.getElementById('subs-'+colId);
-  if(open && !body.classList.contains('open')){
-    body.classList.add('open');
-    document.getElementById('chev-'+colId).classList.add('open');
-  }
-  if(open) document.getElementById('sub-name-'+colId).focus();
+  if(open) setTimeout(()=>document.getElementById('af-inp-'+pid)?.focus(),50);
 }
 
-function confirmAddSub(colId){
-  const nameEl=document.getElementById('sub-name-'+colId);
-  const roleEl=document.getElementById('sub-role-'+colId);
-  const name=nameEl.value.trim(); if(!name) return;
-  const col=cols.find(c=>c.id===colId); if(!col) return;
-  if(!col.subs) col.subs=[];
-  col.subs.push({id:'s'+Date.now(), name, role:roleEl.value.trim()});
-  nameEl.value=''; roleEl.value='';
-  saveAll(); render();
-  // reabrir a seção após render
-  const body=document.getElementById('subs-'+colId);
+function toggleAtivForm(fid){
+  const form=document.getElementById('aa-form-'+fid);
+  const btn=document.getElementById('aa-btn-'+fid);
+  // garante que a funcao-body está aberta
+  const body=document.getElementById('fbody-'+fid);
   if(body && !body.classList.contains('open')){
     body.classList.add('open');
-    document.getElementById('chev-'+colId)?.classList.add('open');
+    document.getElementById('fchev-'+fid)?.classList.add('open');
   }
+  const open=form.classList.toggle('open');
+  btn.style.display=open?'none':'flex';
+  if(open) setTimeout(()=>document.getElementById('aa-inp-'+fid)?.focus(),50);
 }
 
-function trashSub(colId, subId){
-  const col=cols.find(c=>c.id===colId); if(!col) return;
-  const sub=col.subs?.find(s=>s.id===subId); if(!sub) return;
-  trash.push({id:'t'+Date.now(), type:'subordinado', data:JSON.parse(JSON.stringify(sub)),
-    meta:`${sub.name}${sub.role?' · '+sub.role:''} (subordinado de ${col.name})`, parentId:colId, deletedAt:Date.now()});
-  col.subs=col.subs.filter(s=>s.id!==subId);
-  saveAll(); render();
-}
-
-function cardHtml(card,colId){
-  const cat=getCat(card.tag), clr=getClr(cat.colorId);
-  return `
-    <div class="k-card" id="card-${card.id}"
-      draggable="true"
-      ondragstart="dStart(event,'${card.id}','${colId}')"
-      ondragend="dEnd()">
-      <style>#card-${card.id}::before{background:${clr.bar}}</style>
-      <span class="k-card-tag" style="background:${clr.bg};color:${clr.text}">${esc(cat.name)}</span>
-      <div class="k-card-title">${esc(card.title)}</div>
-      ${card.desc?`<div class="k-card-desc">${esc(card.desc)}</div>`:''}
-      <div class="k-card-footer">
-        <button class="k-card-del" onclick="trashCard('${colId}','${card.id}')">🗑 lixeira</button>
-      </div>
-    </div>`;
-}
-
-// ── DRAG ──
-function dStart(e,cid,pid){ dragCardId=cid; dragFromColId=pid; setTimeout(()=>document.getElementById('card-'+cid)?.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; }
-function dEnd(){ document.getElementById('card-'+dragCardId)?.classList.remove('dragging'); document.querySelectorAll('.k-col-body').forEach(b=>b.classList.remove('drag-over')); }
-function dOver(e,cid){ e.preventDefault(); document.querySelectorAll('.k-col-body').forEach(b=>b.classList.remove('drag-over')); document.getElementById('body-'+cid)?.classList.add('drag-over'); }
-function dLeave(e,cid){ const b=document.getElementById('body-'+cid); if(b&&!b.contains(e.relatedTarget)) b.classList.remove('drag-over'); }
-function dDrop(e,toId){
-  e.preventDefault(); document.querySelectorAll('.k-col-body').forEach(b=>b.classList.remove('drag-over'));
-  if(!dragCardId||dragFromColId===toId){ dragCardId=null; dragFromColId=null; return; }
-  const src=cols.find(c=>c.id===dragFromColId), dst=cols.find(c=>c.id===toId);
-  if(!src||!dst) return;
-  const i=src.cards.findIndex(c=>c.id===dragCardId); if(i===-1) return;
-  dst.cards.push(...src.cards.splice(i,1));
-  dragCardId=null; dragFromColId=null; saveAll(); render();
-}
-
-// ════════════════════════════════════════
-// PEOPLE
-// ════════════════════════════════════════
-function openAddPersonModal(){ openModal('modal-person'); document.getElementById('mp-name').focus(); }
-function confirmAddPerson(){
-  const name=document.getElementById('mp-name').value.trim(); if(!name) return;
-  cols.push({id:'c'+Date.now(), name, role:document.getElementById('mp-role').value.trim(), cards:[], subs:[]});
-  document.getElementById('mp-name').value=''; document.getElementById('mp-role').value='';
-  closeModal('modal-person'); saveAll(); render();
-}
-function toggleAddColForm(){
+function toggleAddCol(){
   const f=document.getElementById('add-col-form'), b=document.getElementById('add-col-btn');
   const open=f.classList.toggle('open'); b.style.display=open?'none':'block';
-  if(open) document.getElementById('new-col-name').focus();
+  if(open) document.getElementById('nc-name').focus();
+}
+
+// ════════════════════════════════════════
+// CRUD — PESSOAS
+// ════════════════════════════════════════
+function openAddPessoaModal(){ openModal('modal-pessoa'); document.getElementById('mp-name').focus(); }
+function confirmAddPessoa(){
+  const name=document.getElementById('mp-name').value.trim(); if(!name) return;
+  pessoas.push({id:'p'+uid(), name, role:document.getElementById('mp-role').value.trim(), funcoes:[]});
+  document.getElementById('mp-name').value=''; document.getElementById('mp-role').value='';
+  closeModal('modal-pessoa'); save(); render();
 }
 function confirmAddCol(){
-  const name=document.getElementById('new-col-name').value.trim(); if(!name) return;
-  cols.push({id:'c'+Date.now(), name, role:document.getElementById('new-col-role').value.trim(), cards:[], subs:[]});
-  document.getElementById('new-col-name').value=''; document.getElementById('new-col-role').value='';
+  const name=document.getElementById('nc-name').value.trim(); if(!name) return;
+  pessoas.push({id:'p'+uid(), name, role:document.getElementById('nc-role').value.trim(), funcoes:[]});
+  document.getElementById('nc-name').value=''; document.getElementById('nc-role').value='';
   document.getElementById('add-col-form').classList.remove('open');
   document.getElementById('add-col-btn').style.display='block';
-  saveAll(); render();
+  save(); render();
+}
+function trashPessoa(pid){
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  trash.push({id:'t'+uid(), type:'pessoa', data:JSON.parse(JSON.stringify(p)),
+    meta:p.name+(p.role?' · '+p.role:''), deletedAt:Date.now()});
+  pessoas=pessoas.filter(x=>x.id!==pid);
+  save(); render();
 }
 
 // ════════════════════════════════════════
-// TRASH
+// CRUD — FUNÇÕES
 // ════════════════════════════════════════
-function trashPerson(colId){
-  const col=cols.find(c=>c.id===colId); if(!col) return;
-  trash.push({id:'t'+Date.now(), type:'pessoa', data:JSON.parse(JSON.stringify(col)),
-    meta:col.name+(col.role?' · '+col.role:''), deletedAt:Date.now()});
-  cols=cols.filter(c=>c.id!==colId);
-  saveAll(); render();
+function confirmAddFuncao(pid){
+  const inp=document.getElementById('af-inp-'+pid);
+  const name=inp.value.trim(); if(!name) return;
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  p.funcoes.push({id:'f'+uid(), name, atividades:[]});
+  inp.value='';
+  save(); render();
+  // reabrir o form após render para permitir adicionar várias funções seguidas
+  const form=document.getElementById('af-form-'+pid);
+  const btn=document.getElementById('af-btn-'+pid);
+  if(form){ form.classList.add('open'); btn.style.display='none'; setTimeout(()=>document.getElementById('af-inp-'+pid)?.focus(),50); }
 }
-function trashCard(colId,cardId){
-  const col=cols.find(c=>c.id===colId); if(!col) return;
-  const card=col.cards.find(c=>c.id===cardId); if(!card) return;
-  trash.push({id:'t'+Date.now(), type:'atividade', data:JSON.parse(JSON.stringify(card)),
-    meta:`${card.title} · de ${col.name}`, parentId:colId, deletedAt:Date.now()});
-  col.cards=col.cards.filter(c=>c.id!==cardId);
-  saveAll(); render();
-}
-function trashCat(catId){
-  const cat=cats.find(c=>c.id===catId); if(!cat) return;
-  const inUse=cols.some(col=>col.cards.some(c=>c.tag===catId));
-  if(inUse && !confirm(`"${cat.name}" está em uso. Os cards ficarão como "Geral". Continuar?`)) return;
-  trash.push({id:'t'+Date.now(), type:'categoria', data:JSON.parse(JSON.stringify(cat)),
-    meta:cat.name, deletedAt:Date.now()});
-  cols.forEach(col=>col.cards.forEach(c=>{ if(c.tag===catId) c.tag='cinza'; }));
-  cats=cats.filter(c=>c.id!==catId);
-  saveAll(); renderCats(); render();
+function trashFuncao(pid, fid){
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  const f=p.funcoes.find(x=>x.id===fid); if(!f) return;
+  trash.push({id:'t'+uid(), type:'funcao', data:JSON.parse(JSON.stringify(f)),
+    meta:`${f.name} (função de ${p.name})`, parentId:pid, deletedAt:Date.now()});
+  p.funcoes=p.funcoes.filter(x=>x.id!==fid);
+  save(); render();
 }
 
 // ════════════════════════════════════════
-// TRASH PANEL
+// CRUD — ATIVIDADES
+// ════════════════════════════════════════
+function confirmAddAtiv(pid, fid){
+  const inp=document.getElementById('aa-inp-'+fid);
+  const text=inp.value.trim(); if(!text) return;
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  const f=p.funcoes.find(x=>x.id===fid); if(!f) return;
+  f.atividades.push({id:'a'+uid(), text});
+  inp.value='';
+  save(); render();
+  // manter form aberto para adicionar várias atividades seguidas
+  const form=document.getElementById('aa-form-'+fid);
+  const btn=document.getElementById('aa-btn-'+fid);
+  const body=document.getElementById('fbody-'+fid);
+  if(form){ form.classList.add('open'); btn.style.display='none'; body?.classList.add('open'); document.getElementById('fchev-'+fid)?.classList.add('open'); setTimeout(()=>document.getElementById('aa-inp-'+fid)?.focus(),50); }
+}
+function trashAtiv(pid, fid, aid){
+  const p=pessoas.find(x=>x.id===pid); if(!p) return;
+  const f=p.funcoes.find(x=>x.id===fid); if(!f) return;
+  const a=f.atividades.find(x=>x.id===aid); if(!a) return;
+  trash.push({id:'t'+uid(), type:'atividade', data:JSON.parse(JSON.stringify(a)),
+    meta:`${a.text} · ${f.name} / ${p.name}`, parentPid:pid, parentFid:fid, deletedAt:Date.now()});
+  f.atividades=f.atividades.filter(x=>x.id!==aid);
+  save(); render();
+}
+
+// ════════════════════════════════════════
+// LIXEIRA
 // ════════════════════════════════════════
 function renderTrash(){
   const box=document.getElementById('trash-content');
   const lbl=document.getElementById('trash-count-label');
   const btn=document.getElementById('btn-empty-trash');
   if(!trash.length){
-    box.innerHTML=`<div class="trash-empty">🗑️<br><br>A lixeira está vazia.<br><span style="font-size:11px;color:var(--gray3)">Itens excluídos aparecem aqui para você restaurar se precisar.</span></div>`;
+    box.innerHTML=`<div class="trash-empty">🗑️<br><br>A lixeira está vazia.<br><span style="font-size:11px;color:var(--gray3)">Itens excluídos aparecem aqui.</span></div>`;
     lbl.textContent=''; btn.style.display='none'; return;
   }
   lbl.textContent=`${trash.length} item${trash.length>1?'s':''} na lixeira`;
   btn.style.display='flex';
-  const icons={pessoa:'👤',atividade:'📌',categoria:'🏷️',subordinado:'👥'};
-  const labels={pessoa:'Pessoas',atividade:'Atividades',categoria:'Categorias',subordinado:'Subordinados'};
-  const byType={pessoa:[],atividade:[],categoria:[],subordinado:[]};
+  const icons={pessoa:'👤',funcao:'⚙️',atividade:'📌'};
+  const labels={pessoa:'Pessoas',funcao:'Funções',atividade:'Atividades'};
+  const byType={pessoa:[],funcao:[],atividade:[]};
   trash.forEach(t=>{ if(byType[t.type]) byType[t.type].push(t); });
   let html='';
-  ['pessoa','subordinado','atividade','categoria'].forEach(type=>{
+  ['pessoa','funcao','atividade'].forEach(type=>{
     const items=byType[type]; if(!items.length) return;
     html+=`<div class="trash-section-title">${labels[type]}</div>`;
     [...items].reverse().forEach(item=>{
@@ -719,142 +607,54 @@ function restoreItem(tid){
   const i=trash.findIndex(t=>t.id===tid); if(i===-1) return;
   const item=trash[i];
   if(item.type==='pessoa'){
-    if(!cols.find(c=>c.id===item.data.id)) cols.push(item.data);
-    else { item.data.id='c'+Date.now(); cols.push(item.data); }
-  } else if(item.type==='atividade'){
-    const col=cols.find(c=>c.id===item.parentId);
-    if(col){ if(!col.cards.find(c=>c.id===item.data.id)) col.cards.push(item.data); }
+    if(!pessoas.find(p=>p.id===item.data.id)) pessoas.push(item.data);
+    else { item.data.id='p'+uid(); pessoas.push(item.data); }
+  } else if(item.type==='funcao'){
+    const p=pessoas.find(x=>x.id===item.parentId);
+    if(p){ if(!p.funcoes.find(f=>f.id===item.data.id)) p.funcoes.push(item.data); }
     else {
-      let rec=cols.find(c=>c.id==='recovery');
-      if(!rec){ rec={id:'recovery',name:'Recuperados',role:'',cards:[],subs:[]}; cols.push(rec); }
-      rec.cards.push(item.data);
+      let rec=pessoas.find(x=>x.id==='recovery');
+      if(!rec){ rec={id:'recovery',name:'Recuperados',role:'',funcoes:[]}; pessoas.push(rec); }
+      rec.funcoes.push(item.data);
     }
-  } else if(item.type==='categoria'){
-    if(!cats.find(c=>c.id===item.data.id)) cats.push(item.data);
-  } else if(item.type==='subordinado'){
-    const col=cols.find(c=>c.id===item.parentId);
-    if(col){ if(!col.subs) col.subs=[]; if(!col.subs.find(s=>s.id===item.data.id)) col.subs.push(item.data); }
+  } else if(item.type==='atividade'){
+    const p=pessoas.find(x=>x.id===item.parentPid);
+    if(p){
+      const f=p.funcoes.find(x=>x.id===item.parentFid);
+      if(f){ if(!f.atividades.find(a=>a.id===item.data.id)) f.atividades.push(item.data); }
+      else {
+        // a função foi excluída — recria com nome "Recuperados"
+        let rec=p.funcoes.find(x=>x.id==='frec');
+        if(!rec){ rec={id:'frec',name:'Recuperados',atividades:[]}; p.funcoes.push(rec); }
+        rec.atividades.push(item.data);
+      }
+    }
   }
   trash.splice(i,1);
-  saveAll(); render(); renderTrash(); syncTrashBadge();
+  save(); render(); renderTrash(); syncBadge();
 }
-function permDelete(tid){ trash=trash.filter(t=>t.id!==tid); saveAll(); renderTrash(); syncTrashBadge(); }
+function permDelete(tid){ trash=trash.filter(t=>t.id!==tid); save(); renderTrash(); syncBadge(); }
 function emptyTrash(){
   if(!confirm('Esvaziar toda a lixeira? Não pode ser desfeito.')) return;
-  trash=[]; saveAll(); renderTrash(); syncTrashBadge();
-}
-
-// ════════════════════════════════════════
-// CATEGORIES
-// ════════════════════════════════════════
-let selColorId=COLORS[0].id;
-function renderCats(){
-  const grid=document.getElementById('cat-grid'); grid.innerHTML='';
-  if(!cats.length){ grid.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0">Nenhuma categoria. Crie a primeira abaixo.</div>'; }
-  cats.forEach(cat=>{
-    const clr=getClr(cat.colorId);
-    const el=document.createElement('div'); el.className='cat-item-card';
-    el.innerHTML=`
-      <div class="cat-accent-bar" style="background:${clr.bar}"></div>
-      <div class="cat-item-info">
-        <div class="cat-item-name">${esc(cat.name)}</div>
-        <span class="cat-pill-preview" style="background:${clr.bg};color:${clr.text}">${esc(cat.name)}</span>
-      </div>
-      <div class="cat-item-actions">
-        <button class="cat-act-btn" onclick="editCat('${cat.id}')" title="Editar">✏️</button>
-        <button class="cat-act-btn del" onclick="trashCat('${cat.id}')" title="Mover para lixeira">🗑️</button>
-      </div>`;
-    grid.appendChild(el);
-  });
-  buildColorPicker(selColorId);
-}
-function buildColorPicker(selId){
-  selColorId=selId||COLORS[0].id;
-  const row=document.getElementById('color-picker-row'); row.innerHTML='';
-  COLORS.forEach(c=>{
-    const d=document.createElement('div');
-    d.className='color-opt'+(selColorId===c.id?' selected':'');
-    d.style.background=c.bar; d.title=c.label;
-    d.onclick=()=>{ selColorId=c.id; document.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected')); d.classList.add('selected'); };
-    row.appendChild(d);
-  });
-}
-function confirmSaveCat(){
-  const name=document.getElementById('cat-name-inp').value.trim();
-  const editId=document.getElementById('cat-edit-id').value;
-  const warn=document.getElementById('cat-warning'); warn.classList.remove('show');
-  if(!name) return;
-  if(cats.find(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==editId)){ warn.classList.add('show'); return; }
-  if(editId){
-    const cat=cats.find(c=>c.id===editId);
-    if(cat){ cat.name=name; cat.colorId=selColorId; }
-    cancelEditCat();
-  } else { cats.push({id:'cat_'+Date.now(), name, colorId:selColorId}); }
-  document.getElementById('cat-name-inp').value='';
-  lsSet(SK_CAT,cats); renderCats(); render();
-}
-function editCat(catId){
-  const cat=cats.find(c=>c.id===catId); if(!cat) return;
-  document.getElementById('cat-edit-id').value=catId;
-  document.getElementById('cat-name-inp').value=cat.name;
-  document.getElementById('cat-form-title').textContent='Editar categoria';
-  document.getElementById('cat-cancel-btn').style.display='inline-flex';
-  buildColorPicker(cat.colorId);
-  document.getElementById('cat-name-inp').focus();
-}
-function cancelEditCat(){
-  document.getElementById('cat-edit-id').value='';
-  document.getElementById('cat-name-inp').value='';
-  document.getElementById('cat-form-title').textContent='Nova categoria';
-  document.getElementById('cat-cancel-btn').style.display='none';
-  document.getElementById('cat-warning').classList.remove('show');
-  buildColorPicker(null);
-}
-
-// ════════════════════════════════════════
-// ADD CARD MODAL
-// ════════════════════════════════════════
-function openCardModal(colId){
-  addCardColId=colId;
-  const col=cols.find(c=>c.id===colId);
-  document.getElementById('modal-card-title').textContent='Nova Atividade — '+col.name;
-  document.getElementById('mc-title').value='';
-  document.getElementById('mc-desc').value='';
-  selTag=cats.length?cats[0].id:null;
-  buildTagSel();
-  openModal('modal-card');
-  setTimeout(()=>document.getElementById('mc-title').focus(),100);
-}
-function buildTagSel(){
-  const sel=document.getElementById('tag-selector'); sel.innerHTML='';
-  cats.forEach(cat=>{
-    const clr=getClr(cat.colorId);
-    const sp=document.createElement('span');
-    sp.className='tag-opt'+(selTag===cat.id?' selected':'');
-    sp.style.cssText=`background:${clr.bg};color:${clr.text}`;
-    sp.dataset.tag=cat.id; sp.textContent=cat.name;
-    sp.onclick=()=>{ document.querySelectorAll('.tag-opt').forEach(t=>t.classList.remove('selected')); sp.classList.add('selected'); selTag=cat.id; };
-    sel.appendChild(sp);
-  });
-}
-function confirmAddCard(){
-  const title=document.getElementById('mc-title').value.trim(); if(!title) return;
-  const col=cols.find(c=>c.id===addCardColId); if(!col) return;
-  col.cards.push({id:'card'+Date.now(), title, desc:document.getElementById('mc-desc').value.trim(), tag:selTag||(cats[0]?cats[0].id:'cinza')});
-  closeModal('modal-card'); saveAll(); render();
+  trash=[]; save(); renderTrash(); syncBadge();
 }
 
 // ════════════════════════════════════════
 // EXPORT
 // ════════════════════════════════════════
 function openExportModal(){
-  const txt=cols.map(col=>{
-    const h=col.role?`${col.name} (${col.role})`:col.name;
-    const c=col.cards.length?col.cards.map(c=>`  • [${getCat(c.tag).name}] ${c.title}${c.desc?' — '+c.desc:''}`).join('\n'):'  (sem atividades)';
-    const s=(col.subs||[]).length?(col.subs.map(s=>`  ↳ ${s.name}${s.role?' ('+s.role+')':''}`)).join('\n'):'';
-    return `${h}:\n${c}${s?'\n\n  Subordinados:\n'+s:''}`;
+  const lines=pessoas.map(p=>{
+    const h=p.role?`${p.name} (${p.role})`:p.name;
+    if(!p.funcoes.length) return `${h}:\n  (sem funções)`;
+    const fs=p.funcoes.map(f=>{
+      const as=f.atividades.length
+        ? f.atividades.map(a=>`      • ${a.text}`).join('\n')
+        : '      (sem atividades)';
+      return `  ▸ ${f.name}\n${as}`;
+    }).join('\n');
+    return `${h}:\n${fs}`;
   }).join('\n\n');
-  document.getElementById('export-content').textContent=txt||'(nenhuma pessoa cadastrada)';
+  document.getElementById('export-content').textContent=lines||'(nenhuma pessoa cadastrada)';
   openModal('modal-export');
 }
 function copyExport(){
@@ -871,20 +671,50 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open')); });
 
 // ════════════════════════════════════════
-// INIT
+// KEYBOARD SHORTCUTS
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
-  ['mp-name','mp-role','new-col-name','new-col-role','mc-title','cat-name-inp'].forEach(id=>{
-    const el=document.getElementById(id); if(!el) return;
-    el.addEventListener('keydown',e=>{
-      if(e.key!=='Enter') return;
-      const map={'mp-name':'mp-role','mp-role':()=>confirmAddPerson(),'new-col-name':'new-col-role','new-col-role':()=>confirmAddCol(),'mc-title':'mc-desc','cat-name-inp':()=>confirmSaveCat()};
-      const next=map[id]; if(typeof next==='function') next(); else if(next) document.getElementById(next)?.focus();
+  // modal pessoa
+  document.getElementById('mp-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('mp-role').focus(); });
+  document.getElementById('mp-role').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAddPessoa(); });
+  // inline col
+  document.getElementById('nc-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('nc-role').focus(); });
+  document.getElementById('nc-role').addEventListener('keydown',e=>{ if(e.key==='Enter') confirmAddCol(); });
+
+  // delegação de eventos para inputs dinâmicos (função e atividade)
+  document.getElementById('board').addEventListener('keydown', e=>{
+    if(e.key!=='Enter') return;
+    const id=e.target.id||'';
+    // af-inp-{pid}
+    if(id.startsWith('af-inp-')){
+      const pid=id.replace('af-inp-','');
+      confirmAddFuncao(pid);
+    }
+    // aa-inp-{fid}
+    if(id.startsWith('aa-inp-')){
+      // precisamos do pid — guardamos no dataset do input
+      const fid=id.replace('aa-inp-','');
+      const pid=e.target.dataset.pid||'';
+      if(pid) confirmAddAtiv(pid,fid);
+    }
+  });
+
+  render();
+  syncBadge();
+});
+
+// after render, stamp data-pid on atividade inputs
+const _origRender=render;
+window.render=function(){
+  _origRender();
+  // stamp pid em cada aa-inp
+  pessoas.forEach(p=>{
+    p.funcoes.forEach(f=>{
+      const inp=document.getElementById('aa-inp-'+f.id);
+      if(inp) inp.dataset.pid=p.id;
     });
   });
-  render();
-  syncTrashBadge();
-});
+};
 </script>
 </body>
 </html>
