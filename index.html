@@ -7,8 +7,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
-  --navy:#2B4A7A;--navy2:#1F3A6B;--navy3:#3D5F95;--navy-bg:#2E4F82;
-  --orange:#F5831F;--red:#E82227;--white:#FFF;
+  --navy:#2B4A7A;--navy2:#1F3A6B;--navy3:#3D5F95;
+  --orange:#F5831F;
   --off:#F4F7FC;--gray1:#EEF2F8;--gray2:#D0DAE8;--gray3:#8FA3BE;
   --dark:#1A2D4F;--text:#1A2E4A;--muted:#5A7090;
   --green:#1E7B4B;--green2:#D4EDDF;
@@ -22,17 +22,19 @@
 body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden}
 
 /* ── SIDEBAR ── */
-.sidebar{position:fixed;top:0;left:0;width:230px;height:100vh;background:var(--dark);display:flex;flex-direction:column;z-index:100;border-right:1px solid rgba(255,255,255,0.06)}
-.sidebar-logo{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.sidebar{position:fixed;top:0;left:0;width:230px;height:100vh;background:var(--dark);display:flex;flex-direction:column;z-index:100;border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto}
+.sidebar-logo{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0}
 .logo-text{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.5px}
 .logo-text span{color:var(--orange)}
 .sidebar-tag{font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--orange);text-transform:uppercase;margin-top:5px}
-.sidebar-section{font-size:9px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,0.28);text-transform:uppercase;padding:16px 20px 6px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,0.55);cursor:pointer;font-size:12.5px;border-left:2px solid transparent;transition:all .15s;user-select:none}
+.sidebar-section{font-size:9px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,0.28);text-transform:uppercase;padding:16px 20px 6px;flex-shrink:0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,0.55);cursor:pointer;font-size:12.5px;border-left:2px solid transparent;transition:all .15s;user-select:none;flex-shrink:0}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,0.05)}
 .nav-item.active{color:#fff;font-weight:600;border-left-color:var(--orange);background:rgba(245,131,31,0.1)}
 .nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
-.sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:rgba(255,255,255,0.25);line-height:1.7;margin-top:auto}
+.nav-badge{background:var(--danger);color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;font-family:'JetBrains Mono',monospace;margin-left:auto}
+.sidebar-spacer{flex:1}
+.sidebar-footer{padding:14px 20px;border-top:1px solid rgba(255,255,255,0.06);font-size:10px;color:rgba(255,255,255,0.25);line-height:1.7;flex-shrink:0}
 
 /* ── MAIN ── */
 .main{margin-left:230px;min-height:100vh}
@@ -43,88 +45,105 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .btn-top{height:32px;padding:0 14px;border:1px solid var(--gray2);border-radius:20px;background:#fff;color:var(--navy);font-size:11px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;display:flex;align-items:center;gap:6px}
 .btn-top:hover{background:var(--gray1);border-color:var(--navy)}
-.btn-top.primary{background:var(--navy);color:#fff;border-color:var(--navy)}
-.btn-top.primary:hover{background:var(--navy3)}
 .btn-top.orange{background:var(--orange);color:#fff;border-color:var(--orange)}
 .btn-top.orange:hover{opacity:.9}
-.count-pill{background:var(--orange);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;font-family:'JetBrains Mono',monospace}
+.btn-top.danger{color:var(--danger);border-color:rgba(192,57,43,0.3)}
+.btn-top.danger:hover{background:var(--danger2);border-color:var(--danger)}
 
-/* ── CONTENT ── */
+/* ── PANELS ── */
+.panel{display:none}.panel.active{display:block}
+
+/* ── STATS ── */
 .content{padding:20px 24px}
-.board-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
-.board-title{font-size:15px;font-weight:700;color:var(--navy)}
-.board-meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.board-meta span{display:flex;align-items:center;gap:4px}
+.stats-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.stat-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:10px 16px;box-shadow:var(--shadow);min-width:110px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.stat-card.s-orange::before{background:var(--orange)}
+.stat-card.s-navy::before{background:var(--navy)}
+.stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:3px}
+.stat-value{font-size:20px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace}
 
-/* ── KANBAN BOARD ── */
-.kanban-scroll{overflow-x:auto;padding-bottom:16px}
+/* ══════════════════════════════════
+   KANBAN — COLUNA PRINCIPAL
+══════════════════════════════════ */
+.kanban-scroll{overflow-x:auto;padding-bottom:24px}
 .kanban-board{display:flex;gap:14px;align-items:flex-start;min-width:max-content}
 
-/* ── COLUMN ── */
-.k-col{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:0}
+/* wrapper que engloba a coluna principal + subordinados */
+.k-col-group{display:flex;flex-direction:column;gap:0;flex-shrink:0}
+
+/* coluna principal */
+.k-col{width:260px;display:flex;flex-direction:column}
 .k-col-head{background:var(--dark);border-radius:var(--radius) var(--radius) 0 0;padding:12px 14px;display:flex;align-items:center;justify-content:space-between}
-.k-col-name{font-size:12px;font-weight:700;color:#fff;letter-spacing:.02em}
+.k-col-name{font-size:12px;font-weight:700;color:#fff}
 .k-col-role{font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px}
 .k-col-badge{background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.8);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;font-family:'JetBrains Mono',monospace}
-.k-col-body{background:#fff;border:1px solid var(--gray2);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:10px;min-height:120px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
+.k-col-head-actions{display:flex;align-items:center;gap:5px}
+.k-col-accent{height:3px;background:var(--orange)}
+.k-col-body{background:#fff;border:1px solid var(--gray2);border-top:none;border-radius:0 0 0 0;padding:10px;min-height:120px;display:flex;flex-direction:column;gap:8px;transition:background .15s}
 .k-col-body.drag-over{background:var(--gray1);border-color:var(--navy3)}
-.k-col-accent{height:3px;background:var(--orange);border-radius:0;margin-top:-1px}
+.k-col-icon-btn{background:rgba(255,255,255,0.08);border:none;border-radius:5px;color:rgba(255,255,255,0.5);font-size:12px;cursor:pointer;width:22px;height:22px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;opacity:0}
+.k-col-head:hover .k-col-icon-btn{opacity:1}
+.k-col-icon-btn:hover{background:rgba(255,255,255,0.18);color:#fff}
+.k-col-icon-btn.del:hover{background:rgba(232,34,39,0.35);color:#fff}
+
+/* ── SUBORDINADOS ── */
+.k-sub-section{background:var(--gray1);border:1px solid var(--gray2);border-top:none;border-radius:0 0 var(--radius) var(--radius);overflow:hidden}
+.k-sub-toggle{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;cursor:pointer;user-select:none;transition:background .15s}
+.k-sub-toggle:hover{background:var(--gray2)}
+.k-sub-toggle-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);display:flex;align-items:center;gap:6px}
+.k-sub-count{font-size:9px;font-weight:700;background:var(--navy);color:#fff;padding:1px 5px;border-radius:6px;font-family:'JetBrains Mono',monospace}
+.k-sub-chevron{font-size:10px;color:var(--gray3);transition:transform .2s}
+.k-sub-chevron.open{transform:rotate(180deg)}
+.k-sub-body{display:none;border-top:1px solid var(--gray2)}
+.k-sub-body.open{display:block}
+
+/* mini-cards de subordinados */
+.k-sub-list{padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.k-sub-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:9px 11px;display:flex;align-items:center;gap:8px;transition:border-color .15s,box-shadow .15s;position:relative;overflow:hidden}
+.k-sub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--navy3)}
+.k-sub-card:hover{border-color:var(--navy3);box-shadow:var(--shadow)}
+.k-sub-card-info{flex:1;min-width:0}
+.k-sub-card-name{font-size:12px;font-weight:600;color:var(--text)}
+.k-sub-card-role{font-size:10px;color:var(--muted);margin-top:1px}
+.k-sub-card-del{opacity:0;font-size:11px;color:var(--danger);cursor:pointer;padding:2px 5px;border-radius:4px;border:none;background:transparent;transition:opacity .15s;flex-shrink:0}
+.k-sub-card:hover .k-sub-card-del{opacity:1}
+.k-sub-card-del:hover{background:var(--danger2)}
+
+/* add-subordinado inline */
+.k-sub-add-btn{display:flex;align-items:center;gap:5px;padding:6px 10px;margin:4px 10px 8px;border-radius:var(--radius-sm);border:1.5px dashed var(--gray2);background:transparent;cursor:pointer;font-size:10px;font-weight:600;color:var(--muted);font-family:'Sora',sans-serif;width:calc(100% - 20px);transition:all .15s;text-transform:uppercase;letter-spacing:.05em}
+.k-sub-add-btn:hover{border-color:var(--navy3);color:var(--navy);background:#fff}
+.k-sub-add-form{padding:0 10px 10px;display:none;flex-direction:column;gap:6px}
+.k-sub-add-form.open{display:flex}
+.k-sub-add-form input{border:1px solid var(--gray2);border-radius:6px;padding:6px 9px;font-size:11px;font-family:'Sora',sans-serif;background:#fff;color:var(--text);outline:none;width:100%}
+.k-sub-add-form input:focus{border-color:var(--navy)}
+.k-sub-add-actions{display:flex;gap:5px}
 
 /* ── CARD ── */
 .k-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:11px 12px;cursor:grab;transition:box-shadow .15s,border-color .15s,opacity .15s;position:relative;overflow:hidden}
-.k-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--orange)}
-.k-card.tag-azul::before{background:var(--navy)}
-.k-card.tag-verde::before{background:var(--green)}
-.k-card.tag-vermelho::before{background:var(--danger)}
-.k-card.tag-amarelo::before{background:#D4960A}
-.k-card.tag-cinza::before{background:var(--gray3)}
+.k-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .k-card:hover{box-shadow:var(--shadow-md);border-color:var(--navy3)}
 .k-card.dragging{opacity:.35;cursor:grabbing}
-.k-card.drag-target{border:1.5px dashed var(--navy3)}
 .k-card-tag{display:inline-block;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:'JetBrains Mono',monospace;margin-bottom:6px}
-.tag-pill-laranja{background:rgba(245,131,31,0.12);color:#C05A08}
-.tag-pill-azul{background:rgba(43,74,122,0.1);color:var(--navy)}
-.tag-pill-verde{background:var(--green2);color:var(--green)}
-.tag-pill-vermelho{background:var(--danger2);color:var(--danger)}
-.tag-pill-amarelo{background:var(--amber2);color:var(--amber)}
-.tag-pill-cinza{background:var(--gray1);color:var(--muted)}
-.k-card-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;margin-bottom:4px;word-break:break-word}
-.k-card-desc{font-size:11px;color:var(--muted);line-height:1.5;word-break:break-word}
-.k-card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:7px;border-top:1px solid var(--gray1)}
-.k-card-priority{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;font-family:'JetBrains Mono',monospace}
-.p-alta{background:var(--danger2);color:var(--danger)}
-.p-media{background:var(--amber2);color:var(--amber)}
-.p-baixa{background:var(--green2);color:var(--green)}
-.k-card-del{opacity:0;font-size:10px;color:var(--danger);cursor:pointer;padding:3px 5px;border-radius:4px;border:none;background:transparent;transition:opacity .15s;font-weight:700}
+.k-card-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.4;word-break:break-word}
+.k-card-desc{font-size:11px;color:var(--muted);line-height:1.5;word-break:break-word;margin-top:4px}
+.k-card-footer{display:flex;align-items:center;justify-content:flex-end;margin-top:8px;padding-top:6px;border-top:1px solid var(--gray1)}
+.k-card-del{opacity:0;font-size:10px;color:var(--muted);cursor:pointer;padding:3px 7px;border-radius:4px;border:1px solid transparent;background:transparent;transition:opacity .15s,background .15s;font-weight:600;font-family:'Sora',sans-serif;display:flex;align-items:center;gap:4px}
 .k-card:hover .k-card-del{opacity:1}
-.k-card-del:hover{background:var(--danger2)}
-
-/* ── EMPTY STATE ── */
+.k-card-del:hover{background:var(--danger2);color:var(--danger);border-color:var(--danger)}
 .k-empty{font-size:11px;color:var(--gray3);text-align:center;padding:18px 0;border:1.5px dashed var(--gray2);border-radius:var(--radius-sm);line-height:1.6}
-
-/* ── ADD CARD FORM (inline) ── */
 .add-card-btn{display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:var(--radius-sm);border:1.5px dashed var(--gray2);background:transparent;cursor:pointer;font-size:11px;color:var(--muted);font-family:'Sora',sans-serif;width:100%;margin-top:2px;transition:all .15s}
 .add-card-btn:hover{border-color:var(--navy3);color:var(--navy);background:var(--gray1)}
-.add-card-form{background:var(--gray1);border-radius:var(--radius-sm);padding:10px;margin-top:2px;display:none;flex-direction:column;gap:6px}
-.add-card-form.open{display:flex}
-.add-card-form input,.add-card-form textarea,.add-card-form select{border:1px solid var(--gray2);border-radius:6px;padding:6px 9px;font-size:11px;font-family:'Sora',sans-serif;background:#fff;color:var(--text);outline:none;width:100%;resize:none}
-.add-card-form input:focus,.add-card-form textarea:focus,.add-card-form select:focus{border-color:var(--navy)}
-.add-card-form textarea{min-height:52px;line-height:1.4}
-.add-card-actions{display:flex;gap:6px;margin-top:2px}
-.btn-add-ok{height:28px;padding:0 12px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif}
-.btn-add-ok:hover{background:var(--navy3)}
-.btn-add-cancel{height:28px;padding:0 10px;background:transparent;color:var(--muted);border:1px solid var(--gray2);border-radius:6px;font-size:11px;cursor:pointer;font-family:'Sora',sans-serif}
-.btn-add-cancel:hover{background:#fff}
 
-/* ── ADD COL BUTTON ── */
-.k-add-col{width:240px;flex-shrink:0}
+/* ── ADD COL ── */
+.k-add-col{width:260px;flex-shrink:0}
 .add-col-btn{width:100%;padding:12px;background:rgba(43,74,122,0.06);border:2px dashed var(--navy3);border-radius:var(--radius);color:var(--navy3);font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;text-align:center}
 .add-col-btn:hover{background:rgba(43,74,122,0.1);border-color:var(--navy)}
 .add-col-form{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px;display:none;flex-direction:column;gap:8px;box-shadow:var(--shadow)}
 .add-col-form.open{display:flex}
 .add-col-form input{border:1px solid var(--gray2);border-radius:6px;padding:8px 10px;font-size:12px;font-family:'Sora',sans-serif;color:var(--text);outline:none;width:100%}
 .add-col-form input:focus{border-color:var(--navy)}
-.add-col-form label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.add-col-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
 
 /* ── MODAL ── */
 .modal-overlay{position:fixed;inset:0;background:rgba(10,20,45,0.45);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
@@ -133,63 +152,63 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .modal-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--gray2)}
 .modal-field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
 .modal-field label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.modal-field input,.modal-field select,.modal-field textarea{border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:8px 11px;font-size:13px;font-family:'Sora',sans-serif;color:var(--text);outline:none;width:100%;resize:none}
-.modal-field input:focus,.modal-field select:focus,.modal-field textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(43,74,122,0.1)}
+.modal-field input,.modal-field textarea{border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:8px 11px;font-size:13px;font-family:'Sora',sans-serif;color:var(--text);outline:none;width:100%;resize:none}
+.modal-field input:focus,.modal-field textarea:focus{border-color:var(--navy);box-shadow:0 0 0 3px rgba(43,74,122,0.1)}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;padding-top:14px;border-top:1px solid var(--gray2)}
 .btn-modal{height:36px;padding:0 18px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:none;transition:all .15s}
 .btn-modal.ok{background:var(--navy);color:#fff}
 .btn-modal.ok:hover{background:var(--navy3)}
 .btn-modal.cancel{background:var(--gray1);color:var(--muted)}
 .btn-modal.cancel:hover{background:var(--gray2)}
+.btn-modal.sm{height:28px;padding:0 10px;font-size:11px;border-radius:6px}
 
-/* ── STATS BAR ── */
-.stats-bar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-.stat-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:10px 16px;box-shadow:var(--shadow);min-width:110px;position:relative;overflow:hidden}
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
-.stat-card.s-orange::before{background:var(--orange)}
-.stat-card.s-navy::before{background:var(--navy)}
-.stat-card.s-green::before{background:var(--green)}
-.stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:3px}
-.stat-value{font-size:20px;font-weight:700;color:var(--navy);font-family:'JetBrains Mono',monospace}
+/* ── TAG SELECTOR ── */
+.tag-selector{display:flex;flex-wrap:wrap;gap:5px}
+.tag-opt{padding:3px 9px;border-radius:10px;font-size:10px;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'JetBrains Mono',monospace;transition:all .15s;user-select:none}
+.tag-opt.selected{border-color:var(--navy)}
 
-/* ── PANEL SYSTEM ── */
-.panel{display:none}.panel.active{display:block}
-.page-cat{padding:24px}
-.page-cat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
-.page-cat-title{font-size:15px;font-weight:700;color:var(--navy)}
+/* ── PAGES ── */
+.page-inner{padding:24px}
+.page-inner-title{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:20px}
 
-/* ── CAT MANAGEMENT ── */
+/* ── CATEGORIAS ── */
 .cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:24px}
-.cat-item-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px;position:relative}
-.cat-item-card .accent-bar{width:4px;height:40px;border-radius:3px;flex-shrink:0}
+.cat-item-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}
+.cat-accent-bar{width:4px;height:40px;border-radius:3px;flex-shrink:0}
 .cat-item-info{flex:1;min-width:0}
-.cat-item-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
-.cat-item-slug{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.cat-item-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px}
+.cat-pill-preview{display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace}
 .cat-item-actions{display:flex;gap:4px;flex-shrink:0}
 .cat-act-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--gray2);background:transparent;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .cat-act-btn:hover{background:var(--gray1);border-color:var(--navy)}
-.cat-act-btn.del:hover{background:var(--danger2);border-color:var(--danger);color:var(--danger)}
-.cat-pill-preview{display:inline-block;padding:3px 9px;border-radius:10px;font-size:10px;font-weight:600;font-family:'JetBrains Mono',monospace;margin-top:4px}
-
-/* ── ADD CAT FORM ── */
+.cat-act-btn.del:hover{background:var(--danger2);border-color:var(--danger)}
 .add-cat-box{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);max-width:480px}
 .add-cat-box-title{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--gray1)}
 .color-picker-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .color-opt{width:28px;height:28px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;flex-shrink:0}
 .color-opt:hover{transform:scale(1.15)}
 .color-opt.selected{border-color:var(--navy);transform:scale(1.15)}
-.cat-warning{font-size:11px;color:var(--amber);background:var(--amber2);border-radius:6px;padding:8px 12px;margin-top:10px;display:none}
-.cat-warning.show{display:block}
+.field-warn{font-size:11px;color:var(--amber);background:var(--amber2);border-radius:6px;padding:8px 12px;margin-top:10px;display:none}
+.field-warn.show{display:block}
 
-/* ── DELETE COL ── */
-.k-col-del{opacity:0;background:rgba(255,255,255,0.08);border:none;border-radius:5px;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;width:20px;height:20px;display:flex;align-items:center;justify-content:center;transition:opacity .15s,background .15s;flex-shrink:0}
-.k-col-head:hover .k-col-del{opacity:1}
-.k-col-del:hover{background:rgba(232,34,39,0.4);color:#fff}
-
-/* ── TAGS SELECTOR ── */
-.tag-selector{display:flex;flex-wrap:wrap;gap:5px}
-.tag-opt{padding:3px 9px;border-radius:10px;font-size:10px;font-weight:600;cursor:pointer;border:1.5px solid transparent;font-family:'JetBrains Mono',monospace;transition:all .15s;user-select:none}
-.tag-opt.selected{border-color:var(--navy)}
+/* ── LIXEIRA ── */
+.trash-section-title{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+.trash-section-title::after{content:'';flex:1;height:1px;background:var(--gray2)}
+.trash-empty{font-size:13px;color:var(--gray3);text-align:center;padding:48px 0;line-height:2}
+.trash-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.trash-toolbar-label{font-size:12px;color:var(--muted);flex:1}
+.trash-item{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:12px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px;box-shadow:var(--shadow);transition:border-color .15s}
+.trash-item:hover{border-color:var(--navy3)}
+.trash-item-icon{font-size:20px;flex-shrink:0;width:32px;text-align:center}
+.trash-item-info{flex:1;min-width:0}
+.trash-item-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;word-break:break-word}
+.trash-item-meta{font-size:11px;color:var(--muted)}
+.trash-item-actions{display:flex;gap:6px;flex-shrink:0}
+.trash-btn{height:28px;padding:0 11px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;border:none;transition:all .15s;white-space:nowrap}
+.trash-btn.restore{background:var(--green2);color:var(--green)}
+.trash-btn.restore:hover{opacity:.8}
+.trash-btn.del-perm{background:var(--danger2);color:var(--danger)}
+.trash-btn.del-perm:hover{opacity:.8}
 
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 </style>
@@ -209,12 +228,15 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
   <div class="nav-item" id="nav-cats" onclick="showView('cats')">
     <span class="nav-icon">🏷️</span> Categorias
   </div>
+  <div class="nav-item" id="nav-trash" onclick="showView('trash')">
+    <span class="nav-icon">🗑️</span> Lixeira
+    <span class="nav-badge" id="trash-badge" style="display:none">0</span>
+  </div>
+  <div class="sidebar-section">Ferramentas</div>
   <div class="nav-item" onclick="openExportModal()">
     <span class="nav-icon">📤</span> Exportar
   </div>
-  <div class="nav-item" onclick="resetBoard()" style="margin-top:auto">
-    <span class="nav-icon">🔄</span> Resetar board
-  </div>
+  <div class="sidebar-spacer"></div>
   <div class="sidebar-footer">
     Grupo Pinto Cerqueira<br>
     <span style="color:rgba(255,255,255,0.4)">Gestão Interna · R2 Soluções</span>
@@ -229,103 +251,87 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
       <span id="topbar-title-text">Divisão de Atividades</span>
     </div>
     <div class="topbar-right" id="topbar-actions">
-      <button class="btn-top" onclick="openAddPersonModal()">
-        + Pessoa
-      </button>
-      <button class="btn-top orange" onclick="openExportModal()">
-        📤 Exportar
-      </button>
+      <button class="btn-top" onclick="openAddPersonModal()">+ Pessoa</button>
+      <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>
     </div>
   </div>
 
-  <!-- PANEL: BOARD -->
+  <!-- ── BOARD ── -->
   <div class="panel active" id="panel-board">
-  <div class="content">
-    <!-- STATS -->
-    <div class="stats-bar" id="stats-bar">
-      <div class="stat-card s-navy">
-        <div class="stat-label">Pessoas</div>
-        <div class="stat-value" id="stat-pessoas">0</div>
+    <div class="content">
+      <div class="stats-bar">
+        <div class="stat-card s-navy">
+          <div class="stat-label">Pessoas</div>
+          <div class="stat-value" id="stat-pessoas">0</div>
+        </div>
+        <div class="stat-card s-orange">
+          <div class="stat-label">Atividades</div>
+          <div class="stat-value" id="stat-atividades">0</div>
+        </div>
       </div>
-      <div class="stat-card s-orange">
-        <div class="stat-label">Atividades</div>
-        <div class="stat-value" id="stat-atividades">0</div>
-      </div>
-      <div class="stat-card s-green">
-        <div class="stat-label">Prioridade Alta</div>
-        <div class="stat-value" id="stat-alta">0</div>
-      </div>
-    </div>
-
-    <!-- BOARD -->
-    <div class="kanban-scroll">
-      <div class="kanban-board" id="kanban-board">
-        <!-- cols injected by JS -->
-        <div class="k-add-col">
-          <button class="add-col-btn" id="add-col-btn" onclick="toggleAddColForm()">+ Adicionar pessoa</button>
-          <div class="add-col-form" id="add-col-form">
-            <div>
-              <label style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Nome</label>
-              <input id="new-col-name" placeholder="Nome da pessoa" />
-            </div>
-            <div>
-              <label style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px">Cargo / Setor</label>
-              <input id="new-col-role" placeholder="Ex: Analista · Financeiro" />
-            </div>
-            <div style="display:flex;gap:6px;margin-top:4px">
-              <button class="btn-modal ok" style="height:32px;font-size:11px" onclick="confirmAddCol()">Adicionar</button>
-              <button class="btn-modal cancel" style="height:32px;font-size:11px" onclick="toggleAddColForm()">Cancelar</button>
+      <div class="kanban-scroll">
+        <div class="kanban-board" id="kanban-board">
+          <div class="k-add-col">
+            <button class="add-col-btn" id="add-col-btn" onclick="toggleAddColForm()">+ Adicionar pessoa</button>
+            <div class="add-col-form" id="add-col-form">
+              <div><label class="add-col-label">Nome</label><input id="new-col-name" placeholder="Nome da pessoa" /></div>
+              <div><label class="add-col-label">Cargo / Setor</label><input id="new-col-role" placeholder="Ex: Analista · Financeiro" /></div>
+              <div style="display:flex;gap:6px;margin-top:4px">
+                <button class="btn-modal ok" style="height:32px;font-size:11px" onclick="confirmAddCol()">Adicionar</button>
+                <button class="btn-modal cancel" style="height:32px;font-size:11px" onclick="toggleAddColForm()">Cancelar</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-  </div>
 
-  <!-- PANEL: CATEGORIAS -->
+  <!-- ── CATEGORIAS ── -->
   <div class="panel" id="panel-cats">
-  <div class="page-cat">
-    <div class="page-cat-header">
-      <div class="page-cat-title">Categorias de Atividades</div>
-    </div>
-
-    <!-- lista de categorias -->
-    <div class="cat-grid" id="cat-grid"></div>
-
-    <!-- formulário de nova/edição -->
-    <div class="add-cat-box">
-      <div class="add-cat-box-title" id="cat-form-title">Nova categoria</div>
-      <input type="hidden" id="cat-edit-id" value="" />
-      <div class="modal-field">
-        <label>Nome da categoria</label>
-        <input id="cat-name-inp" placeholder="Ex: RH, Compras, TI..." />
-      </div>
-      <div class="modal-field">
-        <label>Cor</label>
-        <div class="color-picker-row" id="color-picker-row"></div>
-      </div>
-      <div class="cat-warning" id="cat-warning">Já existe uma categoria com esse nome.</div>
-      <div style="display:flex;gap:8px;margin-top:16px">
-        <button class="btn-modal ok" style="height:34px;font-size:12px" onclick="confirmSaveCat()">Salvar categoria</button>
-        <button class="btn-modal cancel" style="height:34px;font-size:12px" id="cat-cancel-btn" onclick="cancelEditCat()" style="display:none">Cancelar edição</button>
+    <div class="page-inner">
+      <div class="page-inner-title">Categorias de Atividades</div>
+      <div class="cat-grid" id="cat-grid"></div>
+      <div class="add-cat-box">
+        <div class="add-cat-box-title" id="cat-form-title">Nova categoria</div>
+        <input type="hidden" id="cat-edit-id" value="" />
+        <div class="modal-field">
+          <label>Nome da categoria</label>
+          <input id="cat-name-inp" placeholder="Ex: RH, Compras, TI..." />
+        </div>
+        <div class="modal-field">
+          <label>Cor</label>
+          <div class="color-picker-row" id="color-picker-row"></div>
+        </div>
+        <div class="field-warn" id="cat-warning">Já existe uma categoria com esse nome.</div>
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button class="btn-modal ok" style="height:34px;font-size:12px" onclick="confirmSaveCat()">Salvar categoria</button>
+          <button class="btn-modal cancel" style="height:34px;font-size:12px;display:none" id="cat-cancel-btn" onclick="cancelEditCat()">Cancelar edição</button>
+        </div>
       </div>
     </div>
   </div>
+
+  <!-- ── LIXEIRA ── -->
+  <div class="panel" id="panel-trash">
+    <div class="page-inner">
+      <div class="page-inner-title">Lixeira</div>
+      <div class="trash-toolbar">
+        <span class="trash-toolbar-label" id="trash-count-label"></span>
+        <button class="btn-top danger" id="btn-empty-trash" style="display:none" onclick="emptyTrash()">🗑️ Esvaziar lixeira</button>
+      </div>
+      <div id="trash-content"></div>
+    </div>
   </div>
+
+</div><!-- /main -->
 
 <!-- MODAL: Add Person -->
 <div class="modal-overlay" id="modal-person">
   <div class="modal">
     <div class="modal-title">Nova Pessoa</div>
-    <div class="modal-field">
-      <label>Nome</label>
-      <input id="mp-name" placeholder="Nome completo" />
-    </div>
-    <div class="modal-field">
-      <label>Cargo / Setor</label>
-      <input id="mp-role" placeholder="Ex: Gerente · Atacado" />
-    </div>
+    <div class="modal-field"><label>Nome</label><input id="mp-name" placeholder="Nome completo" /></div>
+    <div class="modal-field"><label>Cargo / Setor</label><input id="mp-role" placeholder="Ex: Gerente · Atacado" /></div>
     <div class="modal-actions">
       <button class="btn-modal cancel" onclick="closeModal('modal-person')">Cancelar</button>
       <button class="btn-modal ok" onclick="confirmAddPerson()">Adicionar</button>
@@ -337,33 +343,9 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 <div class="modal-overlay" id="modal-card">
   <div class="modal">
     <div class="modal-title" id="modal-card-title">Nova Atividade</div>
-    <div class="modal-field">
-      <label>Título da atividade</label>
-      <input id="mc-title" placeholder="Descreva a atividade..." />
-    </div>
-    <div class="modal-field">
-      <label>Observação (opcional)</label>
-      <textarea id="mc-desc" placeholder="Detalhes, prazo, contexto..."></textarea>
-    </div>
-    <div class="modal-field">
-      <label>Prioridade</label>
-      <select id="mc-priority">
-        <option value="media">Média</option>
-        <option value="alta">Alta</option>
-        <option value="baixa">Baixa</option>
-      </select>
-    </div>
-    <div class="modal-field">
-      <label>Categoria</label>
-      <div class="tag-selector" id="tag-selector">
-        <span class="tag-opt tag-pill-laranja" data-tag="laranja" onclick="selectTag(this)">Operacional</span>
-        <span class="tag-opt tag-pill-azul" data-tag="azul" onclick="selectTag(this)">Administrativo</span>
-        <span class="tag-opt tag-pill-verde" data-tag="verde" onclick="selectTag(this)">Financeiro</span>
-        <span class="tag-opt tag-pill-vermelho" data-tag="vermelho" onclick="selectTag(this)">Urgente</span>
-        <span class="tag-opt tag-pill-amarelo" data-tag="amarelo" onclick="selectTag(this)">Comercial</span>
-        <span class="tag-opt tag-pill-cinza" data-tag="cinza" onclick="selectTag(this)">Geral</span>
-      </div>
-    </div>
+    <div class="modal-field"><label>Título da atividade</label><input id="mc-title" placeholder="Descreva a atividade..." /></div>
+    <div class="modal-field"><label>Observação (opcional)</label><textarea id="mc-desc" placeholder="Detalhes, prazo, contexto..."></textarea></div>
+    <div class="modal-field"><label>Categoria</label><div class="tag-selector" id="tag-selector"></div></div>
     <div class="modal-actions">
       <button class="btn-modal cancel" onclick="closeModal('modal-card')">Cancelar</button>
       <button class="btn-modal ok" onclick="confirmAddCard()">Adicionar</button>
@@ -384,12 +366,19 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 </div>
 
 <script>
-// ── STORAGE KEYS ──
-const STORAGE_KEY     = 'gpc_kanban_v1';
-const STORAGE_KEY_CAT = 'gpc_cats_v1';
+// ════════════════════════════════════════
+// STORAGE
+// ════════════════════════════════════════
+const SK       = 'gpc_kanban_v1';
+const SK_CAT   = 'gpc_cats_v1';
+const SK_TRASH = 'gpc_trash_v1';
+const lsGet = k => { try{ const r=localStorage.getItem(k); return r?JSON.parse(r):null; }catch(e){ return null; } };
+const lsSet = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} };
 
-// ── PALETA DE CORES DISPONÍVEIS ──
-const COLOR_PALETTE = [
+// ════════════════════════════════════════
+// DEFAULTS
+// ════════════════════════════════════════
+const COLORS = [
   {id:'laranja', bg:'rgba(245,131,31,0.13)', text:'#C05A08', bar:'#F5831F', label:'Laranja'},
   {id:'azul',    bg:'rgba(43,74,122,0.10)',  text:'#2B4A7A', bar:'#2B4A7A', label:'Azul'},
   {id:'verde',   bg:'#D4EDDF',              text:'#1E7B4B', bar:'#1E7B4B', label:'Verde'},
@@ -401,204 +390,411 @@ const COLOR_PALETTE = [
   {id:'ciano',   bg:'rgba(0,160,180,0.11)', text:'#0A7A8A', bar:'#0BAFC0', label:'Ciano'},
   {id:'marrom',  bg:'rgba(130,80,40,0.12)', text:'#6B3D14', bar:'#9B5A22', label:'Marrom'},
 ];
-
-// ── CATEGORIAS PADRÃO ──
-const DEFAULT_CATS = [
-  {id:'laranja', name:'Operacional', colorId:'laranja'},
-  {id:'azul',    name:'Administrativo', colorId:'azul'},
-  {id:'verde',   name:'Financeiro',  colorId:'verde'},
-  {id:'vermelho',name:'Urgente',     colorId:'vermelho'},
-  {id:'amarelo', name:'Comercial',   colorId:'amarelo'},
-  {id:'cinza',   name:'Geral',       colorId:'cinza'},
+const DEF_CATS = [
+  {id:'laranja', name:'Operacional',   colorId:'laranja'},
+  {id:'azul',    name:'Administrativo',colorId:'azul'},
+  {id:'verde',   name:'Financeiro',    colorId:'verde'},
+  {id:'vermelho',name:'Urgente',       colorId:'vermelho'},
+  {id:'amarelo', name:'Comercial',     colorId:'amarelo'},
+  {id:'cinza',   name:'Geral',         colorId:'cinza'},
+];
+// cols agora têm campo `subs: [{id, name, role}]`
+const DEF_COLS = [
+  {id:'p_carlos',   name:'Carlos',    role:'', cards:[], subs:[]},
+  {id:'p_sandra',   name:'Sandra',    role:'', cards:[], subs:[]},
+  {id:'p_karla',    name:'Karla',     role:'', cards:[], subs:[]},
+  {id:'p_pedro',    name:'Pedro',     role:'', cards:[], subs:[]},
+  {id:'p_vitor',    name:'Vitor',     role:'', cards:[], subs:[]},
+  {id:'p_lucas',    name:'Lucas',     role:'', cards:[], subs:[]},
+  {id:'p_derivaldo',name:'Derivaldo', role:'', cards:[], subs:[]},
+  {id:'p_daniel',   name:'Daniel',    role:'', cards:[], subs:[]}
 ];
 
-// ── PEOPLE DEFAULT ──
-const DEFAULT_COLS = [
-  {id:'p_carlos',   name:'Carlos',    role:'', cards:[]},
-  {id:'p_sandra',   name:'Sandra',    role:'', cards:[]},
-  {id:'p_karla',    name:'Karla',     role:'', cards:[]},
-  {id:'p_pedro',    name:'Pedro',     role:'', cards:[]},
-  {id:'p_vitor',    name:'Vitor',     role:'', cards:[]},
-  {id:'p_lucas',    name:'Lucas',     role:'', cards:[]},
-  {id:'p_derivaldo',name:'Derivaldo', role:'', cards:[]},
-  {id:'p_daniel',   name:'Daniel',    role:'', cards:[]}
-];
+// ════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════
+let cols  = lsGet(SK)       || JSON.parse(JSON.stringify(DEF_COLS));
+let cats  = lsGet(SK_CAT)   || JSON.parse(JSON.stringify(DEF_CATS));
+let trash = lsGet(SK_TRASH) || [];
 
-// ── LOAD / SAVE ──
-function loadState(){
-  try{const r=localStorage.getItem(STORAGE_KEY);if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length>0)return p;}}catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT_COLS));
+// migração: garante que cols antigas tenham campo subs
+cols.forEach(c=>{ if(!c.subs) c.subs=[]; });
+
+function saveAll(){ lsSet(SK,cols); lsSet(SK_CAT,cats); lsSet(SK_TRASH,trash); }
+
+// ════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════
+const getClr = id => COLORS.find(c=>c.id===id)||COLORS[5];
+const getCat = id => cats.find(c=>c.id===id)||{id:'cinza',name:'Geral',colorId:'cinza'};
+const esc    = s  => { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; };
+const fmtTs  = ts => new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '
+                   + new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+function syncTrashBadge(){
+  const b=document.getElementById('trash-badge');
+  if(trash.length){ b.textContent=trash.length; b.style.display='inline-block'; }
+  else b.style.display='none';
 }
-function saveState(){ try{localStorage.setItem(STORAGE_KEY,JSON.stringify(cols));}catch(e){} }
 
-function loadCats(){
-  try{const r=localStorage.getItem(STORAGE_KEY_CAT);if(r){const p=JSON.parse(r);if(Array.isArray(p)&&p.length>0)return p;}}catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT_CATS));
-}
-function saveCats(){ try{localStorage.setItem(STORAGE_KEY_CAT,JSON.stringify(cats));}catch(e){} }
-
-let cols = loadState();
-let cats = loadCats();
-
-// ── HELPERS ──
-function getColor(colorId){ return COLOR_PALETTE.find(c=>c.id===colorId)||COLOR_PALETTE[5]; }
-function getCat(catId){ return cats.find(c=>c.id===catId)||{id:'cinza',name:'Geral',colorId:'cinza'}; }
-
-let dragCardId=null,dragFromColId=null,addCardTargetColId=null,selectedTag=null;
-
-// ── VIEW SWITCH ──
-function showView(view){
+// ════════════════════════════════════════
+// VIEW SWITCH
+// ════════════════════════════════════════
+function showView(v){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item[id^="nav-"]').forEach(n=>n.classList.remove('active'));
-  document.getElementById('panel-'+view).classList.add('active');
-  document.getElementById('nav-'+view).classList.add('active');
-  const titles={board:'Divisão de Atividades',cats:'Categorias de Atividades'};
-  document.getElementById('topbar-title-text').textContent=titles[view]||'';
-  const ta=document.getElementById('topbar-actions');
-  ta.innerHTML = view==='board'
+  document.getElementById('panel-'+v).classList.add('active');
+  document.getElementById('nav-'+v).classList.add('active');
+  document.getElementById('topbar-title-text').textContent=
+    {board:'Divisão de Atividades',cats:'Categorias',trash:'Lixeira'}[v]||'';
+  document.getElementById('topbar-actions').innerHTML = v==='board'
     ? `<button class="btn-top" onclick="openAddPersonModal()">+ Pessoa</button>
-       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>`
-    : '';
-  if(view==='cats') renderCats();
+       <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>` : '';
+  if(v==='cats')  renderCats();
+  if(v==='trash') renderTrash();
 }
 
-// ═══════════════════════════════════════
+// ════════════════════════════════════════
 // BOARD RENDER
-// ═══════════════════════════════════════
+// ════════════════════════════════════════
+let dragCardId=null, dragFromColId=null, addCardColId=null, selTag=null;
+
 function render(){
   const board=document.getElementById('kanban-board');
-  const addBtn=board.querySelector('.k-add-col');
-  board.querySelectorAll('.k-col').forEach(el=>el.remove());
+  const stub=board.querySelector('.k-add-col');
+  board.querySelectorAll('.k-col-group').forEach(el=>el.remove());
+
   cols.forEach(col=>{
-    const colEl=document.createElement('div');
-    colEl.className='k-col';
-    colEl.innerHTML=`
-      <div class="k-col-head">
-        <div>
-          <div class="k-col-name">${esc(col.name)}</div>
-          ${col.role?`<div class="k-col-role">${esc(col.role)}</div>`:''}
+    const group=document.createElement('div');
+    group.className='k-col-group';
+    group.id='group-'+col.id;
+
+    // ── cabeçalho + body da coluna principal ──
+    group.innerHTML=`
+      <div class="k-col">
+        <div class="k-col-head">
+          <div>
+            <div class="k-col-name">${esc(col.name)}</div>
+            ${col.role?`<div class="k-col-role">${esc(col.role)}</div>`:''}
+          </div>
+          <div class="k-col-head-actions">
+            <span class="k-col-badge">${col.cards.length}</span>
+            <button class="k-col-icon-btn del" onclick="trashPerson('${col.id}')" title="Mover para lixeira">🗑</button>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <span class="k-col-badge">${col.cards.length}</span>
-          <button class="k-col-del" onclick="deleteCol('${col.id}')" title="Remover">✕</button>
+        <div class="k-col-accent"></div>
+        <div class="k-col-body" id="body-${col.id}"
+          ondragover="dOver(event,'${col.id}')"
+          ondragleave="dLeave(event,'${col.id}')"
+          ondrop="dDrop(event,'${col.id}')">
+          ${!col.cards.length?`<div class="k-empty">Nenhuma atividade<br>Clique em + para adicionar</div>`:''}
+          ${col.cards.map(c=>cardHtml(c,col.id)).join('')}
+          <button class="add-card-btn" onclick="openCardModal('${col.id}')">
+            <span style="font-size:14px;line-height:1">+</span> Adicionar atividade
+          </button>
         </div>
       </div>
-      <div class="k-col-accent"></div>
-      <div class="k-col-body" id="body-${col.id}"
-        ondragover="e_dragOver(event,'${col.id}')"
-        ondragleave="e_dragLeave(event,'${col.id}')"
-        ondrop="e_drop(event,'${col.id}')">
-        ${col.cards.length===0?`<div class="k-empty">Nenhuma atividade<br>Clique em + para adicionar</div>`:''}
-        ${col.cards.map(card=>renderCard(card,col.id)).join('')}
-        <button class="add-card-btn" onclick="openAddCardModal('${col.id}')">
-          <span style="font-size:14px;line-height:1">+</span> Adicionar atividade
-        </button>
-      </div>`;
-    board.insertBefore(colEl,addBtn);
+      ${subSectionHtml(col)}`;
+
+    board.insertBefore(group,stub);
   });
-  updateStats();
+
+  document.getElementById('stat-pessoas').textContent=cols.length;
+  document.getElementById('stat-atividades').textContent=cols.reduce((s,c)=>s+c.cards.length,0);
+  syncTrashBadge();
 }
 
-function renderCard(card,colId){
-  const cat=getCat(card.tag);
-  const clr=getColor(cat.colorId);
-  const pClass={alta:'p-alta',media:'p-media',baixa:'p-baixa'}[card.priority]||'p-media';
-  const pLabel={alta:'Alta',media:'Média',baixa:'Baixa'}[card.priority]||'Média';
+// ── HTML da seção de subordinados ──
+function subSectionHtml(col){
+  const subs = col.subs||[];
+  const subCards = subs.map(s=>`
+    <div class="k-sub-card">
+      <div class="k-sub-card-info">
+        <div class="k-sub-card-name">${esc(s.name)}</div>
+        ${s.role?`<div class="k-sub-card-role">${esc(s.role)}</div>`:''}
+      </div>
+      <button class="k-sub-card-del" onclick="trashSub('${col.id}','${s.id}')" title="Remover">✕</button>
+    </div>`).join('');
+
   return `
-    <div class="k-card" id="card-${card.id}" style="--card-bar:${clr.bar}"
+    <div class="k-sub-section">
+      <div class="k-sub-toggle" onclick="toggleSubs('${col.id}')">
+        <span class="k-sub-toggle-label">
+          Subordinados
+          <span class="k-sub-count">${subs.length}</span>
+        </span>
+        <span class="k-sub-chevron${subs.length?'':''}" id="chev-${col.id}">▾</span>
+      </div>
+      <div class="k-sub-body${subs.length?' open':''}" id="subs-${col.id}">
+        <div class="k-sub-list" id="sub-list-${col.id}">
+          ${subs.length ? subCards : '<div style="font-size:11px;color:var(--gray3);text-align:center;padding:10px 0">Nenhum subordinado</div>'}
+        </div>
+        <button class="k-sub-add-btn" id="sub-add-btn-${col.id}" onclick="toggleSubForm('${col.id}')">
+          + Subordinado direto
+        </button>
+        <div class="k-sub-add-form" id="sub-form-${col.id}">
+          <input id="sub-name-${col.id}" placeholder="Nome do subordinado" />
+          <input id="sub-role-${col.id}" placeholder="Cargo / Setor" />
+          <div class="k-sub-add-actions">
+            <button class="btn-modal ok sm" onclick="confirmAddSub('${col.id}')">Adicionar</button>
+            <button class="btn-modal cancel sm" onclick="toggleSubForm('${col.id}')">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+function toggleSubs(colId){
+  const body=document.getElementById('subs-'+colId);
+  const chev=document.getElementById('chev-'+colId);
+  body.classList.toggle('open');
+  chev.classList.toggle('open');
+}
+
+function toggleSubForm(colId){
+  const form=document.getElementById('sub-form-'+colId);
+  const btn=document.getElementById('sub-add-btn-'+colId);
+  const open=form.classList.toggle('open');
+  btn.style.display=open?'none':'flex';
+  // garante seção aberta
+  const body=document.getElementById('subs-'+colId);
+  if(open && !body.classList.contains('open')){
+    body.classList.add('open');
+    document.getElementById('chev-'+colId).classList.add('open');
+  }
+  if(open) document.getElementById('sub-name-'+colId).focus();
+}
+
+function confirmAddSub(colId){
+  const nameEl=document.getElementById('sub-name-'+colId);
+  const roleEl=document.getElementById('sub-role-'+colId);
+  const name=nameEl.value.trim(); if(!name) return;
+  const col=cols.find(c=>c.id===colId); if(!col) return;
+  if(!col.subs) col.subs=[];
+  col.subs.push({id:'s'+Date.now(), name, role:roleEl.value.trim()});
+  nameEl.value=''; roleEl.value='';
+  saveAll(); render();
+  // reabrir a seção após render
+  const body=document.getElementById('subs-'+colId);
+  if(body && !body.classList.contains('open')){
+    body.classList.add('open');
+    document.getElementById('chev-'+colId)?.classList.add('open');
+  }
+}
+
+function trashSub(colId, subId){
+  const col=cols.find(c=>c.id===colId); if(!col) return;
+  const sub=col.subs?.find(s=>s.id===subId); if(!sub) return;
+  trash.push({id:'t'+Date.now(), type:'subordinado', data:JSON.parse(JSON.stringify(sub)),
+    meta:`${sub.name}${sub.role?' · '+sub.role:''} (subordinado de ${col.name})`, parentId:colId, deletedAt:Date.now()});
+  col.subs=col.subs.filter(s=>s.id!==subId);
+  saveAll(); render();
+}
+
+function cardHtml(card,colId){
+  const cat=getCat(card.tag), clr=getClr(cat.colorId);
+  return `
+    <div class="k-card" id="card-${card.id}"
       draggable="true"
-      ondragstart="e_dragStart(event,'${card.id}','${colId}')"
-      ondragend="e_dragEnd(event)">
+      ondragstart="dStart(event,'${card.id}','${colId}')"
+      ondragend="dEnd()">
       <style>#card-${card.id}::before{background:${clr.bar}}</style>
       <span class="k-card-tag" style="background:${clr.bg};color:${clr.text}">${esc(cat.name)}</span>
       <div class="k-card-title">${esc(card.title)}</div>
       ${card.desc?`<div class="k-card-desc">${esc(card.desc)}</div>`:''}
       <div class="k-card-footer">
-        <span class="k-card-priority ${pClass}">${pLabel}</span>
-        <button class="k-card-del" onclick="deleteCard('${colId}','${card.id}')">✕</button>
+        <button class="k-card-del" onclick="trashCard('${colId}','${card.id}')">🗑 lixeira</button>
       </div>
     </div>`;
 }
 
-// ═══════════════════════════════════════
-// CATEGORIES RENDER
-// ═══════════════════════════════════════
-function renderCats(){
-  const grid=document.getElementById('cat-grid');
-  grid.innerHTML='';
-  if(cats.length===0){
-    grid.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0">Nenhuma categoria cadastrada.</div>';
+// ── DRAG ──
+function dStart(e,cid,pid){ dragCardId=cid; dragFromColId=pid; setTimeout(()=>document.getElementById('card-'+cid)?.classList.add('dragging'),0); e.dataTransfer.effectAllowed='move'; }
+function dEnd(){ document.getElementById('card-'+dragCardId)?.classList.remove('dragging'); document.querySelectorAll('.k-col-body').forEach(b=>b.classList.remove('drag-over')); }
+function dOver(e,cid){ e.preventDefault(); document.querySelectorAll('.k-col-body').forEach(b=>b.classList.remove('drag-over')); document.getElementById('body-'+cid)?.classList.add('drag-over'); }
+function dLeave(e,cid){ const b=document.getElementById('body-'+cid); if(b&&!b.contains(e.relatedTarget)) b.classList.remove('drag-over'); }
+function dDrop(e,toId){
+  e.preventDefault(); document.querySelectorAll('.k-col-body').forEach(b=>b.classList.remove('drag-over'));
+  if(!dragCardId||dragFromColId===toId){ dragCardId=null; dragFromColId=null; return; }
+  const src=cols.find(c=>c.id===dragFromColId), dst=cols.find(c=>c.id===toId);
+  if(!src||!dst) return;
+  const i=src.cards.findIndex(c=>c.id===dragCardId); if(i===-1) return;
+  dst.cards.push(...src.cards.splice(i,1));
+  dragCardId=null; dragFromColId=null; saveAll(); render();
+}
+
+// ════════════════════════════════════════
+// PEOPLE
+// ════════════════════════════════════════
+function openAddPersonModal(){ openModal('modal-person'); document.getElementById('mp-name').focus(); }
+function confirmAddPerson(){
+  const name=document.getElementById('mp-name').value.trim(); if(!name) return;
+  cols.push({id:'c'+Date.now(), name, role:document.getElementById('mp-role').value.trim(), cards:[], subs:[]});
+  document.getElementById('mp-name').value=''; document.getElementById('mp-role').value='';
+  closeModal('modal-person'); saveAll(); render();
+}
+function toggleAddColForm(){
+  const f=document.getElementById('add-col-form'), b=document.getElementById('add-col-btn');
+  const open=f.classList.toggle('open'); b.style.display=open?'none':'block';
+  if(open) document.getElementById('new-col-name').focus();
+}
+function confirmAddCol(){
+  const name=document.getElementById('new-col-name').value.trim(); if(!name) return;
+  cols.push({id:'c'+Date.now(), name, role:document.getElementById('new-col-role').value.trim(), cards:[], subs:[]});
+  document.getElementById('new-col-name').value=''; document.getElementById('new-col-role').value='';
+  document.getElementById('add-col-form').classList.remove('open');
+  document.getElementById('add-col-btn').style.display='block';
+  saveAll(); render();
+}
+
+// ════════════════════════════════════════
+// TRASH
+// ════════════════════════════════════════
+function trashPerson(colId){
+  const col=cols.find(c=>c.id===colId); if(!col) return;
+  trash.push({id:'t'+Date.now(), type:'pessoa', data:JSON.parse(JSON.stringify(col)),
+    meta:col.name+(col.role?' · '+col.role:''), deletedAt:Date.now()});
+  cols=cols.filter(c=>c.id!==colId);
+  saveAll(); render();
+}
+function trashCard(colId,cardId){
+  const col=cols.find(c=>c.id===colId); if(!col) return;
+  const card=col.cards.find(c=>c.id===cardId); if(!card) return;
+  trash.push({id:'t'+Date.now(), type:'atividade', data:JSON.parse(JSON.stringify(card)),
+    meta:`${card.title} · de ${col.name}`, parentId:colId, deletedAt:Date.now()});
+  col.cards=col.cards.filter(c=>c.id!==cardId);
+  saveAll(); render();
+}
+function trashCat(catId){
+  const cat=cats.find(c=>c.id===catId); if(!cat) return;
+  const inUse=cols.some(col=>col.cards.some(c=>c.tag===catId));
+  if(inUse && !confirm(`"${cat.name}" está em uso. Os cards ficarão como "Geral". Continuar?`)) return;
+  trash.push({id:'t'+Date.now(), type:'categoria', data:JSON.parse(JSON.stringify(cat)),
+    meta:cat.name, deletedAt:Date.now()});
+  cols.forEach(col=>col.cards.forEach(c=>{ if(c.tag===catId) c.tag='cinza'; }));
+  cats=cats.filter(c=>c.id!==catId);
+  saveAll(); renderCats(); render();
+}
+
+// ════════════════════════════════════════
+// TRASH PANEL
+// ════════════════════════════════════════
+function renderTrash(){
+  const box=document.getElementById('trash-content');
+  const lbl=document.getElementById('trash-count-label');
+  const btn=document.getElementById('btn-empty-trash');
+  if(!trash.length){
+    box.innerHTML=`<div class="trash-empty">🗑️<br><br>A lixeira está vazia.<br><span style="font-size:11px;color:var(--gray3)">Itens excluídos aparecem aqui para você restaurar se precisar.</span></div>`;
+    lbl.textContent=''; btn.style.display='none'; return;
   }
+  lbl.textContent=`${trash.length} item${trash.length>1?'s':''} na lixeira`;
+  btn.style.display='flex';
+  const icons={pessoa:'👤',atividade:'📌',categoria:'🏷️',subordinado:'👥'};
+  const labels={pessoa:'Pessoas',atividade:'Atividades',categoria:'Categorias',subordinado:'Subordinados'};
+  const byType={pessoa:[],atividade:[],categoria:[],subordinado:[]};
+  trash.forEach(t=>{ if(byType[t.type]) byType[t.type].push(t); });
+  let html='';
+  ['pessoa','subordinado','atividade','categoria'].forEach(type=>{
+    const items=byType[type]; if(!items.length) return;
+    html+=`<div class="trash-section-title">${labels[type]}</div>`;
+    [...items].reverse().forEach(item=>{
+      html+=`
+        <div class="trash-item">
+          <div class="trash-item-icon">${icons[type]}</div>
+          <div class="trash-item-info">
+            <div class="trash-item-title">${esc(item.meta)}</div>
+            <div class="trash-item-meta">Excluído em ${fmtTs(item.deletedAt)}</div>
+          </div>
+          <div class="trash-item-actions">
+            <button class="trash-btn restore" onclick="restoreItem('${item.id}')">↩ Restaurar</button>
+            <button class="trash-btn del-perm" onclick="permDelete('${item.id}')">✕ Excluir</button>
+          </div>
+        </div>`;
+    });
+  });
+  box.innerHTML=html;
+}
+
+function restoreItem(tid){
+  const i=trash.findIndex(t=>t.id===tid); if(i===-1) return;
+  const item=trash[i];
+  if(item.type==='pessoa'){
+    if(!cols.find(c=>c.id===item.data.id)) cols.push(item.data);
+    else { item.data.id='c'+Date.now(); cols.push(item.data); }
+  } else if(item.type==='atividade'){
+    const col=cols.find(c=>c.id===item.parentId);
+    if(col){ if(!col.cards.find(c=>c.id===item.data.id)) col.cards.push(item.data); }
+    else {
+      let rec=cols.find(c=>c.id==='recovery');
+      if(!rec){ rec={id:'recovery',name:'Recuperados',role:'',cards:[],subs:[]}; cols.push(rec); }
+      rec.cards.push(item.data);
+    }
+  } else if(item.type==='categoria'){
+    if(!cats.find(c=>c.id===item.data.id)) cats.push(item.data);
+  } else if(item.type==='subordinado'){
+    const col=cols.find(c=>c.id===item.parentId);
+    if(col){ if(!col.subs) col.subs=[]; if(!col.subs.find(s=>s.id===item.data.id)) col.subs.push(item.data); }
+  }
+  trash.splice(i,1);
+  saveAll(); render(); renderTrash(); syncTrashBadge();
+}
+function permDelete(tid){ trash=trash.filter(t=>t.id!==tid); saveAll(); renderTrash(); syncTrashBadge(); }
+function emptyTrash(){
+  if(!confirm('Esvaziar toda a lixeira? Não pode ser desfeito.')) return;
+  trash=[]; saveAll(); renderTrash(); syncTrashBadge();
+}
+
+// ════════════════════════════════════════
+// CATEGORIES
+// ════════════════════════════════════════
+let selColorId=COLORS[0].id;
+function renderCats(){
+  const grid=document.getElementById('cat-grid'); grid.innerHTML='';
+  if(!cats.length){ grid.innerHTML='<div style="font-size:13px;color:var(--muted);padding:8px 0">Nenhuma categoria. Crie a primeira abaixo.</div>'; }
   cats.forEach(cat=>{
-    const clr=getColor(cat.colorId);
-    const card=document.createElement('div');
-    card.className='cat-item-card';
-    card.innerHTML=`
-      <div class="accent-bar" style="background:${clr.bar}"></div>
+    const clr=getClr(cat.colorId);
+    const el=document.createElement('div'); el.className='cat-item-card';
+    el.innerHTML=`
+      <div class="cat-accent-bar" style="background:${clr.bar}"></div>
       <div class="cat-item-info">
         <div class="cat-item-name">${esc(cat.name)}</div>
         <span class="cat-pill-preview" style="background:${clr.bg};color:${clr.text}">${esc(cat.name)}</span>
       </div>
       <div class="cat-item-actions">
         <button class="cat-act-btn" onclick="editCat('${cat.id}')" title="Editar">✏️</button>
-        <button class="cat-act-btn del" onclick="deleteCat('${cat.id}')" title="Remover">✕</button>
+        <button class="cat-act-btn del" onclick="trashCat('${cat.id}')" title="Mover para lixeira">🗑️</button>
       </div>`;
-    grid.appendChild(card);
+    grid.appendChild(el);
   });
-
-  // build color picker
-  buildColorPicker(null);
+  buildColorPicker(selColorId);
 }
-
-let selectedColorId = COLOR_PALETTE[0].id;
-
-function buildColorPicker(selectedId){
-  selectedColorId = selectedId || COLOR_PALETTE[0].id;
-  const row=document.getElementById('color-picker-row');
-  row.innerHTML='';
-  COLOR_PALETTE.forEach(c=>{
-    const dot=document.createElement('div');
-    dot.className='color-opt'+(selectedColorId===c.id?' selected':'');
-    dot.style.background=c.bar;
-    dot.title=c.label;
-    dot.onclick=()=>{
-      selectedColorId=c.id;
-      document.querySelectorAll('.color-opt').forEach(d=>d.classList.remove('selected'));
-      dot.classList.add('selected');
-    };
-    row.appendChild(dot);
+function buildColorPicker(selId){
+  selColorId=selId||COLORS[0].id;
+  const row=document.getElementById('color-picker-row'); row.innerHTML='';
+  COLORS.forEach(c=>{
+    const d=document.createElement('div');
+    d.className='color-opt'+(selColorId===c.id?' selected':'');
+    d.style.background=c.bar; d.title=c.label;
+    d.onclick=()=>{ selColorId=c.id; document.querySelectorAll('.color-opt').forEach(x=>x.classList.remove('selected')); d.classList.add('selected'); };
+    row.appendChild(d);
   });
 }
-
 function confirmSaveCat(){
   const name=document.getElementById('cat-name-inp').value.trim();
   const editId=document.getElementById('cat-edit-id').value;
-  const warn=document.getElementById('cat-warning');
-  warn.classList.remove('show');
+  const warn=document.getElementById('cat-warning'); warn.classList.remove('show');
   if(!name) return;
-
-  // check duplicate name (ignoring self when editing)
-  const dup=cats.find(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==editId);
-  if(dup){ warn.classList.add('show'); return; }
-
+  if(cats.find(c=>c.name.toLowerCase()===name.toLowerCase()&&c.id!==editId)){ warn.classList.add('show'); return; }
   if(editId){
-    // editing
     const cat=cats.find(c=>c.id===editId);
-    if(cat){ cat.name=name; cat.colorId=selectedColorId; }
+    if(cat){ cat.name=name; cat.colorId=selColorId; }
     cancelEditCat();
-  } else {
-    // new
-    cats.push({id:'cat_'+Date.now(), name, colorId:selectedColorId});
-  }
-  saveCats();
+  } else { cats.push({id:'cat_'+Date.now(), name, colorId:selColorId}); }
   document.getElementById('cat-name-inp').value='';
-  renderCats();
-  render(); // refresh cards on board
+  lsSet(SK_CAT,cats); renderCats(); render();
 }
-
 function editCat(catId){
-  const cat=cats.find(c=>c.id===catId);
-  if(!cat) return;
+  const cat=cats.find(c=>c.id===catId); if(!cat) return;
   document.getElementById('cat-edit-id').value=catId;
   document.getElementById('cat-name-inp').value=cat.name;
   document.getElementById('cat-form-title').textContent='Editar categoria';
@@ -606,7 +802,6 @@ function editCat(catId){
   buildColorPicker(cat.colorId);
   document.getElementById('cat-name-inp').focus();
 }
-
 function cancelEditCat(){
   document.getElementById('cat-edit-id').value='';
   document.getElementById('cat-name-inp').value='';
@@ -616,198 +811,80 @@ function cancelEditCat(){
   buildColorPicker(null);
 }
 
-function deleteCat(catId){
-  const cat=cats.find(c=>c.id===catId);
-  if(!cat) return;
-  // check if in use
-  const inUse=cols.some(col=>col.cards.some(c=>c.tag===catId));
-  if(inUse){
-    if(!confirm(`A categoria "${cat.name}" está em uso em alguns cards. Remover mesmo assim? Os cards ficarão sem categoria.`)) return;
-    cols.forEach(col=>col.cards.forEach(c=>{ if(c.tag===catId) c.tag='cinza'; }));
-    saveState();
-  }
-  cats=cats.filter(c=>c.id!==catId);
-  saveCats();
-  renderCats();
-  render();
-}
-
-// ═══════════════════════════════════════
-// ADD CARD MODAL — tag selector dinâmico
-// ═══════════════════════════════════════
-function openAddCardModal(colId){
-  addCardTargetColId=colId;
+// ════════════════════════════════════════
+// ADD CARD MODAL
+// ════════════════════════════════════════
+function openCardModal(colId){
+  addCardColId=colId;
   const col=cols.find(c=>c.id===colId);
   document.getElementById('modal-card-title').textContent='Nova Atividade — '+col.name;
   document.getElementById('mc-title').value='';
   document.getElementById('mc-desc').value='';
-  document.getElementById('mc-priority').value='media';
-  selectedTag=cats.length>0?cats[0].id:null;
-  buildTagSelector();
+  selTag=cats.length?cats[0].id:null;
+  buildTagSel();
   openModal('modal-card');
   setTimeout(()=>document.getElementById('mc-title').focus(),100);
 }
-
-function buildTagSelector(){
-  const sel=document.getElementById('tag-selector');
-  sel.innerHTML='';
+function buildTagSel(){
+  const sel=document.getElementById('tag-selector'); sel.innerHTML='';
   cats.forEach(cat=>{
-    const clr=getColor(cat.colorId);
+    const clr=getClr(cat.colorId);
     const sp=document.createElement('span');
-    sp.className='tag-opt'+(selectedTag===cat.id?' selected':'');
-    sp.style.background=clr.bg;
-    sp.style.color=clr.text;
-    sp.dataset.tag=cat.id;
-    sp.textContent=cat.name;
-    sp.onclick=()=>selectTagEl(sp,cat.id);
+    sp.className='tag-opt'+(selTag===cat.id?' selected':'');
+    sp.style.cssText=`background:${clr.bg};color:${clr.text}`;
+    sp.dataset.tag=cat.id; sp.textContent=cat.name;
+    sp.onclick=()=>{ document.querySelectorAll('.tag-opt').forEach(t=>t.classList.remove('selected')); sp.classList.add('selected'); selTag=cat.id; };
     sel.appendChild(sp);
   });
 }
-
-function selectTagEl(el,catId){
-  document.querySelectorAll('.tag-opt').forEach(t=>t.classList.remove('selected'));
-  el.classList.add('selected');
-  selectedTag=catId;
-}
-
-function selectTag(el){ selectTagEl(el, el.dataset.tag); }
-
 function confirmAddCard(){
-  const title=document.getElementById('mc-title').value.trim();
-  if(!title) return;
-  const col=cols.find(c=>c.id===addCardTargetColId);
-  if(!col) return;
-  col.cards.push({
-    id:'card'+Date.now(), title,
-    desc:document.getElementById('mc-desc').value.trim(),
-    priority:document.getElementById('mc-priority').value,
-    tag:selectedTag||(cats[0]?cats[0].id:'cinza')
-  });
-  closeModal('modal-card');
-  saveState(); render();
+  const title=document.getElementById('mc-title').value.trim(); if(!title) return;
+  const col=cols.find(c=>c.id===addCardColId); if(!col) return;
+  col.cards.push({id:'card'+Date.now(), title, desc:document.getElementById('mc-desc').value.trim(), tag:selTag||(cats[0]?cats[0].id:'cinza')});
+  closeModal('modal-card'); saveAll(); render();
 }
 
-// ── DRAG & DROP ──
-function e_dragStart(e,cardId,colId){
-  dragCardId=cardId;dragFromColId=colId;
-  setTimeout(()=>{const el=document.getElementById('card-'+cardId);if(el)el.classList.add('dragging');},0);
-  e.dataTransfer.effectAllowed='move';
-}
-function e_dragEnd(){
-  if(dragCardId){const el=document.getElementById('card-'+dragCardId);if(el)el.classList.remove('dragging');}
-  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
-}
-function e_dragOver(e,colId){
-  e.preventDefault();e.dataTransfer.dropEffect='move';
-  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
-  const b=document.getElementById('body-'+colId);if(b)b.classList.add('drag-over');
-}
-function e_dragLeave(e,colId){
-  const b=document.getElementById('body-'+colId);
-  if(b&&!b.contains(e.relatedTarget))b.classList.remove('drag-over');
-}
-function e_drop(e,toColId){
-  e.preventDefault();
-  document.querySelectorAll('.k-col-body').forEach(el=>el.classList.remove('drag-over'));
-  if(!dragCardId||!dragFromColId||dragFromColId===toColId){dragCardId=null;dragFromColId=null;return;}
-  const src=cols.find(c=>c.id===dragFromColId),dst=cols.find(c=>c.id===toColId);
-  if(!src||!dst)return;
-  const idx=src.cards.findIndex(c=>c.id===dragCardId);if(idx===-1)return;
-  const[card]=src.cards.splice(idx,1);dst.cards.push(card);
-  dragCardId=null;dragFromColId=null;
-  saveState();render();
-}
-
-// ── ADD PERSON ──
-function openAddPersonModal(){openModal('modal-person');document.getElementById('mp-name').focus();}
-function confirmAddPerson(){
-  const name=document.getElementById('mp-name').value.trim();if(!name)return;
-  const role=document.getElementById('mp-role').value.trim();
-  cols.push({id:'c'+Date.now(),name,role,cards:[]});
-  document.getElementById('mp-name').value='';document.getElementById('mp-role').value='';
-  closeModal('modal-person');saveState();render();
-}
-function toggleAddColForm(){
-  const f=document.getElementById('add-col-form'),b=document.getElementById('add-col-btn');
-  const open=f.classList.toggle('open');b.style.display=open?'none':'block';
-  if(open)document.getElementById('new-col-name').focus();
-}
-function confirmAddCol(){
-  const name=document.getElementById('new-col-name').value.trim();if(!name)return;
-  const role=document.getElementById('new-col-role').value.trim();
-  cols.push({id:'c'+Date.now(),name,role,cards:[]});
-  document.getElementById('new-col-name').value='';document.getElementById('new-col-role').value='';
-  const f=document.getElementById('add-col-form'),b=document.getElementById('add-col-btn');
-  f.classList.remove('open');b.style.display='block';
-  saveState();render();
-}
-
-// ── DELETE ──
-function deleteCard(colId,cardId){
-  const col=cols.find(c=>c.id===colId);if(!col)return;
-  col.cards=col.cards.filter(c=>c.id!==cardId);
-  saveState();render();
-}
-function deleteCol(colId){
-  if(!confirm('Remover esta pessoa e todas as suas atividades?'))return;
-  cols=cols.filter(c=>c.id!==colId);saveState();render();
-}
-
-// ── EXPORT ──
+// ════════════════════════════════════════
+// EXPORT
+// ════════════════════════════════════════
 function openExportModal(){
-  const lines=cols.map(col=>{
-    const header=col.role?`${col.name} (${col.role})`:col.name;
-    const cards=col.cards.length
-      ?col.cards.map(c=>{const cat=getCat(c.tag);return `  • [${c.priority.toUpperCase()}][${cat.name}] ${c.title}${c.desc?' — '+c.desc:''}`;}).join('\n')
-      :'  (sem atividades)';
-    return `${header}:\n${cards}`;
+  const txt=cols.map(col=>{
+    const h=col.role?`${col.name} (${col.role})`:col.name;
+    const c=col.cards.length?col.cards.map(c=>`  • [${getCat(c.tag).name}] ${c.title}${c.desc?' — '+c.desc:''}`).join('\n'):'  (sem atividades)';
+    const s=(col.subs||[]).length?(col.subs.map(s=>`  ↳ ${s.name}${s.role?' ('+s.role+')':''}`)).join('\n'):'';
+    return `${h}:\n${c}${s?'\n\n  Subordinados:\n'+s:''}`;
   }).join('\n\n');
-  document.getElementById('export-content').textContent=lines||'(nenhuma pessoa cadastrada)';
+  document.getElementById('export-content').textContent=txt||'(nenhuma pessoa cadastrada)';
   openModal('modal-export');
 }
 function copyExport(){
   navigator.clipboard.writeText(document.getElementById('export-content').textContent).catch(()=>{});
-  const btn=event.target;btn.textContent='Copiado!';setTimeout(()=>btn.textContent='Copiar texto',1600);
+  const b=event.target; b.textContent='Copiado!'; setTimeout(()=>b.textContent='Copiar texto',1600);
 }
 
-// ── STATS ──
-function updateStats(){
-  document.getElementById('stat-pessoas').textContent=cols.length;
-  document.getElementById('stat-atividades').textContent=cols.reduce((s,c)=>s+c.cards.length,0);
-  document.getElementById('stat-alta').textContent=cols.reduce((s,c)=>s+c.cards.filter(x=>x.priority==='alta').length,0);
-}
+// ════════════════════════════════════════
+// MODALS
+// ════════════════════════════════════════
+const openModal  = id => document.getElementById(id).classList.add('open');
+const closeModal = id => document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open')); });
 
-// ── RESET ──
-function resetBoard(){
-  if(!confirm('Apagar todos os dados e voltar às 8 pessoas padrão?'))return;
-  localStorage.removeItem(STORAGE_KEY);
-  cols=JSON.parse(JSON.stringify(DEFAULT_COLS));
-  saveState();render();
-}
-
-// ── MODALS ──
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-document.querySelectorAll('.modal-overlay').forEach(o=>{
-  o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open');});
-});
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open'));
-});
-
-// ── INIT ──
+// ════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('mp-role').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddPerson();});
-  document.getElementById('mp-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('mp-role').focus();});
-  document.getElementById('mc-title').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('mc-desc').focus();});
-  document.getElementById('new-col-name').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('new-col-role').focus();});
-  document.getElementById('new-col-role').addEventListener('keydown',e=>{if(e.key==='Enter')confirmAddCol();});
-  document.getElementById('cat-name-inp').addEventListener('keydown',e=>{if(e.key==='Enter')confirmSaveCat();});
+  ['mp-name','mp-role','new-col-name','new-col-role','mc-title','cat-name-inp'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.addEventListener('keydown',e=>{
+      if(e.key!=='Enter') return;
+      const map={'mp-name':'mp-role','mp-role':()=>confirmAddPerson(),'new-col-name':'new-col-role','new-col-role':()=>confirmAddCol(),'mc-title':'mc-desc','cat-name-inp':()=>confirmSaveCat()};
+      const next=map[id]; if(typeof next==='function') next(); else if(next) document.getElementById(next)?.focus();
+    });
+  });
   render();
+  syncTrashBadge();
 });
-
-function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
 </script>
-
 </body>
 </html>
