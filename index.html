@@ -247,13 +247,73 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .ativ-item:hover .ativ-edit-btn{opacity:1}
 .ativ-edit-btn:hover{background:var(--gray1);color:var(--navy)}
 
+/* ════ DRAG & DROP ════ */
+/* handle de arrasto — pessoa */
+.drag-handle-col{cursor:grab;color:rgba(255,255,255,0.3);font-size:13px;padding:2px 4px;flex-shrink:0;line-height:1;user-select:none;transition:color .12s}
+.drag-handle-col:hover{color:rgba(255,255,255,0.8)}
+.pessoa-col.dragging-col{opacity:.35;outline:2px dashed var(--orange);outline-offset:2px}
+.pessoa-col.col-drag-over{outline:2px solid var(--orange);outline-offset:2px;background:rgba(245,131,31,0.04)}
+
+/* handle de arrasto — função */
+.drag-handle-func{cursor:grab;color:var(--gray3);font-size:12px;padding:2px 4px;flex-shrink:0;line-height:1;user-select:none;transition:color .12s}
+.drag-handle-func:hover{color:var(--navy)}
+.funcao-block.dragging-func{opacity:.35;outline:2px dashed var(--navy3);outline-offset:1px;border-radius:4px}
+.funcao-block.func-drag-over{outline:2px solid var(--navy);outline-offset:1px;border-radius:4px}
+
+/* atividade arrastável */
+.ativ-item{cursor:grab}
+.ativ-item.dragging-ativ{opacity:.35;outline:2px dashed var(--orange);outline-offset:1px}
+.ativ-item.ativ-drag-over{outline:2px solid var(--orange);outline-offset:1px;background:rgba(245,131,31,0.06)}
+/* zona de drop na funcao-body quando vazia */
+.funcao-body.func-body-over{background:rgba(43,74,122,0.06);outline:2px dashed var(--navy3);outline-offset:2px;border-radius:4px}
+
 @keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ════ RESPONSIVO MOBILE ════ */
+.hamburger{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px;border-radius:6px;flex-shrink:0}
+.hamburger span{display:block;width:20px;height:2px;background:var(--navy);border-radius:2px;transition:all .25s}
+.hamburger.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99}
+.sidebar-overlay.open{display:block}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(-100%);transition:transform .25s;z-index:100}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0}
+  .topbar{padding:0 14px;gap:8px}
+  .topbar-title{font-size:13px;gap:6px}
+  .hamburger{display:flex}
+  .topbar-right{gap:6px}
+  .btn-top{height:30px;padding:0 10px;font-size:10px}
+  .btn-top span,.btn-top-label{display:none}
+  .content{padding:14px 14px 0}
+  .stats-bar{gap:8px}
+  .stat-card{min-width:80px;padding:8px 12px}
+  .stat-value{font-size:17px}
+  .board-scroll{padding:0 14px 80px}
+  .pessoa-col{width:260px}
+  .float-scroll-wrap{left:0}
+  .page-inner{padding:16px}
+  .add-cat-box{max-width:100%}
+  /* edit buttons sempre visíveis no mobile (sem hover) */
+  .pessoa-icon-btn{opacity:1}
+  .pessoa-edit-btn{opacity:1}
+  .k-card-del{opacity:1}
+  .ativ-del{opacity:1}
+  .ativ-edit-btn{opacity:1}
+  .funcao-head-right{opacity:1}
+}
 </style>
 </head>
 <body>
 
+<!-- overlay mobile -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <!-- SIDEBAR -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-text">GPC<span>.</span></div>
     <div class="sidebar-tag">Gestão de Atividades</div>
@@ -280,6 +340,9 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 <!-- MAIN -->
 <div class="main">
   <div class="topbar">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()">
+      <span></span><span></span><span></span>
+    </button>
     <div class="topbar-title">
       <span class="dot-live"></span>
       <span id="topbar-title-text">Divisão de Atividades</span>
@@ -660,6 +723,7 @@ function showView(v){
        <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>`
     : `<span id="conn-status"></span>`;
   if(v==='trash') renderTrash();
+  if(window.innerWidth<=768) closeSidebar();
 }
 
 // ════════════════════════════════════════
@@ -676,7 +740,13 @@ function render(){
     col.className='pessoa-col';
     col.id='col-'+p.id;
     col.innerHTML=`
-      <div class="pessoa-head">
+      <div class="pessoa-head" draggable="true"
+        ondragstart="colDragStart(event,'${p.id}')"
+        ondragend="colDragEnd(event,'${p.id}')"
+        ondragover="colDragOver(event,'${p.id}')"
+        ondragleave="colDragLeave(event,'${p.id}')"
+        ondrop="colDrop(event,'${p.id}')">
+        <span class="drag-handle-col" title="Arrastar pessoa">⠿</span>
         <div class="pessoa-head-info" style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px">
             <div class="pessoa-name" id="pname-${p.id}">${esc(p.name)}</div>
@@ -687,18 +757,17 @@ function render(){
             <button class="edit-ok" onclick="confirmEditPessoa('${p.id}')">✓</button>
             <button class="edit-cancel" onclick="cancelEditPessoa('${p.id}')">✕</button>
           </div>
-          ${p.role?`<div class="pessoa-role" id="prole-${p.id}">${esc(p.role)}</div>`:`<div class="pessoa-role" id="prole-${p.id}" style="font-style:italic;opacity:.5">sem cargo</div>`}
+          ${p.role?`<div class="pessoa-role" id="prole-${p.id}">${esc(p.role)}</div>`:``}
           <div class="edit-inline dark" id="proleedit-${p.id}" style="display:none">
             <input id="pedit-role-${p.id}" value="${esc(p.role)}" placeholder="Cargo / Setor" style="font-size:10px" />
           </div>
         </div>
         <div class="pessoa-head-right">
-          <span class="pessoa-badge">${p.funcoes.length} função${p.funcoes.length!==1?'es':''} · ${totalAtiv} ativ.</span>
           <button class="pessoa-icon-btn del" onclick="trashPessoa('${p.id}')" title="Mover para lixeira">🗑</button>
         </div>
       </div>
       <div class="pessoa-accent"></div>
-      <div class="pessoa-body" id="pbody-${p.id}">
+      <div class="pessoa-body" id="pbody-${p.id}" ondragover="if(_dragFuncId){event.preventDefault();event.stopPropagation();}" ondrop="bodyPessoaDrop(event,'${p.id}')">
         ${p.funcoes.length===0
           ? `<div style="padding:18px 14px;font-size:11px;color:var(--gray3);text-align:center;line-height:1.7">Nenhuma função cadastrada.<br>Adicione abaixo.</div>`
           : p.funcoes.map(f=>funcaoHtml(p.id,f)).join('')}
@@ -734,7 +803,12 @@ function render(){
 
 function funcaoHtml(pessoaId, f){
   const atvHtml = f.atividades.map(a=>`
-    <div class="ativ-item" id="ativ-${a.id}">
+    <div class="ativ-item" id="ativ-${a.id}" draggable="true"
+      ondragstart="ativDragStart(event,'${a.id}','${f.id}','${pessoaId}')"
+      ondragend="ativDragEnd(event,'${a.id}')"
+      ondragover="ativDragOver(event,'${a.id}')"
+      ondragleave="ativDragLeave(event,'${a.id}')"
+      ondrop="ativDrop(event,'${a.id}','${f.id}','${pessoaId}')">
       <div class="ativ-dot"></div>
       <span class="ativ-text" id="atext-${a.id}">${esc(a.text)}</span>
       <div class="edit-inline ativ" id="aedit-${a.id}">
@@ -747,9 +821,15 @@ function funcaoHtml(pessoaId, f){
     </div>`).join('');
 
   return `
-    <div class="funcao-block" id="fb-${f.id}">
+    <div class="funcao-block" id="fb-${f.id}" draggable="true"
+      ondragstart="funcDragStart(event,'${f.id}','${pessoaId}')"
+      ondragend="funcDragEnd(event,'${f.id}')"
+      ondragover="funcDragOver(event,'${f.id}',event)"
+      ondragleave="funcDragLeave(event,'${f.id}')"
+      ondrop="funcDrop(event,'${f.id}','${pessoaId}')">
       <div class="funcao-head" onclick="toggleFuncao('${f.id}')">
         <div class="funcao-head-left">
+          <span class="drag-handle-func" title="Arrastar função" onclick="event.stopPropagation()">⠿</span>
           <span class="funcao-chevron open" id="fchev-${f.id}">▶</span>
           <span class="funcao-name" id="fname-${f.id}">${esc(f.name)}</span>
           <div class="edit-inline light" id="fedit-${f.id}" onclick="event.stopPropagation()">
@@ -764,7 +844,10 @@ function funcaoHtml(pessoaId, f){
           <button class="funcao-btn del" onclick="trashFuncao('${pessoaId}','${f.id}')" title="Lixeira">🗑</button>
         </div>
       </div>
-      <div class="funcao-body open" id="fbody-${f.id}">
+      <div class="funcao-body open" id="fbody-${f.id}"
+        ondragover="bodyDragOver(event,'${f.id}')"
+        ondragleave="bodyDragLeave(event,'${f.id}')"
+        ondrop="bodyDrop(event,'${f.id}','${pessoaId}')">
         ${f.atividades.length===0
           ? `<div class="funcao-empty">Nenhuma atividade.<br>Adicione abaixo.</div>`
           : atvHtml}
@@ -780,6 +863,202 @@ function funcaoHtml(pessoaId, f){
         </div>
       </div>
     </div>`;
+}
+
+// ════════════════════════════════════════
+// DRAG & DROP — COLUNAS (PESSOAS)
+// ════════════════════════════════════════
+let _dragColId = null;
+
+function colDragStart(e, pid){
+  // só inicia se o clique veio do handle ou do cabeçalho direto
+  _dragColId = pid;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('type','col');
+  setTimeout(()=>document.getElementById('col-'+pid)?.classList.add('dragging-col'),0);
+}
+function colDragEnd(e, pid){
+  _dragColId = null;
+  document.querySelectorAll('.pessoa-col').forEach(el=>{
+    el.classList.remove('dragging-col','col-drag-over');
+  });
+}
+function colDragOver(e, pid){
+  if(!_dragColId || _dragColId===pid) return;
+  if(e.dataTransfer.getData('type')==='func'||e.dataTransfer.getData('type')==='ativ') return;
+  e.preventDefault();
+  document.querySelectorAll('.pessoa-col').forEach(el=>el.classList.remove('col-drag-over'));
+  document.getElementById('col-'+pid)?.classList.add('col-drag-over');
+}
+function colDragLeave(e, pid){
+  const col=document.getElementById('col-'+pid);
+  if(col&&!col.contains(e.relatedTarget)) col.classList.remove('col-drag-over');
+}
+function colDrop(e, pid){
+  e.preventDefault();
+  document.querySelectorAll('.pessoa-col').forEach(el=>el.classList.remove('col-drag-over'));
+  if(!_dragColId || _dragColId===pid) return;
+  const fromIdx = pessoas.findIndex(p=>p.id===_dragColId);
+  const toIdx   = pessoas.findIndex(p=>p.id===pid);
+  if(fromIdx===-1||toIdx===-1) return;
+  const [moved] = pessoas.splice(fromIdx,1);
+  pessoas.splice(toIdx,0,moved);
+  _dragColId = null;
+  save(); render();
+}
+
+// ════════════════════════════════════════
+// DRAG & DROP — FUNÇÕES
+// ════════════════════════════════════════
+let _dragFuncId = null, _dragFuncPid = null;
+
+function funcDragStart(e, fid, pid){
+  _dragFuncId  = fid;
+  _dragFuncPid = pid;
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('type','func');
+  e.stopPropagation();
+  setTimeout(()=>document.getElementById('fb-'+fid)?.classList.add('dragging-func'),0);
+}
+function funcDragEnd(e, fid){
+  _dragFuncId = null; _dragFuncPid = null;
+  document.querySelectorAll('.funcao-block').forEach(el=>el.classList.remove('dragging-func','func-drag-over'));
+}
+function funcDragOver(e, fid){
+  if(!_dragFuncId || _dragFuncId===fid) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.funcao-block').forEach(el=>el.classList.remove('func-drag-over'));
+  document.getElementById('fb-'+fid)?.classList.add('func-drag-over');
+}
+function funcDragLeave(e, fid){
+  const el=document.getElementById('fb-'+fid);
+  if(el&&!el.contains(e.relatedTarget)) el.classList.remove('func-drag-over');
+}
+function funcDrop(e, fid, toPid){
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.funcao-block').forEach(el=>el.classList.remove('func-drag-over'));
+  if(!_dragFuncId||_dragFuncId===fid) return;
+
+  const srcP = pessoas.find(p=>p.id===_dragFuncPid);
+  const dstP = pessoas.find(p=>p.id===toPid);
+  if(!srcP||!dstP) return;
+
+  const srcIdx = srcP.funcoes.findIndex(f=>f.id===_dragFuncId);
+  if(srcIdx===-1) return;
+  const [func] = srcP.funcoes.splice(srcIdx,1);
+
+  if(_dragFuncPid===toPid){
+    // mesma pessoa — reordena
+    const dstIdx = dstP.funcoes.findIndex(f=>f.id===fid);
+    dstP.funcoes.splice(dstIdx,0,func);
+  } else {
+    // outra pessoa — transfere na posição
+    const dstIdx = dstP.funcoes.findIndex(f=>f.id===fid);
+    dstP.funcoes.splice(dstIdx,0,func);
+  }
+  _dragFuncId=null; _dragFuncPid=null;
+  save(); render();
+}
+
+// drop no corpo da pessoa (área vazia) para adicionar função
+function bodyPessoaDrop(e, pid){
+  e.preventDefault();
+  if(!_dragFuncId) return;
+  const srcP = pessoas.find(p=>p.id===_dragFuncPid);
+  const dstP = pessoas.find(p=>p.id===pid);
+  if(!srcP||!dstP) return;
+  const idx = srcP.funcoes.findIndex(f=>f.id===_dragFuncId);
+  if(idx===-1) return;
+  const [func]=srcP.funcoes.splice(idx,1);
+  dstP.funcoes.push(func);
+  _dragFuncId=null; _dragFuncPid=null;
+  save(); render();
+}
+
+// ════════════════════════════════════════
+// DRAG & DROP — ATIVIDADES
+// ════════════════════════════════════════
+let _dragAtivId=null, _dragAtivFid=null, _dragAtivPid=null;
+
+function ativDragStart(e, aid, fid, pid){
+  _dragAtivId=aid; _dragAtivFid=fid; _dragAtivPid=pid;
+  e.dataTransfer.effectAllowed='move';
+  e.dataTransfer.setData('type','ativ');
+  e.stopPropagation();
+  setTimeout(()=>document.getElementById('ativ-'+aid)?.classList.add('dragging-ativ'),0);
+}
+function ativDragEnd(e, aid){
+  _dragAtivId=null; _dragAtivFid=null; _dragAtivPid=null;
+  document.querySelectorAll('.ativ-item').forEach(el=>el.classList.remove('dragging-ativ','ativ-drag-over'));
+  document.querySelectorAll('.funcao-body').forEach(el=>el.classList.remove('func-body-over'));
+}
+function ativDragOver(e, aid){
+  if(!_dragAtivId||_dragAtivId===aid) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.ativ-item').forEach(el=>el.classList.remove('ativ-drag-over'));
+  document.getElementById('ativ-'+aid)?.classList.add('ativ-drag-over');
+}
+function ativDragLeave(e, aid){
+  const el=document.getElementById('ativ-'+aid);
+  if(el&&!el.contains(e.relatedTarget)) el.classList.remove('ativ-drag-over');
+}
+function ativDrop(e, aid, toFid, toPid){
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.ativ-item').forEach(el=>el.classList.remove('ativ-drag-over'));
+  if(!_dragAtivId||_dragAtivId===aid) return;
+
+  const srcP=pessoas.find(p=>p.id===_dragAtivPid);
+  const dstP=pessoas.find(p=>p.id===toPid);
+  if(!srcP||!dstP) return;
+  const srcF=srcP.funcoes.find(f=>f.id===_dragAtivFid);
+  const dstF=dstP.funcoes.find(f=>f.id===toFid);
+  if(!srcF||!dstF) return;
+
+  const srcIdx=srcF.atividades.findIndex(a=>a.id===_dragAtivId);
+  if(srcIdx===-1) return;
+  const [ativ]=srcF.atividades.splice(srcIdx,1);
+
+  const dstIdx=dstF.atividades.findIndex(a=>a.id===aid);
+  // insere antes ou depois dependendo da posição vertical do mouse
+  const el=document.getElementById('ativ-'+aid);
+  const rect=el?el.getBoundingClientRect():null;
+  const insertAfter = rect && e.clientY > rect.top + rect.height/2;
+  dstF.atividades.splice(insertAfter ? dstIdx+1 : dstIdx, 0, ativ);
+
+  _dragAtivId=null; _dragAtivFid=null; _dragAtivPid=null;
+  save(); render();
+}
+
+// drop em funcao-body vazio (para transferir atividade para outra função)
+function bodyDragOver(e, fid){
+  if(!_dragAtivId) return;
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.funcao-body').forEach(el=>el.classList.remove('func-body-over'));
+  document.getElementById('fbody-'+fid)?.classList.add('func-body-over');
+}
+function bodyDragLeave(e, fid){
+  const el=document.getElementById('fbody-'+fid);
+  if(el&&!el.contains(e.relatedTarget)) el.classList.remove('func-body-over');
+}
+function bodyDrop(e, fid, pid){
+  e.preventDefault(); e.stopPropagation();
+  document.querySelectorAll('.funcao-body').forEach(el=>el.classList.remove('func-body-over'));
+  if(!_dragAtivId||_dragAtivFid===fid) return;
+
+  const srcP=pessoas.find(p=>p.id===_dragAtivPid);
+  const dstP=pessoas.find(p=>p.id===pid);
+  if(!srcP||!dstP) return;
+  const srcF=srcP.funcoes.find(f=>f.id===_dragAtivFid);
+  const dstF=dstP.funcoes.find(f=>f.id===fid);
+  if(!srcF||!dstF) return;
+
+  const idx=srcF.atividades.findIndex(a=>a.id===_dragAtivId);
+  if(idx===-1) return;
+  const [ativ]=srcF.atividades.splice(idx,1);
+  dstF.atividades.push(ativ);
+
+  _dragAtivId=null; _dragAtivFid=null; _dragAtivPid=null;
+  save(); render();
 }
 
 // ════════════════════════════════════════
@@ -1090,7 +1369,21 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open')); });
 
 // ════════════════════════════════════════
-// KEYBOARD SHORTCUTS
+// SIDEBAR MOBILE
+// ════════════════════════════════════════
+function toggleSidebar(){
+  const s=document.getElementById('sidebar');
+  const o=document.getElementById('sidebar-overlay');
+  const h=document.getElementById('hamburger');
+  s.classList.toggle('open');
+  o.classList.toggle('open');
+  h.classList.toggle('open');
+}
+function closeSidebar(){
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
+  document.getElementById('hamburger').classList.remove('open');
+}
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('mp-name').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('mp-role').focus(); });
