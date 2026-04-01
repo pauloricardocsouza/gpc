@@ -247,6 +247,43 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .ativ-item:hover .ativ-edit-btn{opacity:1}
 .ativ-edit-btn:hover{background:var(--gray1);color:var(--navy)}
 
+/* ════ ANÁLISE ════ */
+.analise-wrap{padding:24px;max-width:900px}
+.analise-header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.analise-title{font-size:15px;font-weight:700;color:var(--navy)}
+.analise-sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.analise-select-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.analise-select{border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;font-family:'Sora',sans-serif;color:var(--text);background:#fff;outline:none;cursor:pointer;min-width:180px}
+.analise-select:focus{border-color:var(--navy)}
+.analise-tipo-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px}
+.analise-tipo{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--gray2);background:#fff;color:var(--muted);font-family:'Sora',sans-serif;transition:all .15s}
+.analise-tipo:hover{border-color:var(--navy);color:var(--navy)}
+.analise-tipo.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-analisar{height:36px;padding:0 20px;background:var(--navy);color:#fff;border:none;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Sora',sans-serif;transition:all .15s;display:flex;align-items:center;gap:8px}
+.btn-analisar:hover{background:var(--navy3)}
+.btn-analisar:disabled{opacity:.5;cursor:not-allowed}
+.analise-loading{display:none;align-items:center;gap:10px;padding:20px;font-size:13px;color:var(--muted)}
+.analise-loading.show{display:flex}
+.analise-spinner{width:20px;height:20px;border:2px solid var(--gray2);border-top-color:var(--navy);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.analise-result{display:none}
+.analise-result.show{display:block}
+.analise-card{background:#fff;border:1px solid var(--gray2);border-radius:var(--radius);padding:20px 24px;margin-bottom:14px;box-shadow:var(--shadow)}
+.analise-card-title{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.analise-card-title .badge-tipo{font-size:9px;font-weight:700;padding:2px 8px;border-radius:8px;font-family:'JetBrains Mono',monospace;background:var(--gray1);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.analise-card-title .badge-tipo.orange{background:rgba(245,131,31,0.12);color:#C05A08}
+.analise-card-title .badge-tipo.red{background:var(--danger2);color:var(--danger)}
+.analise-card-title .badge-tipo.green{background:var(--green2);color:var(--green)}
+.analise-card-title .badge-tipo.blue{background:rgba(43,74,122,0.1);color:var(--navy)}
+.analise-card-title .badge-tipo.amber{background:var(--amber2);color:var(--amber)}
+.analise-body{font-size:13px;color:var(--text);line-height:1.75;white-space:pre-wrap}
+.analise-body strong{font-weight:600;color:var(--navy)}
+.analise-error{background:var(--danger2);border:1px solid var(--danger);border-radius:var(--radius-sm);padding:14px 18px;font-size:12px;color:var(--danger);display:none}
+.analise-error.show{display:block}
+.analise-person-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:10px;background:var(--gray1);border:1px solid var(--gray2);font-size:11px;font-weight:600;color:var(--navy);margin:3px}
+.analise-person-chip.selected{background:var(--navy);color:#fff;border-color:var(--navy)}
+.analise-chips-row{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px}
+
 /* ════ DRAG & DROP ════ */
 /* handle de arrasto — pessoa */
 .drag-handle-col{cursor:grab;color:rgba(255,255,255,0.3);font-size:13px;padding:2px 4px;flex-shrink:0;line-height:1;user-select:none;transition:color .12s}
@@ -322,6 +359,9 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
   <div class="nav-item active" id="nav-board" onclick="showView('board')">
     <span class="nav-icon">📋</span> Divisão de Tarefas
   </div>
+  <div class="nav-item" id="nav-analise" onclick="showView('analise')">
+    <span class="nav-icon">🧠</span> Análise
+  </div>
   <div class="nav-item" id="nav-trash" onclick="showView('trash')">
     <span class="nav-icon">🗑️</span> Lixeira
     <span class="nav-badge" id="trash-badge" style="display:none">0</span>
@@ -396,6 +436,45 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
         <button class="btn-top danger" id="btn-empty-trash" style="display:none" onclick="emptyTrash()">🗑️ Esvaziar</button>
       </div>
       <div id="trash-content"></div>
+    </div>
+  </div>
+
+  <!-- PANEL: ANÁLISE -->
+  <div class="panel" id="panel-analise">
+    <div class="analise-wrap">
+      <div class="analise-header">
+        <div>
+          <div class="analise-title">🧠 Análise Inteligente</div>
+          <div class="analise-sub">Selecione uma ou mais pessoas e o tipo de análise que deseja gerar.</div>
+        </div>
+      </div>
+
+      <!-- Seleção de pessoas -->
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Pessoas a analisar</div>
+      <div class="analise-chips-row" id="analise-chips"></div>
+
+      <!-- Tipo de análise -->
+      <div style="font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Tipo de análise</div>
+      <div class="analise-tipo-row" id="analise-tipos">
+        <button class="analise-tipo active" data-tipo="geral" onclick="selectTipo(this)">Visão geral</button>
+        <button class="analise-tipo" data-tipo="cargo" onclick="selectTipo(this)">Adequação ao cargo</button>
+        <button class="analise-tipo" data-tipo="conflitos" onclick="selectTipo(this)">Atividades conflitantes</button>
+        <button class="analise-tipo" data-tipo="sobrecarga" onclick="selectTipo(this)">Sobrecarga / lacunas</button>
+        <button class="analise-tipo" data-tipo="insights" onclick="selectTipo(this)">Insights estratégicos</button>
+        <button class="analise-tipo" data-tipo="questionamentos" onclick="selectTipo(this)">Questionamentos</button>
+        <button class="analise-tipo" data-tipo="grupo" onclick="selectTipo(this)">Análise do grupo</button>
+      </div>
+
+      <button class="btn-analisar" id="btn-analisar" onclick="rodarAnalise()">
+        <span>🧠</span> Gerar análise
+      </button>
+
+      <div class="analise-loading" id="analise-loading">
+        <div class="analise-spinner"></div>
+        <span id="analise-loading-txt">Analisando com IA...</span>
+      </div>
+      <div class="analise-error" id="analise-error"></div>
+      <div class="analise-result" id="analise-result"></div>
     </div>
   </div>
 </div>
@@ -716,13 +795,14 @@ function showView(v){
   document.getElementById('panel-'+v).classList.add('active');
   document.getElementById('nav-'+v).classList.add('active');
   document.getElementById('topbar-title-text').textContent=
-    {board:'Divisão de Atividades',trash:'Lixeira'}[v]||'';
+    {board:'Divisão de Atividades',trash:'Lixeira',analise:'Análise Inteligente'}[v]||'';
   document.getElementById('topbar-actions').innerHTML = v==='board'
     ? `<span id="conn-status"></span>
        <button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
        <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>`
     : `<span id="conn-status"></span>`;
-  if(v==='trash') renderTrash();
+  if(v==='trash')   renderTrash();
+  if(v==='analise') renderAnalisePanel();
   if(window.innerWidth<=768) closeSidebar();
 }
 
@@ -1450,6 +1530,127 @@ function initFloatScroll(){
 }
 
 document.addEventListener('DOMContentLoaded', initFloatScroll);
+
+// ════════════════════════════════════════
+// PAINEL DE ANÁLISE
+// ════════════════════════════════════════
+const GPC_CONTEXT = `Você é um consultor especialista em gestão organizacional analisando o Grupo Pinto Cerqueira (GPC), um grupo varejista/atacadista do nordeste do Brasil com múltiplas unidades (ATP Varejo, ATP Atacado, Cestão Inhambupe, entre outras).
+
+Contexto dos gestores:
+- Carlos: Diretor Presidente do grupo. Responsável pela visão estratégica global.
+- Sandra: Diretora do Varejo. Responsável pelas operações de varejo do grupo.
+- Karla: Diretora Administrativo-Financeira. Gestora das áreas ADM e Financeiro do GPC.
+- Pedro: Gerente Financeiro e Gestor do Posto de Combustível. Nível tático/operacional financeiro.
+- Vitor: Gerente Comercial, focado em compras. Gestão de fornecedores, negociações e abastecimento.
+- Lucas: Responsável por Logística e Vendas do Atacado. Gestão de equipe comercial e operações logísticas.
+- Derivaldo: Sócio-fundador.
+- Daniel: Sócio-fundador.`;
+
+const TIPO_PROMPTS = {
+  geral:`Faça uma análise completa desta pessoa: cargo sugerido com base nas atividades reais, pontos fortes da distribuição de funções, e um resumo executivo do perfil de atuação. Seja direto e objetivo.`,
+  cargo:`Compare as atividades listadas com o cargo/perfil esperado desta pessoa no GPC. Identifique: (1) atividades bem alinhadas ao cargo, (2) atividades que fogem do escopo esperado para o nível hierárquico, (3) se o cargo atual reflete adequadamente o que a pessoa executa na prática. Sugira um cargo mais preciso se necessário.`,
+  conflitos:`Identifique atividades conflitantes, sobrepostas ou incompatíveis com o perfil/cargo desta pessoa. Explique por que cada conflito existe e quais riscos organizacionais ele representa (acúmulo indevido, conflito de interesses, falta de segregação de funções, etc.).`,
+  sobrecarga:`Analise o volume e a diversidade de atividades desta pessoa. Identifique: (1) sinais de sobrecarga operacional, (2) atividades que deveriam ser delegadas, (3) lacunas — funções importantes que não aparecem nas atividades listadas mas deveriam estar presentes dado o cargo.`,
+  insights:`Gere insights estratégicos sobre esta pessoa com base nas atividades: O que a distribuição de atividades revela sobre a cultura organizacional do GPC? Quais decisões de gestão ou reestruturação seriam recomendadas? Há oportunidades de ganho de eficiência ou realocação de responsabilidades?`,
+  questionamentos:`Gere entre 5 e 8 perguntas provocadoras e estratégicas para discutir com esta pessoa ou sobre ela em reunião de liderança. As perguntas devem questionar prioridades, delegação, desenvolvimento de equipe, alinhamento com o cargo e sustentabilidade do modelo atual.`,
+  grupo:`Analise o grupo de pessoas selecionadas em conjunto como equipe de liderança do GPC. Identifique: (1) gaps de cobertura — áreas importantes sem responsável claro, (2) sobreposições entre as funções de diferentes pessoas, (3) desequilíbrios de carga, (4) sugestões de redistribuição de responsabilidades para fortalecer o grupo como um todo.`
+};
+
+let analiseSelectedPids = new Set();
+let analiseTipoAtual = 'geral';
+
+function renderAnalisePanel(){
+  const chips = document.getElementById('analise-chips');
+  if(!chips) return;
+  chips.innerHTML = '';
+  pessoas.forEach(p=>{
+    const chip = document.createElement('span');
+    chip.className = 'analise-person-chip' + (analiseSelectedPids.has(p.id)?' selected':'');
+    chip.textContent = p.name;
+    chip.onclick = ()=>{
+      if(analiseSelectedPids.has(p.id)) analiseSelectedPids.delete(p.id);
+      else analiseSelectedPids.add(p.id);
+      chip.classList.toggle('selected');
+    };
+    chips.appendChild(chip);
+  });
+}
+
+function selectTipo(el){
+  document.querySelectorAll('.analise-tipo').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  analiseTipoAtual = el.dataset.tipo;
+}
+
+function buildAnalisePrompt(){
+  const selected = pessoas.filter(p=>analiseSelectedPids.has(p.id));
+  if(!selected.length) return null;
+  let dadosPessoas = selected.map(p=>{
+    const funcs = p.funcoes.map(f=>{
+      const ativs = f.atividades.map(a=>`    • ${a.text}`).join('\n');
+      return `  Função: ${f.name}\n${ativs||'    (sem atividades)'}`;
+    }).join('\n');
+    return `PESSOA: ${p.name}${p.role?' ('+p.role+')':''}\n${funcs||'  (sem funções cadastradas)'}`;
+  }).join('\n\n---\n\n');
+  const instrucao = TIPO_PROMPTS[analiseTipoAtual]||TIPO_PROMPTS.geral;
+  return `${GPC_CONTEXT}\n\n========================================\nDADOS DO BOARD:\n========================================\n\n${dadosPessoas}\n\n========================================\nINSTRUÇÃO:\n========================================\n${instrucao}\n\nIMPORTANTE: Use português do Brasil. Organize em seções com títulos em negrito. Seja específico citando atividades reais. Se a lista for incompleta, mencione isso.`;
+}
+
+async function rodarAnalise(){
+  const selected = pessoas.filter(p=>analiseSelectedPids.has(p.id));
+  if(!selected.length){ alert('Selecione ao menos uma pessoa para analisar.'); return; }
+  const prompt = buildAnalisePrompt();
+  if(!prompt) return;
+
+  const btn=document.getElementById('btn-analisar');
+  const loading=document.getElementById('analise-loading');
+  const result=document.getElementById('analise-result');
+  const error=document.getElementById('analise-error');
+  const loadingTxt=document.getElementById('analise-loading-txt');
+  const tipoLabels={geral:'Visão geral',cargo:'Adequação ao cargo',conflitos:'Atividades conflitantes',sobrecarga:'Sobrecarga / lacunas',insights:'Insights estratégicos',questionamentos:'Questionamentos',grupo:'Análise do grupo'};
+  const badgeClasses={geral:'blue',cargo:'green',conflitos:'red',sobrecarga:'amber',insights:'orange',questionamentos:'blue',grupo:'blue'};
+
+  btn.disabled=true;
+  loading.classList.add('show');
+  result.classList.remove('show');
+  error.classList.remove('show');
+  result.innerHTML='';
+  loadingTxt.textContent=`Analisando ${selected.map(p=>p.name).join(', ')}...`;
+
+  try{
+    const res = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1500,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const text = data.content?.[0]?.text||'';
+    const html = text
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/^#{1,3}\s+(.+)$/gm,'<strong>$1</strong>')
+      .split('\n').join('<br>');
+    result.innerHTML=`
+      <div class="analise-card" style="margin-top:20px">
+        <div class="analise-card-title">
+          ${selected.map(p=>p.name).join(', ')}
+          <span class="badge-tipo ${badgeClasses[analiseTipoAtual]}">${tipoLabels[analiseTipoAtual]}</span>
+        </div>
+        <div class="analise-body">${html}</div>
+      </div>`;
+    result.classList.add('show');
+  }catch(err){
+    error.textContent=`Erro ao gerar análise: ${err.message}`;
+    error.classList.add('show');
+  }finally{
+    btn.disabled=false;
+    loading.classList.remove('show');
+  }
+}
 
 </script>
 </body>
