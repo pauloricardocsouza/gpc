@@ -783,6 +783,13 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .org-title-edit{background:transparent;border:none;font-size:15px;font-weight:600;color:var(--text);outline:none;flex:1;min-width:0;font-family:'Sora',sans-serif}
 .orgpanel .org-title-edit:focus{background:var(--gray1);padding:3px 8px;border-radius:6px}
 .orgpanel .org-title-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;flex-shrink:0}
+.orgpanel .org-sync-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:10px;background:var(--gray1);font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);font-weight:500;flex-shrink:0}
+.orgpanel .org-sync-badge .sync-dot{width:6px;height:6px;border-radius:50%;background:var(--gray3);transition:background .2s}
+.orgpanel .org-sync-badge.online{color:var(--green3,var(--green));background:var(--green2)}
+.orgpanel .org-sync-badge.online .sync-dot{background:var(--green);animation:pulseDot 2s infinite}
+.orgpanel .org-sync-badge.saving{color:var(--amber);background:var(--amber2)}
+.orgpanel .org-sync-badge.saving .sync-dot{background:var(--orange);animation:pulseDot .8s infinite}
+@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.4}}
 .orgpanel .org-btn-icon{width:32px;height:32px;border-radius:6px;border:1px solid var(--gray2);background:#fff;cursor:pointer;font-size:14px;color:var(--navy);display:flex;align-items:center;justify-content:center;transition:all .12s}
 .orgpanel .org-btn-icon:hover{background:var(--gray1);border-color:var(--navy)}
 .orgpanel .org-sep{width:1px;height:20px;background:var(--gray2);margin:0 2px}
@@ -946,6 +953,10 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
         <span class="org-dot"></span>
         <input class="org-title-edit" id="org-title-edit" placeholder="Nome do organograma…" onchange="ORG.renameCurrentWorkspace(this.value)">
         <span class="org-title-sub" id="org-node-count">0 cargos</span>
+        <span class="org-sync-badge" id="org-sync-badge" title="Status de sincronização">
+          <span class="sync-dot"></span>
+          <span class="sync-label">offline</span>
+        </span>
       </div>
     </div>
     <div class="org-topbar-right">
@@ -2792,12 +2803,151 @@ const state = {
   ui: {sidebarCollapsed:false},
 };
 
+// ═══ Sincronização Firebase ═══
+let _fbListenerInit = false;
+let _suppressSave = false;   // evita loop: quando o Firebase envia atualização, não re-salva
+let _saveDebounceTimer = null;
+const _pendingWsSaves = new Set();
+
 function saveState(){
+  // Salvamento local imediato (cache offline)
   const toSave={workspaces:state.workspaces,activeWsId:state.activeWsId,ui:state.ui};
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); }
   catch(e){ toast('Falha ao salvar localmente','error'); }
   notifyParent();
+
+  // Sincronização remota debounced
+  if(_suppressSave) return;
+  if(typeof db === 'undefined' || !db) return;
+
+  // Marca todos os workspaces ativos para re-envio
+  (state.workspaces||[]).forEach(ws => _pendingWsSaves.add(ws.id));
+
+  clearTimeout(_saveDebounceTimer);
+  _saveDebounceTimer = setTimeout(flushWsToFirebase, 800);
 }
+
+function flushWsToFirebase(){
+  if(typeof db === 'undefined' || !db) return;
+  const toSync = Array.from(_pendingWsSaves);
+  _pendingWsSaves.clear();
+  updateSyncBadge('saving');
+  let pending = toSync.length;
+  toSync.forEach(wsId => {
+    const ws = state.workspaces.find(w=>w.id===wsId);
+    if(!ws){ if(--pending<=0) updateSyncBadge('online'); return; }
+    const payload = {
+      id: ws.id,
+      name: ws.name,
+      meta: ws.meta || {},
+      nodes: ws.nodes || [],
+      createdAt: ws.createdAt || Date.now(),
+      updatedAt: Date.now(),
+      view: ws.view || {tx:0,ty:0,scale:1}
+    };
+    try {
+      db.ref('organogramas/' + ws.id).set(payload)
+        .then(()=>{ if(--pending<=0) updateSyncBadge('online'); })
+        .catch(e => { console.warn('FB save err:', e); if(--pending<=0) updateSyncBadge('online'); });
+    } catch(e){
+      console.warn('FB save exception:', e);
+      if(--pending<=0) updateSyncBadge('online');
+    }
+  });
+}
+
+function updateSyncBadge(status){
+  const el = document.getElementById('org-sync-badge');
+  if(!el) return;
+  const label = el.querySelector('.sync-label');
+  el.classList.remove('online','saving');
+  if(status === 'online'){ el.classList.add('online'); if(label) label.textContent = 'sincronizado'; }
+  else if(status === 'saving'){ el.classList.add('saving'); if(label) label.textContent = 'salvando…'; }
+  else if(status === 'offline'){ if(label) label.textContent = 'offline'; }
+}
+
+function deleteWorkspaceRemote(id){
+  if(typeof db === 'undefined' || !db) return;
+  try { db.ref('organogramas/' + id).remove(); } catch(e){ console.warn(e); }
+}
+
+function initFirebaseSync(){
+  if(_fbListenerInit) return;
+  if(typeof db === 'undefined' || !db){
+    // Reagenda — Firebase pode ainda estar carregando
+    setTimeout(initFirebaseSync, 500);
+    return;
+  }
+  _fbListenerInit = true;
+
+  try {
+    db.ref('organogramas').on('value', snap => {
+      const remote = snap.val() || {};
+      const remoteIds = Object.keys(remote);
+
+      // MIGRAÇÃO: se Firebase está vazio mas temos dados locais, fazer push inicial
+      if(!remoteIds.length && state.workspaces.length){
+        state.workspaces.forEach(ws => {
+          try {
+            db.ref('organogramas/' + ws.id).set({
+              id: ws.id, name: ws.name, meta: ws.meta || {},
+              nodes: ws.nodes || [], createdAt: ws.createdAt || Date.now(),
+              updatedAt: ws.updatedAt || Date.now(),
+              view: ws.view || {tx:0,ty:0,scale:1}
+            });
+          } catch(e){}
+        });
+        return;
+      }
+
+      // Atualização: reconciliar estado local com o Firebase
+      _suppressSave = true;
+      const wasActive = state.activeWsId;
+      const prevSelectedNode = (typeof selectedNodeId !== 'undefined') ? selectedNodeId : null;
+
+      state.workspaces = remoteIds.map(id => {
+        const r = remote[id];
+        return {
+          id: r.id || id,
+          name: r.name || 'Sem nome',
+          meta: r.meta || {},
+          nodes: Array.isArray(r.nodes) ? r.nodes : [],
+          createdAt: r.createdAt || Date.now(),
+          updatedAt: r.updatedAt || Date.now(),
+          view: r.view || {tx:0,ty:0,scale:1}
+        };
+      });
+
+      // Mantém active se ainda existir
+      if(wasActive && state.workspaces.find(w=>w.id===wasActive)){
+        state.activeWsId = wasActive;
+      } else if(state.workspaces.length){
+        state.activeWsId = state.workspaces[0].id;
+      } else {
+        state.activeWsId = null;
+      }
+
+      // Salva local (cache) sem re-enviar
+      try{
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          workspaces:state.workspaces, activeWsId:state.activeWsId, ui:state.ui
+        }));
+      } catch(e){}
+
+      // Re-renderiza se o painel estiver visível
+      if(document.getElementById('panel-organograma') && document.getElementById('panel-organograma').classList.contains('active')){
+        try { render(); } catch(e){}
+      }
+      notifyParent();
+      _suppressSave = false;
+      updateSyncBadge('online');
+    });
+  } catch(e){
+    console.warn('Firebase organogramas listener falhou, modo offline:', e);
+    updateSyncBadge('offline');
+  }
+}
+
 function notifyParent(){
   // Notifica o index que o estado mudou — index atualiza o menu
   if (typeof window.onOrgStateChange === 'function') {
@@ -2879,6 +3029,7 @@ function deleteWorkspace(id){
     state.activeWsId = state.workspaces.length? state.workspaces[0].id : null;
   }
   saveState(); renderSidebar(); render();
+  deleteWorkspaceRemote(id);
 }
 function switchWorkspace(id){
   const ws=state.workspaces.find(w=>w.id===id);
@@ -5159,7 +5310,11 @@ function applySidebarCollapsed(){
 /* ========= BOOT ========= */
 function boot(){
   const loaded=loadState();
-  if(!loaded || !state.workspaces.length){
+  // Só cria exemplo se:
+  // 1) Não tem nada local
+  // 2) E Firebase não está disponível (senão esperamos o listener puxar)
+  const fbAvailable = (typeof db !== 'undefined') && db;
+  if((!loaded || !state.workspaces.length) && !fbAvailable){
     // cria organograma inicial de exemplo
     const ws=newWorkspace('Exemplo — Grupo Pinto Cerqueira','Grupo Pinto Cerqueira','Exemplo inicial — edite à vontade');
     const ceo=addNode({title:'Diretor-Presidente',person:'',dept:'Diretoria',color:'navy',shape:'rounded'});
@@ -5182,8 +5337,11 @@ function boot(){
       if(typeof redrawLinksOnly==='function') redrawLinksOnly();
     });
   }
-  // Notifica pai (em embed)
+  // Notifica pai
   setTimeout(notifyParent, 100);
+
+  // Inicia sincronização com Firebase (tenta até estar disponível)
+  initFirebaseSync();
 }
 // boot chamado pelo index ao abrir o painel
 
