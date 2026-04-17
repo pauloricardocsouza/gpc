@@ -446,7 +446,9 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
   background-size:20px 20px;
 }
 .orgpanel .canvas-wrap.panning{cursor:grabbing}
-.orgpanel .canvas-inner{position:absolute;top:0;left:0;transform-origin:0 0;will-change:transform}
+.orgpanel .canvas-inner{position:absolute;top:0;left:0;transform-origin:0 0}
+.orgpanel .canvas-inner.zooming{will-change:transform}
+.orgpanel .org-node{-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
 .orgpanel .canvas-svg{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
 .orgpanel .canvas-svg path.link{fill:none;stroke:var(--gray3);stroke-width:2;transition:stroke .15s}
 .orgpanel .canvas-svg path.link.highlighted{stroke:var(--orange);stroke-width:3}
@@ -468,6 +470,24 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .org-node.shape-diamond .node-body{transform:rotate(-45deg)}
 .orgpanel .org-node.shape-hexagon{border-radius:10px;clip-path:polygon(10% 0, 90% 0, 100% 50%, 90% 100%, 10% 100%, 0 50%)}
 .orgpanel .org-node.shape-circle{border-radius:50%;min-width:140px;min-height:140px;display:flex;align-items:center;justify-content:center;padding:14px}
+
+/* shape: roster (caixa com múltiplas pessoas lado a lado) */
+.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:720px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff}
+.orgpanel .org-node.shape-roster .roster-wrap{display:flex;align-items:stretch;gap:0}
+.orgpanel .org-node.shape-roster .roster-item{flex:1 1 0;padding:14px 16px;border-right:1px solid rgba(255,255,255,0.12);display:flex;flex-direction:column;gap:4px;min-width:0;text-align:center}
+.orgpanel .org-node.shape-roster .roster-item:last-child{border-right:0}
+.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.orgpanel .org-node.shape-roster .roster-empty{font-size:11px;color:rgba(255,255,255,0.4);font-style:italic;padding:18px 20px;text-align:center;width:100%}
+.orgpanel .org-node.shape-roster.selected{box-shadow:0 0 0 3px var(--orange),var(--shadow-md)}
+
+/* Editor do roster no inspector */
+.orgpanel .roster-editor{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.orgpanel .roster-row{display:grid;grid-template-columns:1fr 1.4fr auto;gap:6px;align-items:center}
+.orgpanel .roster-row input{height:30px;padding:0 8px;border:1px solid var(--gray2);border-radius:6px;font-size:11.5px;font-family:'Sora',sans-serif;outline:none;min-width:0}
+.orgpanel .roster-row input:focus{border-color:var(--navy)}
+.orgpanel .roster-row-del{width:26px;height:30px;border:1px solid var(--gray2);background:#fff;border-radius:6px;color:var(--muted);font-size:14px;cursor:pointer;line-height:1;padding:0}
+.orgpanel .roster-row-del:hover{background:var(--danger2);color:var(--danger);border-color:var(--danger)}
 
 /* node internals */
 .orgpanel .node-dept{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -3109,7 +3129,7 @@ const PALETTES = [
   {id:'gray',  border:'#8FA3BE', bg:'#FFFFFF', accent:'#8FA3BE', text:'#1A2E4A'},
 ];
 function getPalette(id){ return PALETTES.find(p=>p.id===id)||PALETTES[0]; }
-const SHAPES = ['rect','rounded','pill','hexagon','circle','diamond'];
+const SHAPES = ['rect','rounded','pill','hexagon','circle','diamond','roster'];
 const LINE_STYLES = ['solid','dashed','dotted'];
 
 /* ========= CRIAÇÃO DE NÓS ========= */
@@ -3126,6 +3146,9 @@ function makeNode(opts={}){
     notes:opts.notes||'',
     tags:opts.tags||[],
     image:opts.image||null,  // dataURL base64 (foto/logo do nó)
+    // people[] - usado quando shape='roster' (caixa com múltiplas pessoas lado a lado)
+    // cada item: { name, role }
+    people: opts.people || [],
     collapsed:false,
     x:opts.x,y:opts.y // posição manual opcional (null = auto-layout)
   };
@@ -3248,14 +3271,24 @@ function autoLayoutCurrent(){
 /* ========= RENDER: transform / pan / zoom ========= */
 let tx=0, ty=0, scale=1;
 const MIN_SCALE=0.25, MAX_SCALE=2.5;
+let _settleTimer = null;
 
 function applyTransform(){
   const inner=$('#org-canvas-inner');
+  if(!inner) return;
   inner.style.transform=`translate(${tx}px, ${ty}px) scale(${scale})`;
   $('#org-zoom-label').textContent=Math.round(scale*100)+'%';
   const ws=currentWs();
   if(ws){ ws.view={tx,ty,scale}; /* não salva a cada evento — só em saveState() chamados pontuais */ }
   renderMinimap();
+
+  // Nitidez em zoom: ativa "zooming" durante o movimento (usa composição GPU),
+  // depois remove para forçar re-rasterização nítida do texto na nova escala
+  inner.classList.add('zooming');
+  clearTimeout(_settleTimer);
+  _settleTimer = setTimeout(()=>{
+    inner.classList.remove('zooming');
+  }, 180);
 }
 function zoomBy(factor, center){
   const wrap=$('#org-canvas-wrap').getBoundingClientRect();
@@ -3677,8 +3710,29 @@ function buildNodeEl(n){
         <div class="node-title" style="color:${pal.text}">${escHtml(n.title)}</div>
         ${n.person?`<div class="node-person" style="color:${pal.text}"><span class="avatar">${initials(n.person)}</span><span class="name">${escHtml(n.person)}</span></div>`:''}
       </div>`;
+  } else if(n.shape==='roster'){
+    // caixa horizontal com múltiplas pessoas (ex.: fundadores, conselheiros)
+    const people = (n.people||[]);
+    // Quando escurece o fundo, força cores claras nos textos independente da paleta
+    div.style.background = pal.bg === '#fff' || pal.bg === '#FFF' ? 'var(--dark)' : pal.bg;
+    div.style.color = '#fff';
+    if(people.length){
+      div.innerHTML = `
+        <div class="roster-wrap">
+          ${people.map(p=>`
+            <div class="roster-item">
+              ${p.role?`<div class="roster-role" style="color:${pal.accent}">${escHtml(p.role)}</div>`:''}
+              <div class="roster-name">${escHtml(p.name||'(sem nome)')}</div>
+            </div>`).join('')}
+        </div>`;
+    } else {
+      div.innerHTML = `
+        <div class="roster-wrap">
+          <div class="roster-empty">Clique para editar e adicione pessoas</div>
+        </div>`;
+    }
   } else {
-    const showAccent = !['pill','circle','hexagon','diamond'].includes(n.shape);
+    const showAccent = !['pill','circle','hexagon','diamond','roster'].includes(n.shape);
     div.innerHTML=`
       ${showAccent?`<div class="node-accent" style="background:${pal.accent}"></div>`:''}
       ${n.image?`<img class="node-image${n.shape==='rect'?' square':''}" src="${n.image}" alt="">`:''}
@@ -3959,10 +4013,26 @@ function renderInspector(id){
         <label>Título do cargo</label>
         <input type="text" data-field="title" value="${escHtml(n.title)}" placeholder="Ex.: Diretor Financeiro">
       </div>
+      ${n.shape==='roster' ? `
+      <div class="field">
+        <label>Pessoas da caixa</label>
+        <div class="roster-editor" id="roster-editor">
+          ${(n.people||[]).map((p,i)=>`
+            <div class="roster-row" data-idx="${i}">
+              <input type="text" class="roster-inp-role" placeholder="Função (ex.: Sócio-fundador)" value="${escHtml(p.role||'')}">
+              <input type="text" class="roster-inp-name" placeholder="Nome" value="${escHtml(p.name||'')}">
+              <button type="button" class="roster-row-del" title="Remover">×</button>
+            </div>`).join('')}
+        </div>
+        <button type="button" class="org-btn-top" id="roster-add-btn">＋ Adicionar pessoa</button>
+        <div style="font-size:10px;color:var(--muted);margin-top:6px">Caixa com múltiplas pessoas (ex.: conselho, sócios, paritário).</div>
+      </div>
+      ` : `
       <div class="field">
         <label>Responsável (nome)</label>
         <input type="text" data-field="person" value="${escHtml(n.person)}" placeholder="Ex.: Maria Santos">
       </div>
+      `}
       <div class="field">
         <label>Departamento / área</label>
         <input type="text" data-field="dept" value="${escHtml(n.dept)}" placeholder="Ex.: Financeiro">
@@ -4099,7 +4169,19 @@ function renderInspector(id){
     }
   });
   panel.querySelectorAll('.shape-btn').forEach(b=>{
-    b.addEventListener('click',()=>{ snapshot(); n.shape=b.dataset.shape; saveState(); render(); renderInspector(n.id); });
+    b.addEventListener('click',()=>{
+      snapshot();
+      const newShape = b.dataset.shape;
+      // ao mudar para roster, migra o 'person' como primeira pessoa (se vazio)
+      if(newShape === 'roster' && (!n.people || !n.people.length)){
+        n.people = [];
+        if(n.person){
+          n.people.push({role: n.dept||'', name: n.person});
+        }
+      }
+      n.shape = newShape;
+      saveState(); render(); renderInspector(n.id);
+    });
   });
   panel.querySelectorAll('.swatch').forEach(b=>{
     b.addEventListener('click',()=>{ snapshot(); n.color=b.dataset.color; saveState(); render(); renderInspector(n.id); });
@@ -4113,6 +4195,51 @@ function renderInspector(id){
       snapshot(); n.tags.splice(i,1); saveState(); render(); renderInspector(n.id);
     });
   });
+
+  // === ROSTER EDITOR (quando shape === 'roster') ===
+  const addBtn = panel.querySelector('#roster-add-btn');
+  if(addBtn){
+    addBtn.addEventListener('click',()=>{
+      snapshot();
+      n.people = n.people || [];
+      n.people.push({role:'', name:''});
+      saveState(); render(); renderInspector(n.id);
+      // foco no primeiro input da linha recém-adicionada
+      setTimeout(()=>{
+        const rows = document.querySelectorAll('#roster-editor .roster-row');
+        const last = rows[rows.length-1];
+        if(last) last.querySelector('.roster-inp-role').focus();
+      }, 30);
+    });
+  }
+  panel.querySelectorAll('#roster-editor .roster-row').forEach(row=>{
+    const idx = +row.dataset.idx;
+    const inpRole = row.querySelector('.roster-inp-role');
+    const inpName = row.querySelector('.roster-inp-name');
+    const btnDel  = row.querySelector('.roster-row-del');
+    const syncLive = () => {
+      n.people[idx] = { role: inpRole.value, name: inpName.value };
+      // re-render somente o nó para feedback rápido
+      const existing=document.querySelector(`.org-node[data-id="${n.id}"]`);
+      if(existing){
+        const nw=buildNodeEl(n);
+        nw.style.left=existing.style.left;
+        nw.style.top=existing.style.top;
+        existing.replaceWith(nw);
+      }
+      currentWs().updatedAt = Date.now();
+    };
+    const commit = () => { saveState(); render(); };
+    inpRole.addEventListener('input', syncLive);
+    inpName.addEventListener('input', syncLive);
+    inpRole.addEventListener('change', commit);
+    inpName.addEventListener('change', commit);
+    btnDel.addEventListener('click',()=>{
+      snapshot();
+      n.people.splice(idx,1);
+      saveState(); render(); renderInspector(n.id);
+    });
+  });
   // Defer saveState para inputs que têm debounce implícito
 }
 
@@ -4124,6 +4251,7 @@ function shapeSvg(shape){
     case 'diamond': return `<svg viewBox="0 0 24 24"><polygon points="12,3 21,12 12,21 3,12"/></svg>`;
     case 'circle': return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>`;
     case 'hexagon': return `<svg viewBox="0 0 24 24"><polygon points="6,4 18,4 22,12 18,20 6,20 2,12"/></svg>`;
+    case 'roster': return `<svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="10" rx="2"/><line x1="9" y1="8" x2="9" y2="16" stroke="#fff" stroke-width="1"/><line x1="15" y1="8" x2="15" y2="16" stroke="#fff" stroke-width="1"/></svg>`;
   }
   return '';
 }
