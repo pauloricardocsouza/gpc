@@ -2830,6 +2830,10 @@ let _saveDebounceTimer = null;
 const _pendingWsSaves = new Set();
 
 function saveState(){
+  // Atualiza timestamp do workspace ativo (se existir) - essencial para o merge detectar mudanças locais
+  const ws = state.workspaces.find(w => w.id === state.activeWsId);
+  if(ws) ws.updatedAt = Date.now();
+
   // Salvamento local imediato (cache offline)
   const toSave={workspaces:state.workspaces,activeWsId:state.activeWsId,ui:state.ui};
   try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave)); }
@@ -2840,8 +2844,8 @@ function saveState(){
   if(_suppressSave) return;
   if(typeof db === 'undefined' || !db) return;
 
-  // Marca todos os workspaces ativos para re-envio
-  (state.workspaces||[]).forEach(ws => _pendingWsSaves.add(ws.id));
+  // Marca apenas o workspace ativo para re-envio (não todos)
+  if(ws) _pendingWsSaves.add(ws.id);
 
   clearTimeout(_saveDebounceTimer);
   _saveDebounceTimer = setTimeout(flushWsToFirebase, 800);
@@ -2853,6 +2857,7 @@ function flushWsToFirebase(){
   _pendingWsSaves.clear();
   updateSyncBadge('saving');
   let pending = toSync.length;
+  if(pending === 0){ updateSyncBadge('online'); return; }
   toSync.forEach(wsId => {
     const ws = state.workspaces.find(w=>w.id===wsId);
     if(!ws){ if(--pending<=0) updateSyncBadge('online'); return; }
@@ -2862,7 +2867,7 @@ function flushWsToFirebase(){
       meta: ws.meta || {},
       nodes: ws.nodes || [],
       createdAt: ws.createdAt || Date.now(),
-      updatedAt: Date.now(),
+      updatedAt: ws.updatedAt || Date.now(),  // mantém o updatedAt já definido em saveState
       view: ws.view || {tx:0,ty:0,scale:1}
     };
     try {
@@ -2920,18 +2925,22 @@ function initFirebaseSync(){
         return;
       }
 
-      // ═══ MERGE (não sobrescreve): preserva workspaces que só existem localmente ═══
-      // (ex.: recém-criados, aguardando o debounce enviar ao Firebase)
+      // ═══ MERGE INTELIGENTE ═══
+      // - Para cada workspace remoto: se o LOCAL é mais novo (mudanças pendentes
+      //   aguardando flush), preserva a versão local. Caso contrário, usa a remota.
+      // - Workspaces só-locais: preserva e re-agenda envio.
+      // - Workspaces só-remotos: adiciona normalmente.
       _suppressSave = true;
       const wasActive = state.activeWsId;
 
-      const localIds = new Set(state.workspaces.map(w=>w.id));
+      const localById = new Map(state.workspaces.map(w=>[w.id, w]));
       const merged = [];
+      let anyPendingFound = false;
 
-      // 1. Workspaces remotos — usa a versão remota
+      // 1. Percorre remotos
       remoteIds.forEach(id => {
         const r = remote[id];
-        merged.push({
+        const remoteWs = {
           id: r.id || id,
           name: r.name || 'Sem nome',
           meta: r.meta || {},
@@ -2939,15 +2948,36 @@ function initFirebaseSync(){
           createdAt: r.createdAt || Date.now(),
           updatedAt: r.updatedAt || Date.now(),
           view: r.view || {tx:0,ty:0,scale:1}
-        });
+        };
+        const local = localById.get(id);
+        if(local){
+          // Existe em ambos — compara updatedAt para decidir qual é a versão mais fresca
+          const localTs  = local.updatedAt  || 0;
+          const remoteTs = remoteWs.updatedAt || 0;
+          // Se local é >= remoto, há mudanças locais pendentes — mantém local e re-agenda envio
+          if(localTs >= remoteTs){
+            merged.push(local);
+            // só marca como pendente se REALMENTE for mais novo (evita loop infinito)
+            if(localTs > remoteTs){
+              _pendingWsSaves.add(id);
+              anyPendingFound = true;
+            }
+          } else {
+            // remoto é mais novo — aceita a versão remota
+            merged.push(remoteWs);
+          }
+        } else {
+          // só existe no remoto
+          merged.push(remoteWs);
+        }
       });
 
-      // 2. Workspaces locais que NÃO estão no remoto — preserva (são novos, ainda pendentes de envio)
+      // 2. Workspaces locais que NÃO estão no remoto (novos, ainda pendentes de envio)
       state.workspaces.forEach(localWs => {
         if(!remoteIds.has(localWs.id)){
           merged.push(localWs);
-          // garante que vão ser enviados no próximo flush
           _pendingWsSaves.add(localWs.id);
+          anyPendingFound = true;
         }
       });
 
