@@ -472,12 +472,15 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .org-node.shape-circle{border-radius:50%;min-width:140px;min-height:140px;display:flex;align-items:center;justify-content:center;padding:14px}
 
 /* shape: roster (caixa com múltiplas pessoas lado a lado) */
-.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:720px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff}
+.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:720px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff;border:2px solid var(--navy)}
+.orgpanel .org-node.shape-roster .roster-header{padding:10px 16px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.12)}
+.orgpanel .org-node.shape-roster .roster-header-dept{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px;opacity:.9}
+.orgpanel .org-node.shape-roster .roster-header-title{font-size:15px;font-weight:700;color:#fff;line-height:1.2}
 .orgpanel .org-node.shape-roster .roster-wrap{display:flex;align-items:stretch;gap:0}
-.orgpanel .org-node.shape-roster .roster-item{flex:1 1 0;padding:14px 16px;border-right:1px solid rgba(255,255,255,0.12);display:flex;flex-direction:column;gap:4px;min-width:0;text-align:center}
+.orgpanel .org-node.shape-roster .roster-item{flex:1 1 0;padding:12px 14px;border-right:1px solid rgba(255,255,255,0.12);display:flex;flex-direction:column;gap:3px;min-width:0;text-align:center}
 .orgpanel .org-node.shape-roster .roster-item:last-child{border-right:0}
-.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,0.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;color:#fff !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
 .orgpanel .org-node.shape-roster .roster-empty{font-size:11px;color:rgba(255,255,255,0.4);font-style:italic;padding:18px 20px;text-align:center;width:100%}
 .orgpanel .org-node.shape-roster.selected{box-shadow:0 0 0 3px var(--orange),var(--shadow-md)}
 
@@ -3767,11 +3770,18 @@ function buildNodeEl(n){
   } else if(n.shape==='roster'){
     // caixa horizontal com múltiplas pessoas (ex.: fundadores, conselheiros)
     const people = (n.people||[]);
-    // Quando escurece o fundo, força cores claras nos textos independente da paleta
-    div.style.background = pal.bg === '#fff' || pal.bg === '#FFF' ? 'var(--dark)' : pal.bg;
+    // Roster sempre usa fundo escuro para contraste máximo e legibilidade
+    div.style.background = 'var(--dark)';
     div.style.color = '#fff';
+    div.style.borderColor = pal.border;
+    const headerHtml = (n.title && n.title !== 'Novo Cargo') || n.dept ? `
+      <div class="roster-header">
+        ${n.dept ? `<div class="roster-header-dept" style="color:${pal.accent}">${escHtml(n.dept)}</div>` : ''}
+        ${n.title ? `<div class="roster-header-title">${escHtml(n.title)}</div>` : ''}
+      </div>` : '';
     if(people.length){
       div.innerHTML = `
+        ${headerHtml}
         <div class="roster-wrap">
           ${people.map(p=>`
             <div class="roster-item">
@@ -3781,6 +3791,7 @@ function buildNodeEl(n){
         </div>`;
     } else {
       div.innerHTML = `
+        ${headerHtml}
         <div class="roster-wrap">
           <div class="roster-empty">Clique para editar e adicione pessoas</div>
         </div>`;
