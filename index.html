@@ -31,7 +31,7 @@ body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-h
 .logo-text{font-size:18px;font-weight:700;color:#fff;letter-spacing:-.5px}
 .logo-text span{color:var(--orange)}
 .logo-img{width:100%;max-width:150px;height:auto;display:block;margin-bottom:4px}
-.sidebar-tag{font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--orange);text-transform:uppercase;margin-top:5px}
+.sidebar-tag{font-size:9px;font-weight:600;letter-spacing:.12em;color:var(--orange);text-transform:uppercase;margin-top:5px;text-align:center}
 .sidebar-section{font-size:9px;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,0.28);text-transform:uppercase;padding:16px 20px 6px;flex-shrink:0}
 .nav-item{display:flex;align-items:center;gap:10px;padding:9px 20px;color:rgba(255,255,255,0.55);cursor:pointer;font-size:12.5px;border-left:2px solid transparent;transition:all .15s;user-select:none;flex-shrink:0}
 .nav-item:hover{color:#fff;background:rgba(255,255,255,0.05)}
@@ -2903,10 +2903,10 @@ function initFirebaseSync(){
   try {
     db.ref('organogramas').on('value', snap => {
       const remote = snap.val() || {};
-      const remoteIds = Object.keys(remote);
+      const remoteIds = new Set(Object.keys(remote));
 
       // MIGRAÇÃO: se Firebase está vazio mas temos dados locais, fazer push inicial
-      if(!remoteIds.length && state.workspaces.length){
+      if(!remoteIds.size && state.workspaces.length){
         state.workspaces.forEach(ws => {
           try {
             db.ref('organogramas/' + ws.id).set({
@@ -2920,23 +2920,38 @@ function initFirebaseSync(){
         return;
       }
 
-      // Atualização: reconciliar estado local com o Firebase
+      // ═══ MERGE (não sobrescreve): preserva workspaces que só existem localmente ═══
+      // (ex.: recém-criados, aguardando o debounce enviar ao Firebase)
       _suppressSave = true;
       const wasActive = state.activeWsId;
-      const prevSelectedNode = (typeof selectedNodeId !== 'undefined') ? selectedNodeId : null;
 
-      state.workspaces = remoteIds.map(id => {
+      const localIds = new Set(state.workspaces.map(w=>w.id));
+      const merged = [];
+
+      // 1. Workspaces remotos — usa a versão remota
+      remoteIds.forEach(id => {
         const r = remote[id];
-        return {
+        merged.push({
           id: r.id || id,
           name: r.name || 'Sem nome',
           meta: r.meta || {},
-          nodes: Array.isArray(r.nodes) ? r.nodes : [],
+          nodes: Array.isArray(r.nodes) ? r.nodes : (r.nodes && typeof r.nodes === 'object' ? Object.values(r.nodes) : []),
           createdAt: r.createdAt || Date.now(),
           updatedAt: r.updatedAt || Date.now(),
           view: r.view || {tx:0,ty:0,scale:1}
-        };
+        });
       });
+
+      // 2. Workspaces locais que NÃO estão no remoto — preserva (são novos, ainda pendentes de envio)
+      state.workspaces.forEach(localWs => {
+        if(!remoteIds.has(localWs.id)){
+          merged.push(localWs);
+          // garante que vão ser enviados no próximo flush
+          _pendingWsSaves.add(localWs.id);
+        }
+      });
+
+      state.workspaces = merged;
 
       // Mantém active se ainda existir
       if(wasActive && state.workspaces.find(w=>w.id===wasActive)){
@@ -2960,6 +2975,10 @@ function initFirebaseSync(){
       }
       notifyParent();
       _suppressSave = false;
+
+      // Se havia pendências locais preservadas, despacha sem esperar o debounce
+      if(_pendingWsSaves.size) flushWsToFirebase();
+
       updateSyncBadge('online');
     });
   } catch(e){
@@ -3038,6 +3057,11 @@ function newWorkspace(name, orgName='', desc=''){
   state.workspaces.push(ws);
   state.activeWsId=ws.id;
   saveState();
+  // Flush imediato para o Firebase — garante que o novo workspace
+  // esteja no backend antes que qualquer re-sincronização ocorra
+  _pendingWsSaves.add(ws.id);
+  clearTimeout(_saveDebounceTimer);
+  flushWsToFirebase();
   return ws;
 }
 function deleteWorkspace(id){
