@@ -493,7 +493,7 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .roster-row-del:hover{background:var(--danger2);color:var(--danger);border-color:var(--danger)}
 
 /* node internals */
-.orgpanel .node-dept{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orgpanel .node-dept{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .orgpanel .node-image{width:46px;height:46px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 6px;border:2px solid #fff;box-shadow:0 1px 4px rgba(15,30,60,0.15);background:var(--gray1)}
 .orgpanel .node-image.square{border-radius:8px}
 .orgpanel .org-node.shape-circle .node-image{width:54px;height:54px;margin-top:-4px}
@@ -758,7 +758,7 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
   .orgpanel .org-node{min-width:130px;max-width:190px;padding:8px 10px}
   .orgpanel .node-title{font-size:12px}
   .orgpanel .node-person{font-size:10.5px}
-  .orgpanel .node-dept{font-size:8.5px}
+  .orgpanel .node-dept{font-size:9.5px}
   .orgpanel .node-meta{gap:3px}
   .orgpanel .node-chip{font-size:8.5px;padding:1px 5px}
   .orgpanel .org-node.shape-diamond{min-width:120px;padding:16px}
@@ -4117,8 +4117,8 @@ function renderInspector(id){
 
       <div class="inspector-section">Cargo</div>
       <div class="field">
-        <label>Título do cargo</label>
-        <input type="text" data-field="title" value="${escHtml(n.title)}" placeholder="Ex.: Diretor Financeiro">
+        <label>Departamento / área</label>
+        <input type="text" data-field="dept" value="${escHtml(n.dept)}" placeholder="Ex.: Financeiro">
       </div>
       ${n.shape==='roster' ? `
       <div class="field">
@@ -4149,8 +4149,8 @@ function renderInspector(id){
       ` : ''}
       `}
       <div class="field">
-        <label>Departamento / área</label>
-        <input type="text" data-field="dept" value="${escHtml(n.dept)}" placeholder="Ex.: Financeiro">
+        <label>Título do cargo</label>
+        <input type="text" data-field="title" value="${escHtml(n.title)}" placeholder="Ex.: Diretor Financeiro">
       </div>
       <div class="field">
         <label>Observações</label>
