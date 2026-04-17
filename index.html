@@ -472,15 +472,15 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .org-node.shape-circle{border-radius:50%;min-width:140px;min-height:140px;display:flex;align-items:center;justify-content:center;padding:14px}
 
 /* shape: roster (caixa com múltiplas pessoas lado a lado) */
-.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:720px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff;border:2px solid var(--navy)}
-.orgpanel .org-node.shape-roster .roster-header{padding:10px 16px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.12)}
+.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:900px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff;border:2px solid var(--navy);width:max-content}
+.orgpanel .org-node.shape-roster .roster-header{padding:10px 16px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.12)}
 .orgpanel .org-node.shape-roster .roster-header-dept{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px;opacity:.9}
-.orgpanel .org-node.shape-roster .roster-header-title{font-size:15px;font-weight:700;color:#fff;line-height:1.2}
+.orgpanel .org-node.shape-roster .roster-header-title{font-size:15px;font-weight:700;line-height:1.2}
 .orgpanel .org-node.shape-roster .roster-wrap{display:flex;align-items:stretch;gap:0}
-.orgpanel .org-node.shape-roster .roster-item{flex:1 1 0;padding:12px 14px;border-right:1px solid rgba(255,255,255,0.12);display:flex;flex-direction:column;gap:3px;min-width:0;text-align:center}
+.orgpanel .org-node.shape-roster .roster-item{flex:1 1 0;padding:12px 16px;border-right:1px solid rgba(255,255,255,0.18);display:flex;flex-direction:column;gap:3px;min-width:130px;text-align:center}
 .orgpanel .org-node.shape-roster .roster-item:last-child{border-right:0}
-.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--orange);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;color:#fff !important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2}
+.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.3}
+.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;line-height:1.25;word-wrap:break-word;overflow-wrap:break-word;hyphens:auto}
 .orgpanel .org-node.shape-roster .roster-empty{font-size:11px;color:rgba(255,255,255,0.4);font-style:italic;padding:18px 20px;text-align:center;width:100%}
 .orgpanel .org-node.shape-roster.selected{box-shadow:0 0 0 3px var(--orange),var(--shadow-md)}
 
@@ -497,6 +497,11 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .node-image{width:46px;height:46px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 6px;border:2px solid #fff;box-shadow:0 1px 4px rgba(15,30,60,0.15);background:var(--gray1)}
 .orgpanel .node-image.square{border-radius:8px}
 .orgpanel .org-node.shape-circle .node-image{width:54px;height:54px;margin-top:-4px}
+/* Quando há pessoa: nome em destaque (maior), cargo/função abaixo (menor, caixa alta) */
+.orgpanel .node-name-primary{font-size:15px;font-weight:700;color:var(--navy);line-height:1.25;margin-bottom:3px;word-wrap:break-word;text-align:center}
+.orgpanel .node-name-primary .avatar-inline{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;margin-right:6px;vertical-align:middle;flex-shrink:0}
+.orgpanel .node-title-secondary{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);line-height:1.3;word-wrap:break-word;text-align:center}
+/* Quando NÃO há pessoa: título permanece como headline */
 .orgpanel .node-title{font-size:13px;font-weight:700;color:var(--navy);line-height:1.25;margin-bottom:4px;word-wrap:break-word}
 .orgpanel .node-person{font-size:11.5px;color:var(--text);font-weight:500;line-height:1.3;word-wrap:break-word;display:flex;align-items:center;gap:6px;justify-content:center}
 .orgpanel .node-person .avatar{width:18px;height:18px;border-radius:50%;background:var(--gray2);display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--navy);flex-shrink:0;font-family:'JetBrains Mono',monospace}
@@ -572,6 +577,14 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .line-btn.active{border-color:var(--navy);background:var(--gray1);color:var(--navy)}
 .orgpanel .line-btn svg{width:28px;height:10px}
 .orgpanel .line-btn svg line{stroke:currentColor;stroke-width:2}
+.orgpanel .text-colors-grid{display:flex;flex-direction:column;gap:6px;padding:8px;background:var(--gray1);border-radius:8px;border:1px solid var(--gray2)}
+.orgpanel .tc-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.orgpanel .tc-row span{font-size:11px;color:var(--text);font-weight:500}
+.orgpanel .tc-row input[type="color"]{width:40px;height:28px;border:1px solid var(--gray2);border-radius:5px;cursor:pointer;padding:2px;background:#fff}
+.orgpanel .tc-row input[type="color"]::-webkit-color-swatch-wrapper{padding:0}
+.orgpanel .tc-row input[type="color"]::-webkit-color-swatch{border:none;border-radius:3px}
+.orgpanel .toggle-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11.5px;color:var(--text);font-weight:500;margin-bottom:0}
+.orgpanel .toggle-label input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--orange)}
 .orgpanel .inspector-section{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--gray2);display:flex;align-items:center;gap:6px}
 .orgpanel .inspector-section:first-child{margin-top:0}
 .orgpanel .tag-input-wrap{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border:1px solid var(--gray2);border-radius:7px;min-height:36px}
@@ -3203,6 +3216,10 @@ function makeNode(opts={}){
     notes:opts.notes||'',
     tags:opts.tags||[],
     image:opts.image||null,  // dataURL base64 (foto/logo do nó)
+    // Mostrar sigla (iniciais) ao lado do nome? padrão: true
+    showInitials: opts.showInitials !== false,
+    // Cores customizadas de texto (sobrescrevem a paleta)
+    textColors: opts.textColors || null, // {title, dept, person, accent} ou null (usar padrão)
     // people[] - usado quando shape='roster' (caixa com múltiplas pessoas lado a lado)
     // cada item: { name, role }
     people: opts.people || [],
@@ -3770,14 +3787,19 @@ function buildNodeEl(n){
   } else if(n.shape==='roster'){
     // caixa horizontal com múltiplas pessoas (ex.: fundadores, conselheiros)
     const people = (n.people||[]);
-    // Roster sempre usa fundo escuro para contraste máximo e legibilidade
-    div.style.background = 'var(--dark)';
-    div.style.color = '#fff';
+    const tc = n.textColors || {};
+    // Roster usa fundo escuro ou customizado
+    div.style.background = tc.bg || 'var(--dark)';
+    div.style.color = tc.title || '#fff';
     div.style.borderColor = pal.border;
+    const deptColor = tc.dept || pal.accent;
+    const titleColor = tc.title || '#fff';
+    const roleColor = tc.role || pal.accent;
+    const nameColor = tc.name || '#fff';
     const headerHtml = (n.title && n.title !== 'Novo Cargo') || n.dept ? `
       <div class="roster-header">
-        ${n.dept ? `<div class="roster-header-dept" style="color:${pal.accent}">${escHtml(n.dept)}</div>` : ''}
-        ${n.title ? `<div class="roster-header-title">${escHtml(n.title)}</div>` : ''}
+        ${n.dept ? `<div class="roster-header-dept" style="color:${deptColor}">${escHtml(n.dept)}</div>` : ''}
+        ${n.title ? `<div class="roster-header-title" style="color:${titleColor}">${escHtml(n.title)}</div>` : ''}
       </div>` : '';
     if(people.length){
       div.innerHTML = `
@@ -3785,8 +3807,8 @@ function buildNodeEl(n){
         <div class="roster-wrap">
           ${people.map(p=>`
             <div class="roster-item">
-              ${p.role?`<div class="roster-role" style="color:${pal.accent}">${escHtml(p.role)}</div>`:''}
-              <div class="roster-name">${escHtml(p.name||'(sem nome)')}</div>
+              ${p.role?`<div class="roster-role" style="color:${roleColor}">${escHtml(p.role)}</div>`:''}
+              <div class="roster-name" style="color:${nameColor}">${escHtml(p.name||'(sem nome)')}</div>
             </div>`).join('')}
         </div>`;
     } else {
@@ -3798,14 +3820,34 @@ function buildNodeEl(n){
     }
   } else {
     const showAccent = !['pill','circle','hexagon','diamond','roster'].includes(n.shape);
-    div.innerHTML=`
-      ${showAccent?`<div class="node-accent" style="background:${pal.accent}"></div>`:''}
-      ${n.image?`<img class="node-image${n.shape==='rect'?' square':''}" src="${n.image}" alt="">`:''}
-      ${n.dept?`<div class="node-dept" style="color:${n.color==='dark'||n.color==='navy-solid'||n.color==='orange-solid'?'rgba(255,255,255,0.7)':'var(--muted)'}">${escHtml(n.dept)}</div>`:''}
-      <div class="node-title" style="color:${pal.text}">${escHtml(n.title)}</div>
-      ${n.person?`<div class="node-person" style="color:${pal.text}"><span class="avatar" style="background:${pal.accent};color:#fff">${initials(n.person)}</span><span class="name">${escHtml(n.person)}</span></div>`:''}
-      ${chipText?`<div class="node-meta">${chipText}</div>`:''}
-    `;
+    const tc = n.textColors || {};
+    const titleColor = tc.title || pal.text;
+    const deptColor = tc.dept || (n.color==='dark'||n.color==='navy-solid'||n.color==='orange-solid'?'rgba(255,255,255,0.7)':'var(--muted)');
+    const personColor = tc.person || pal.text;
+    const showInitials = n.showInitials !== false;
+
+    if(n.person){
+      // NOVA HIERARQUIA: nome da pessoa em destaque, cargo/função abaixo em caixa alta
+      div.innerHTML=`
+        ${showAccent?`<div class="node-accent" style="background:${pal.accent}"></div>`:''}
+        ${n.image?`<img class="node-image${n.shape==='rect'?' square':''}" src="${n.image}" alt="">`:''}
+        ${n.dept?`<div class="node-dept" style="color:${deptColor}">${escHtml(n.dept)}</div>`:''}
+        <div class="node-name-primary" style="color:${personColor}">
+          ${showInitials?`<span class="avatar-inline" style="background:${pal.accent};color:#fff">${initials(n.person)}</span>`:''}${escHtml(n.person)}
+        </div>
+        <div class="node-title-secondary" style="color:${titleColor}">${escHtml(n.title)}</div>
+        ${chipText?`<div class="node-meta">${chipText}</div>`:''}
+      `;
+    } else {
+      // Sem pessoa: título permanece como headline
+      div.innerHTML=`
+        ${showAccent?`<div class="node-accent" style="background:${pal.accent}"></div>`:''}
+        ${n.image?`<img class="node-image${n.shape==='rect'?' square':''}" src="${n.image}" alt="">`:''}
+        ${n.dept?`<div class="node-dept" style="color:${deptColor}">${escHtml(n.dept)}</div>`:''}
+        <div class="node-title" style="color:${titleColor}">${escHtml(n.title)}</div>
+        ${chipText?`<div class="node-meta">${chipText}</div>`:''}
+      `;
+    }
   }
 
   // Toolbar para nó selecionado
@@ -4097,6 +4139,14 @@ function renderInspector(id){
         <label>Responsável (nome)</label>
         <input type="text" data-field="person" value="${escHtml(n.person)}" placeholder="Ex.: Maria Santos">
       </div>
+      ${n.person ? `
+      <div class="field">
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-show-initials" ${n.showInitials !== false ? 'checked' : ''}>
+          <span>Mostrar sigla (iniciais) antes do nome</span>
+        </label>
+      </div>
+      ` : ''}
       `}
       <div class="field">
         <label>Departamento / área</label>
@@ -4151,6 +4201,25 @@ function renderInspector(id){
           <button class="line-btn ${n.lineStyle==='solid'?'active':''}" data-line="solid"><svg viewBox="0 0 28 10"><line x1="2" y1="5" x2="26" y2="5"/></svg>Sólida</button>
           <button class="line-btn ${n.lineStyle==='dashed'?'active':''}" data-line="dashed"><svg viewBox="0 0 28 10"><line x1="2" y1="5" x2="26" y2="5" stroke-dasharray="4 3"/></svg>Tracejada</button>
           <button class="line-btn ${n.lineStyle==='dotted'?'active':''}" data-line="dotted"><svg viewBox="0 0 28 10"><line x1="2" y1="5" x2="26" y2="5" stroke-dasharray="1 3" stroke-linecap="round"/></svg>Pontilhada</button>
+        </div>
+      </div>
+      <div class="field">
+        <label style="display:flex;justify-content:space-between;align-items:center">
+          <span>Cores de texto</span>
+          ${n.textColors ? `<button type="button" class="org-btn-top" id="text-colors-reset" style="font-size:9px;padding:2px 6px;height:20px">Restaurar padrão</button>` : ''}
+        </label>
+        <div class="text-colors-grid">
+          ${n.shape === 'roster' ? `
+            <div class="tc-row"><span>Fundo da caixa</span><input type="color" data-tc="bg" value="${_tcValue(n,'bg','#1a2b44')}"></div>
+            <div class="tc-row"><span>Título</span><input type="color" data-tc="title" value="${_tcValue(n,'title','#ffffff')}"></div>
+            <div class="tc-row"><span>Departamento</span><input type="color" data-tc="dept" value="${_tcValue(n,'dept', getPalette(n.color).accent)}"></div>
+            <div class="tc-row"><span>Função da pessoa</span><input type="color" data-tc="role" value="${_tcValue(n,'role', getPalette(n.color).accent)}"></div>
+            <div class="tc-row"><span>Nome da pessoa</span><input type="color" data-tc="name" value="${_tcValue(n,'name','#ffffff')}"></div>
+          ` : `
+            <div class="tc-row"><span>Título do cargo</span><input type="color" data-tc="title" value="${_tcValue(n,'title',_hexOrFallback(getPalette(n.color).text,'#1a1a1a'))}"></div>
+            <div class="tc-row"><span>Departamento</span><input type="color" data-tc="dept" value="${_tcValue(n,'dept','#6b7280')}"></div>
+            <div class="tc-row"><span>Nome do responsável</span><input type="color" data-tc="person" value="${_tcValue(n,'person',_hexOrFallback(getPalette(n.color).text,'#1a1a1a'))}"></div>
+          `}
         </div>
       </div>
 
@@ -4261,6 +4330,45 @@ function renderInspector(id){
     });
   });
 
+  // === CORES DE TEXTO (color inputs) ===
+  panel.querySelectorAll('input[data-tc]').forEach(inp=>{
+    const key = inp.dataset.tc;
+    inp.addEventListener('input',()=>{
+      n.textColors = n.textColors || {};
+      n.textColors[key] = inp.value;
+      // re-render só o nó para feedback ao vivo
+      const existing=document.querySelector(`.org-node[data-id="${n.id}"]`);
+      if(existing){
+        const nw=buildNodeEl(n);
+        nw.style.left=existing.style.left;
+        nw.style.top=existing.style.top;
+        existing.replaceWith(nw);
+      }
+      currentWs().updatedAt = Date.now();
+    });
+    inp.addEventListener('change',()=>{
+      saveState(); renderInspector(n.id);
+    });
+  });
+  const tcReset = panel.querySelector('#text-colors-reset');
+  if(tcReset){
+    tcReset.addEventListener('click',()=>{
+      snapshot();
+      n.textColors = null;
+      saveState(); render(); renderInspector(n.id);
+    });
+  }
+
+  // === TOGGLE: mostrar sigla ===
+  const toggleInitials = panel.querySelector('#toggle-show-initials');
+  if(toggleInitials){
+    toggleInitials.addEventListener('change',()=>{
+      snapshot();
+      n.showInitials = toggleInitials.checked;
+      saveState(); render();
+    });
+  }
+
   // === ROSTER EDITOR (quando shape === 'roster') ===
   const addBtn = panel.querySelector('#roster-add-btn');
   if(addBtn){
@@ -4306,6 +4414,24 @@ function renderInspector(id){
     });
   });
   // Defer saveState para inputs que têm debounce implícito
+}
+
+// Helpers para cores de texto (color picker precisa de hex válido)
+function _tcValue(n, key, fallback){
+  const v = n.textColors && n.textColors[key];
+  if(v && /^#[0-9A-Fa-f]{6}$/.test(v)) return v;
+  return _hexOrFallback(fallback, '#000000');
+}
+function _hexOrFallback(v, fallback){
+  if(!v) return fallback;
+  const s = String(v).trim();
+  if(/^#[0-9A-Fa-f]{6}$/.test(s)) return s;
+  if(/^#[0-9A-Fa-f]{3}$/.test(s)){
+    // expande 3 → 6
+    return '#' + s.slice(1).split('').map(c=>c+c).join('');
+  }
+  // Se for cor CSS nomeada ou var(), usa fallback
+  return fallback;
 }
 
 function shapeSvg(shape){
