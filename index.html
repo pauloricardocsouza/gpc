@@ -3158,33 +3158,56 @@ function removeNode(id, cascade=true){
 
 /* ========= AUTO-LAYOUT (Reingold-Tilford simplificado por roots) ========= */
 const NODE_W = 210;       // largura de referência para layout
-const NODE_H = 100;
-const H_GAP = 34;         // gap horizontal entre irmãos
-const V_GAP = 80;         // gap vertical entre níveis
-const ROOT_GAP = 120;     // gap entre árvores (múltiplos roots)
+const NODE_H = 64;        // altura de referência (ajustada para nós compactos)
+const H_GAP = 24;         // gap horizontal entre irmãos
+const V_GAP = 48;         // gap vertical entre níveis
+const ROOT_GAP = 80;      // gap entre árvores (múltiplos roots)
 
 function autoLayout(ws){
   const roots=ws.nodes.filter(n=>!n.parentId);
   let cursorX=0;
   const positions={};
+  // primeiro: calcula altura máxima por nível (usando _h medido quando disponível)
+  const rowHeights = computeRowHeights(ws);
+  // calcula y cumulativo
+  const rowY = [0];
+  for(let i=1;i<rowHeights.length;i++){
+    rowY.push(rowY[i-1] + rowHeights[i-1] + V_GAP);
+  }
   roots.forEach(r=>{
-    const width=layoutSubtree(r,cursorX,0,positions);
+    const width=layoutSubtree(r,cursorX,0,positions,rowY);
     cursorX+=width+ROOT_GAP;
   });
   ws.nodes.forEach(n=>{
     if(positions[n.id]){ n.x=positions[n.id].x; n.y=positions[n.id].y; }
   });
 }
-function layoutSubtree(node,left,depth,positions){
+function computeRowHeights(ws){
+  // Para cada nível, pega a MAIOR altura de nó ali (evita sobreposição)
+  const byDepth = {};
+  function visit(n, depth){
+    if(!n) return;
+    const h = n._h || NODE_H;
+    byDepth[depth] = Math.max(byDepth[depth]||0, h);
+    (childrenOf(n.id)||[]).forEach(k => visit(k, depth+1));
+  }
+  ws.nodes.filter(n=>!n.parentId).forEach(r => visit(r, 0));
+  const max = Math.max(0, ...Object.keys(byDepth).map(Number));
+  const arr = [];
+  for(let i=0;i<=max;i++) arr.push(byDepth[i] || NODE_H);
+  return arr;
+}
+function layoutSubtree(node,left,depth,positions,rowY){
   const kids=(node.collapsed?[]:childrenOf(node.id));
+  const yHere = rowY ? rowY[depth] : depth*(NODE_H+V_GAP);
   if(kids.length===0){
-    positions[node.id]={x:left,y:depth*(NODE_H+V_GAP)};
+    positions[node.id]={x:left,y:yHere};
     return NODE_W;
   }
   let childLeft=left;
   let totalWidth=0;
   kids.forEach(k=>{
-    const w=layoutSubtree(k,childLeft,depth+1,positions);
+    const w=layoutSubtree(k,childLeft,depth+1,positions,rowY);
     childLeft+=w+H_GAP;
     totalWidth+=w;
   });
@@ -3193,7 +3216,7 @@ function layoutSubtree(node,left,depth,positions){
   const first=positions[kids[0].id].x;
   const last=positions[kids[kids.length-1].id].x;
   const centerX=(first+last)/2;
-  positions[node.id]={x:centerX,y:depth*(NODE_H+V_GAP)};
+  positions[node.id]={x:centerX,y:yHere};
   // se totalWidth < NODE_W, expande para no mínimo NODE_W
   return Math.max(totalWidth,NODE_W);
 }
@@ -3201,12 +3224,24 @@ function layoutSubtree(node,left,depth,positions){
 function autoLayoutCurrent(){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
   snapshot();
+  // Mede nós atuais antes do layout (para usar alturas reais)
+  const hiddenSet = new Set(); // sem colapsados escondidos nesta operação
+  try { measureNodes(ws, hiddenSet); } catch(e){}
   // reseta posições manuais
   ws.nodes.forEach(n=>{ n.x=undefined; n.y=undefined; });
   autoLayout(ws);
   saveState();
   render();
-  fitToScreen();
+  // Segunda passada: depois do render, nós reais foram medidos; refaz layout e re-renderiza
+  setTimeout(()=>{
+    const ws2 = currentWs(); if(!ws2) return;
+    try { measureNodes(ws2, hiddenSet); } catch(e){}
+    ws2.nodes.forEach(n=>{ n.x=undefined; n.y=undefined; });
+    autoLayout(ws2);
+    saveState();
+    render();
+    fitToScreen();
+  }, 40);
   toast('Organograma reorganizado','success');
 }
 
@@ -3290,7 +3325,7 @@ function initCanvasInteraction(){
 
   wrap.addEventListener('pointerdown',e=>{
     // ignora se clicou em nó, toolbar, controles, minimapa
-    if(e.target!==wrap && !e.target.classList.contains('canvas-inner') && e.target.id!=='nodes-layer' && e.target.id!=='canvas-svg'){
+    if(e.target!==wrap && !e.target.classList.contains('canvas-inner') && e.target.id!=='org-nodes-layer' && e.target.id!=='org-canvas-svg'){
       // ainda assim registra o pointer para pinch
       pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
       return;
