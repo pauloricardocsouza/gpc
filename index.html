@@ -4531,6 +4531,32 @@ function renderInspector(id){
     });
   }
 
+  // === TOGGLE: virar assessor (cargo paralelo) ===
+  const toggleAssistant = panel.querySelector('#toggle-is-assistant');
+  if(toggleAssistant){
+    toggleAssistant.addEventListener('change',()=>{
+      snapshot();
+      n.isAssistant = toggleAssistant.checked;
+      if(n.isAssistant && !n.assistantSide) n.assistantSide = 'right';
+      // Força recálculo de posicionamento
+      currentWs().nodes.forEach(x => { x.x = undefined; x.y = undefined; });
+      autoLayout(currentWs());
+      saveState(); render(); renderInspector(n.id);
+      toast(n.isAssistant ? 'Transformado em assessor' : 'Voltou a ser subordinado normal','success');
+    });
+  }
+
+  // === BOTÕES DE LADO DO ASSESSOR ===
+  panel.querySelectorAll('[data-ass-side]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      snapshot();
+      n.assistantSide = b.dataset.assSide;
+      currentWs().nodes.forEach(x => { x.x = undefined; x.y = undefined; });
+      autoLayout(currentWs());
+      saveState(); render(); renderInspector(n.id);
+    });
+  });
+
   // === ROSTER EDITOR (quando shape === 'roster') ===
   const addBtn = panel.querySelector('#roster-add-btn');
   if(addBtn){
