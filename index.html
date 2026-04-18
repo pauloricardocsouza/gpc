@@ -585,6 +585,18 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .tc-row input[type="color"]::-webkit-color-swatch{border:none;border-radius:3px}
 .orgpanel .toggle-label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11.5px;color:var(--text);font-weight:500;margin-bottom:0}
 .orgpanel .toggle-label input[type="checkbox"]{width:16px;height:16px;cursor:pointer;accent-color:var(--orange)}
+
+/* Lista de irmãos (ordenação) */
+.orgpanel .sibling-order{display:flex;flex-direction:column;gap:4px;padding:8px;background:var(--gray1);border:1px solid var(--gray2);border-radius:8px;max-height:220px;overflow-y:auto}
+.orgpanel .sib-row{display:grid;grid-template-columns:28px 1fr auto;gap:6px;align-items:center;padding:6px 8px;background:#fff;border:1px solid var(--gray2);border-radius:6px;font-size:11.5px}
+.orgpanel .sib-row.is-self{background:var(--navy);color:#fff;border-color:var(--navy)}
+.orgpanel .sib-row.is-self .sib-pos{color:var(--orange)}
+.orgpanel .sib-pos{font-size:10px;font-weight:700;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:center}
+.orgpanel .sib-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.orgpanel .sib-actions{display:flex;gap:3px}
+.orgpanel .sib-btn{width:26px;height:22px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;cursor:pointer;font-size:9px;padding:0;display:flex;align-items:center;justify-content:center}
+.orgpanel .sib-btn:hover:not(:disabled){background:var(--orange);border-color:var(--orange)}
+.orgpanel .sib-btn:disabled{opacity:.35;cursor:not-allowed}
 .orgpanel .inspector-section{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--gray2);display:flex;align-items:center;gap:6px}
 .orgpanel .inspector-section:first-child{margin-top:0}
 .orgpanel .tag-input-wrap{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border:1px solid var(--gray2);border-radius:7px;min-height:36px}
@@ -3164,7 +3176,29 @@ function cloneWorkspace(){
 /* ========= NODES: helpers ========= */
 function nodesOf(ws){ return ws?ws.nodes:[]; }
 function findNode(id){ const ws=currentWs(); return ws?ws.nodes.find(n=>n.id===id):null; }
-function childrenOf(id){ const ws=currentWs(); return ws?ws.nodes.filter(n=>n.parentId===id):[]; }
+function childrenOf(id){
+  const ws=currentWs(); if(!ws) return [];
+  const list = ws.nodes.filter(n=>n.parentId===id);
+  // Ordena por campo 'order' (menor primeiro). Nós sem ordem definida vão ao final, preservando ordem de criação.
+  return list.sort((a,b)=>{
+    const ao = (typeof a.order === 'number') ? a.order : 9999;
+    const bo = (typeof b.order === 'number') ? b.order : 9999;
+    if(ao !== bo) return ao - bo;
+    // empate: preserva ordem de criação (pelo índice no array original)
+    return ws.nodes.indexOf(a) - ws.nodes.indexOf(b);
+  });
+}
+function regularChildrenOf(id){
+  const ws=currentWs(); if(!ws) return [];
+  const list = ws.nodes.filter(n=>n.parentId===id && !n.isAssistant);
+  return list.sort((a,b)=>{
+    const ao = (typeof a.order === 'number') ? a.order : 9999;
+    const bo = (typeof b.order === 'number') ? b.order : 9999;
+    if(ao !== bo) return ao - bo;
+    return ws.nodes.indexOf(a) - ws.nodes.indexOf(b);
+  });
+}
+function assistantsOf(id){ const ws=currentWs(); return ws?ws.nodes.filter(n=>n.parentId===id && n.isAssistant):[]; }
 function rootNodes(){ const ws=currentWs(); return ws?ws.nodes.filter(n=>!n.parentId):[]; }
 function descendants(id){
   const out=[]; const stack=[id];
@@ -3218,6 +3252,11 @@ function makeNode(opts={}){
     image:opts.image||null,  // dataURL base64 (foto/logo do nó)
     // Mostrar sigla (iniciais) ao lado do nome? padrão: true
     showInitials: opts.showInitials !== false,
+    // Ordem manual entre irmãos (menor = mais à esquerda). Undefined = auto (ordem de criação)
+    order: (typeof opts.order === 'number') ? opts.order : undefined,
+    // Assessor: não entra na fila horizontal dos irmãos, fica ao lado do pai
+    isAssistant: !!opts.isAssistant,
+    assistantSide: opts.assistantSide || 'right', // 'left' | 'right'
     // Cores customizadas de texto (sobrescrevem a paleta)
     textColors: opts.textColors || null, // {title, dept, person, accent} ou null (usar padrão)
     // people[] - usado quando shape='roster' (caixa com múltiplas pessoas lado a lado)
@@ -3256,9 +3295,9 @@ function removeNode(id, cascade=true){
 /* ========= AUTO-LAYOUT (Reingold-Tilford simplificado por roots) ========= */
 const NODE_W = 210;       // largura de referência para layout
 const NODE_H = 64;        // altura de referência (ajustada para nós compactos)
-const H_GAP = 24;         // gap horizontal entre irmãos
+const H_GAP = 14;         // gap horizontal entre irmãos (compacto)
 const V_GAP = 48;         // gap vertical entre níveis
-const ROOT_GAP = 80;      // gap entre árvores (múltiplos roots)
+const ROOT_GAP = 50;      // gap entre árvores (múltiplos roots)
 
 function autoLayout(ws){
   const roots=ws.nodes.filter(n=>!n.parentId);
@@ -3278,15 +3317,44 @@ function autoLayout(ws){
   ws.nodes.forEach(n=>{
     if(positions[n.id]){ n.x=positions[n.id].x; n.y=positions[n.id].y; }
   });
+  // Posiciona assessores ao lado dos pais (fora do fluxo normal)
+  positionAssistants(ws, rowY);
 }
+
+function positionAssistants(ws, rowY){
+  ws.nodes.forEach(n=>{
+    if(!n.isAssistant || !n.parentId) return;
+    const parent = ws.nodes.find(x=>x.id===n.parentId);
+    if(!parent || parent.x===undefined) return;
+    // Determina profundidade do pai
+    let depth = 0; let p = parent;
+    while(p && p.parentId){ depth++; p = ws.nodes.find(x=>x.id===p.parentId); }
+    const parentY = parent.y !== undefined ? parent.y : (rowY ? rowY[depth] : 0);
+    const parentH = parent._h || NODE_H;
+    const pw = parent._w || NODE_W;
+    const nw = n._w || NODE_W;
+    // posiciona à direita ou esquerda do pai, na altura entre pai e próxima linha
+    const sideGap = 30;
+    if(n.assistantSide === 'left'){
+      n.x = parent.x - nw - sideGap;
+    } else {
+      n.x = parent.x + pw + sideGap;
+    }
+    // alinha verticalmente entre o pai e metade do caminho até os filhos
+    n.y = parentY + parentH + Math.max(8, V_GAP/3);
+  });
+}
+
 function computeRowHeights(ws){
   // Para cada nível, pega a MAIOR altura de nó ali (evita sobreposição)
+  // Ignora assessores — eles não afetam a altura da linha
   const byDepth = {};
   function visit(n, depth){
     if(!n) return;
+    if(n.isAssistant) return;
     const h = n._h || NODE_H;
     byDepth[depth] = Math.max(byDepth[depth]||0, h);
-    (childrenOf(n.id)||[]).forEach(k => visit(k, depth+1));
+    (regularChildrenOf(n.id)||[]).forEach(k => visit(k, depth+1));
   }
   ws.nodes.filter(n=>!n.parentId).forEach(r => visit(r, 0));
   const max = Math.max(0, ...Object.keys(byDepth).map(Number));
@@ -3294,8 +3362,10 @@ function computeRowHeights(ws){
   for(let i=0;i<=max;i++) arr.push(byDepth[i] || NODE_H);
   return arr;
 }
+
 function layoutSubtree(node,left,depth,positions,rowY){
-  const kids=(node.collapsed?[]:childrenOf(node.id));
+  // Usa apenas filhos regulares (não-assessores) para o layout horizontal
+  const kids=(node.collapsed?[]:regularChildrenOf(node.id));
   const yHere = rowY ? rowY[depth] : depth*(NODE_H+V_GAP);
   if(kids.length===0){
     positions[node.id]={x:left,y:yHere};
@@ -3712,6 +3782,35 @@ function drawLinks(ws, hidden, ox, oy){
     const pW = parent._w || NODE_W;
     const pH = parent._h || NODE_H;
     const cW = n._w || NODE_W;
+    const cH = n._h || NODE_H;
+
+    // ═══ ASSESSOR: linha lateral tracejada do pai para o assistente ═══
+    if(n.isAssistant){
+      const pCy = (parent.y||0) + pH/2 + oy;           // centro vertical do pai
+      const pEdgeX = n.assistantSide === 'left'
+        ? (parent.x||0) + ox                            // lado esquerdo do pai
+        : (parent.x||0) + pW + ox;                      // lado direito do pai
+      const cCy = (n.y||0) + cH/2 + oy;                 // centro vertical do assistente
+      const cEdgeX = n.assistantSide === 'left'
+        ? (n.x||0) + cW + ox                            // lado direito do assistente
+        : (n.x||0) + ox;                                // lado esquerdo do assistente
+      // Caminho em L: sai do pai na horizontal e desce até o assistente
+      const midX = (pEdgeX + cEdgeX) / 2;
+      // Desce verticalmente do centro do pai até a linha do assistente, depois vai horizontal
+      const d = `M ${pEdgeX} ${pCy} L ${midX} ${pCy} L ${midX} ${cCy} L ${cEdgeX} ${cCy}`;
+      const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',d);
+      path.setAttribute('class','link dashed');
+      const pal=getPalette(parent.color);
+      path.setAttribute('stroke',pal.accent||'#8FA3BE');
+      path.setAttribute('stroke-dasharray','5 4');
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke-linejoin','round');
+      path.setAttribute('stroke-linecap','round');
+      svg.appendChild(path);
+      return;
+    }
+
     // dimensões reais do filho no topo; borda de 2px compensada para encostar visualmente
     const pCx = (parent.x||0) + pW/2 + ox;
     const pCyBottom = (parent.y||0) + pH + oy;
@@ -4082,7 +4181,21 @@ function toggleCollapse(id){
   snapshot();
   const n=findNode(id); if(!n) return;
   n.collapsed=!n.collapsed;
+  // Reorganiza automaticamente ao expandir/recolher para corrigir alinhamento
+  const ws=currentWs();
+  if(ws) ws.nodes.forEach(x=>{ x.x=undefined; x.y=undefined; });
+  autoLayout(ws);
   saveState(); render();
+  // Segunda passada após medir nós reais no DOM
+  setTimeout(()=>{
+    const ws2=currentWs(); if(!ws2) return;
+    const hiddenSet=new Set();
+    ws2.nodes.forEach(x=>{ if(x.collapsed) descendants(x.id).forEach(d=>hiddenSet.add(d.id)); });
+    try{ measureNodes(ws2, hiddenSet); }catch(e){}
+    ws2.nodes.forEach(x=>{ x.x=undefined; x.y=undefined; });
+    autoLayout(ws2);
+    saveState(); render();
+  }, 40);
 }
 function selectNode(id){
   selectedNodeId=id;
@@ -4233,6 +4346,55 @@ function renderInspector(id){
           ).join('')}
         </select>
       </div>
+      ${(() => {
+        // mostra a lista de irmãos para reordenar
+        const sibs = (n.parentId
+          ? currentWs().nodes.filter(x => x.parentId === n.parentId)
+          : currentWs().nodes.filter(x => !x.parentId)
+        ).sort((a,b)=>{
+          const ao = (typeof a.order === 'number') ? a.order : 9999;
+          const bo = (typeof b.order === 'number') ? b.order : 9999;
+          if(ao !== bo) return ao - bo;
+          return currentWs().nodes.indexOf(a) - currentWs().nodes.indexOf(b);
+        });
+        if(sibs.length < 2) return '';
+        const myPos = sibs.findIndex(x => x.id === n.id);
+        return `
+      <div class="field">
+        <label>Ordem entre irmãos</label>
+        <div class="sibling-order">
+          ${sibs.map((s, i) => `
+            <div class="sib-row ${s.id===n.id?'is-self':''}">
+              <span class="sib-pos">${i+1}º</span>
+              <span class="sib-name">${escHtml(s.person || s.title)}</span>
+              <div class="sib-actions">
+                ${s.id===n.id ? `
+                  <button type="button" class="sib-btn" data-sib-up ${myPos===0?'disabled':''} title="Mover para esquerda">◀</button>
+                  <button type="button" class="sib-btn" data-sib-down ${myPos===sibs.length-1?'disabled':''} title="Mover para direita">▶</button>
+                ` : ''}
+              </div>
+            </div>`).join('')}
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Menor número = mais à esquerda. Aplicado pelo auto-layout.</div>
+      </div>`;
+      })()}
+      ${n.parentId ? `
+      <div class="field">
+        <label class="toggle-label">
+          <input type="checkbox" id="toggle-is-assistant" ${n.isAssistant ? 'checked' : ''}>
+          <span>Assessor / cargo paralelo (fica ao lado do superior, não na fila de subordinados)</span>
+        </label>
+      </div>
+      ${n.isAssistant ? `
+      <div class="field">
+        <label>Lado</label>
+        <div class="line-row" style="grid-template-columns:repeat(2,1fr)">
+          <button class="line-btn ${n.assistantSide!=='left'?'active':''}" data-ass-side="right">▶ Direita</button>
+          <button class="line-btn ${n.assistantSide==='left'?'active':''}" data-ass-side="left">◀ Esquerda</button>
+        </div>
+      </div>
+      ` : ''}
+      ` : ''}
       <div class="field-row">
         <div class="field">
           <label>Subordinados</label>
@@ -4413,7 +4575,50 @@ function renderInspector(id){
       saveState(); render(); renderInspector(n.id);
     });
   });
+
+  // === ORDENAÇÃO DE IRMÃOS ===
+  const sibUp = panel.querySelector('[data-sib-up]');
+  const sibDown = panel.querySelector('[data-sib-down]');
+  if(sibUp && !sibUp.disabled){
+    sibUp.addEventListener('click', () => reorderSibling(n.id, -1));
+  }
+  if(sibDown && !sibDown.disabled){
+    sibDown.addEventListener('click', () => reorderSibling(n.id, +1));
+  }
+
   // Defer saveState para inputs que têm debounce implícito
+}
+
+// Move um nó para esquerda (-1) ou direita (+1) na lista de irmãos
+function reorderSibling(nodeId, direction){
+  const n = findNode(nodeId); if(!n) return;
+  const ws = currentWs(); if(!ws) return;
+  // Pega irmãos já ordenados conforme a regra atual
+  const sibs = (n.parentId
+    ? ws.nodes.filter(x => x.parentId === n.parentId)
+    : ws.nodes.filter(x => !x.parentId)
+  ).sort((a,b)=>{
+    const ao = (typeof a.order === 'number') ? a.order : 9999;
+    const bo = (typeof b.order === 'number') ? b.order : 9999;
+    if(ao !== bo) return ao - bo;
+    return ws.nodes.indexOf(a) - ws.nodes.indexOf(b);
+  });
+  const pos = sibs.findIndex(s => s.id === nodeId);
+  const newPos = pos + direction;
+  if(newPos < 0 || newPos >= sibs.length) return;
+
+  snapshot();
+  // Troca de posição no array ordenado
+  const [moved] = sibs.splice(pos, 1);
+  sibs.splice(newPos, 0, moved);
+  // Reatribui o campo 'order' para todos os irmãos, numerando sequencialmente
+  sibs.forEach((s, i) => { s.order = i; });
+
+  // Reseta posições para forçar o auto-layout respeitar a nova ordem
+  ws.nodes.forEach(x => { x.x = undefined; x.y = undefined; });
+  autoLayout(ws);
+  saveState(); render(); renderInspector(nodeId);
+  toast('Ordem atualizada','success');
 }
 
 // Helpers para cores de texto (color picker precisa de hex válido)
@@ -5381,48 +5586,206 @@ function buildSvgString(ws){
   return {svg, width:w, height:h};
 }
 
+// Carrega html2canvas sob demanda
+let _html2canvasPromise = null;
+function loadHtml2Canvas(){
+  if(_html2canvasPromise) return _html2canvasPromise;
+  if(window.html2canvas) return Promise.resolve(window.html2canvas);
+  _html2canvasPromise = new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    s.onload = () => resolve(window.html2canvas);
+    s.onerror = () => { _html2canvasPromise = null; reject(new Error('Falha ao carregar html2canvas')); };
+    document.head.appendChild(s);
+  });
+  return _html2canvasPromise;
+}
+
+// Captura fiel do canvas do organograma usando html2canvas — renderiza tudo que está no DOM
+// (incluindo shape roster, cores customizadas, siglas, hierarquia de texto).
+function captureOrgAsCanvas(ws, scale){
+  scale = scale || 2;
+  return new Promise(async (resolve, reject)=>{
+    try {
+      const h2c = await loadHtml2Canvas();
+
+      // Clona o canvas-inner inteiro em um wrapper auxiliar OFFSCREEN
+      // (para não interferir com o pan/zoom atual nem aplicar transform: scale())
+      const innerReal = document.getElementById('org-canvas-inner');
+      if(!innerReal){ reject(new Error('Canvas não encontrado')); return; }
+
+      // Garante que todos os nós estão posicionados (auto-layout se necessário)
+      if(!ws.nodes.some(n=>Number.isFinite(n.x) && Number.isFinite(n.y))){
+        autoLayout(ws);
+        render();
+        await new Promise(r=>setTimeout(r,150));
+      }
+
+      // Calcula os limites reais dos nós medidos (usando _w/_h reais, não NODE_H fixo)
+      const hidden=new Set();
+      ws.nodes.forEach(n=>{ if(n.collapsed) descendants(n.id).forEach(d=>hidden.add(d.id)); });
+      const visible=ws.nodes.filter(n=>!hidden.has(n.id));
+      let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+      visible.forEach(n=>{
+        const w = n._w || NODE_W;
+        const h = n._h || NODE_H;
+        if(n.x<minX) minX=n.x; if(n.y<minY) minY=n.y;
+        if(n.x+w>maxX) maxX=n.x+w; if(n.y+h>maxY) maxY=n.y+h;
+      });
+      const pad = 60;
+      const headerH = (ws.meta && ws.meta.logo) ? 80 : 0;
+      const totalW = (maxX-minX) + pad*2;
+      const totalH = (maxY-minY) + pad*2 + headerH;
+
+      // Cria container temporário fora da tela com fundo branco
+      const tmp = document.createElement('div');
+      tmp.style.cssText = `position:fixed;left:-99999px;top:0;width:${totalW}px;height:${totalH}px;background:#F4F7FC;overflow:hidden;padding:0;margin:0;z-index:-1`;
+      tmp.className = 'orgpanel';
+      document.body.appendChild(tmp);
+
+      // Header com logo (opcional)
+      if(ws.meta && ws.meta.logo){
+        const header = document.createElement('div');
+        header.style.cssText = `position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:12px 24px;background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05)`;
+        header.innerHTML = `
+          <img src="${ws.meta.logo}" style="height:44px;width:auto;max-width:140px;object-fit:contain">
+          <div style="display:flex;flex-direction:column">
+            <div style="font-size:14px;font-weight:700;color:#2B4A7A;line-height:1.2">${escHtml(ws.meta.org||ws.name||'')}</div>
+            ${ws.meta.description?`<div style="font-size:10px;color:#5A7090;letter-spacing:.08em;text-transform:uppercase;margin-top:2px">${escHtml(ws.meta.description)}</div>`:''}
+          </div>`;
+        tmp.appendChild(header);
+      }
+
+      // Camada dos nós + SVG de conexões, posicionada absolutamente com deslocamento (-minX+pad, -minY+pad+headerH)
+      const innerClone = document.createElement('div');
+      innerClone.style.cssText = `position:absolute;top:${headerH}px;left:0;width:${totalW}px;height:${totalH - headerH}px;transform:translate(${-minX + pad}px, ${-minY + pad}px);transform-origin:0 0`;
+
+      // SVG de links clonado
+      const svgReal = document.getElementById('org-canvas-svg');
+      if(svgReal){
+        const svgClone = svgReal.cloneNode(true);
+        svgClone.removeAttribute('style');
+        svgClone.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible`;
+        innerClone.appendChild(svgClone);
+      }
+
+      // Clona os nós
+      visible.forEach(n => {
+        const el = buildNodeEl(n);
+        el.style.position = 'absolute';
+        el.style.left = (n.x||0) + 'px';
+        el.style.top  = (n.y||0) + 'px';
+        // remove interações / toolbars / selected state
+        el.classList.remove('selected','dragging');
+        el.querySelectorAll('.node-toolbar, .collapse-indicator, .node-coment-badge').forEach(x => x.remove());
+        innerClone.appendChild(el);
+      });
+
+      tmp.appendChild(innerClone);
+
+      // Espera fontes/imagens
+      await (document.fonts ? document.fonts.ready : Promise.resolve());
+      await new Promise(r => setTimeout(r, 80));
+
+      // html2canvas — com alta resolução
+      const canvas = await h2c(tmp, {
+        scale: scale,
+        backgroundColor: '#F4F7FC',
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        width: totalW,
+        height: totalH,
+        windowWidth: totalW,
+        windowHeight: totalH
+      });
+
+      document.body.removeChild(tmp);
+      resolve({canvas, width: totalW, height: totalH});
+    } catch(e){
+      reject(e);
+    }
+  });
+}
+
 function downloadSvg(){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
   const r=buildSvgString(ws);
   if(!r) return;
   const blob=new Blob([r.svg],{type:'image/svg+xml'});
   triggerDownload(blob, sanitizeFilename(ws.name)+'.svg');
-  toast('SVG exportado','success');
+  toast('SVG exportado (vetorial simplificado)','success');
 }
 
 function downloadJpg(){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
-  const r=buildSvgString(ws);
-  if(!r) return;
-  toast('Gerando JPG…','success');
-  const svgBlob=new Blob([r.svg],{type:'image/svg+xml;charset=utf-8'});
-  const svgUrl=URL.createObjectURL(svgBlob);
-  const img=new Image();
-  img.onload=()=>{
-    // Sobredimensiona para qualidade (2x)
-    const scale=2;
-    const canvas=document.createElement('canvas');
-    canvas.width=r.width*scale;
-    canvas.height=r.height*scale;
-    const ctx=canvas.getContext('2d');
-    ctx.fillStyle='#FFFFFF';
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    ctx.drawImage(img,0,0,canvas.width,canvas.height);
-    URL.revokeObjectURL(svgUrl);
-    canvas.toBlob(blob=>{
+  toast('Gerando JPG em alta resolução…','success');
+  captureOrgAsCanvas(ws, 2.5).then(({canvas}) => {
+    canvas.toBlob(blob => {
       if(!blob){ toast('Falha ao gerar JPG','error'); return; }
       triggerDownload(blob, sanitizeFilename(ws.name)+'.jpg');
       toast('JPG exportado','success');
-    },'image/jpeg',0.92);
-  };
-  img.onerror=()=>{
-    URL.revokeObjectURL(svgUrl);
-    toast('Falha ao gerar JPG','error');
-  };
-  img.src=svgUrl;
+    }, 'image/jpeg', 0.95);
+  }).catch(e => {
+    console.error(e);
+    toast('Falha ao gerar JPG: '+(e.message||''),'error');
+  });
 }
 
 function exportPdf(){
+  const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
+  toast('Gerando PDF em alta resolução…','success');
+  captureOrgAsCanvas(ws, 2.5).then(({canvas, width, height}) => {
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    const isLandscape = width >= height;
+    const SCRIPT_OPEN = '<' + 'script>';
+    const SCRIPT_CLOSE = '<' + '/script>';
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${escHtml(ws.name)}</title>
+<style>
+  @page { size: A4 ${isLandscape?'landscape':'portrait'}; margin: 8mm; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; font-family: Arial, sans-serif; background:#fff; }
+  .page { width:100%; display:flex; align-items:center; justify-content:center; padding:4mm }
+  .page img { width:100%; height:auto; max-height:100%; display:block; }
+  @media print {
+    .noprint { display:none !important; }
+    .page { padding:0; }
+  }
+  .noprint{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999}
+  .noprint button{height:38px;padding:0 16px;border-radius:20px;border:none;font-weight:600;cursor:pointer;font-size:13px}
+  .noprint .go{background:#F5831F;color:#fff}
+  .noprint .cancel{background:#eee;color:#333}
+</style>
+</head>
+<body>
+<div class="noprint">
+  <button class="go" onclick="window.print()">🖨 Salvar como PDF</button>
+  <button class="cancel" onclick="window.close()">Fechar</button>
+</div>
+<div class="page"><img src="${dataUrl}" alt="${escHtml(ws.name)}"></div>
+${SCRIPT_OPEN}
+  window.addEventListener('load', ()=>{ setTimeout(()=>window.print(), 400); });
+${SCRIPT_CLOSE}
+</body>
+</html>`;
+    const w = window.open('','_blank');
+    if(!w){ toast('Pop-ups bloqueados. Permita pop-ups deste site.','error'); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    toast('PDF pronto — use "Salvar como PDF" na janela que abriu','success');
+  }).catch(e => {
+    console.error(e);
+    toast('Falha ao gerar PDF: '+(e.message||''),'error');
+  });
+}
+
+// Mantém a função antiga buildSvgString funcional — só é usada pelo botão de SVG (vetorial simplificado)
+function exportPdf_legacy(){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
   const r=buildSvgString(ws);
   if(!r) return;
