@@ -597,6 +597,23 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .sib-btn{width:26px;height:22px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:#fff;border-radius:4px;cursor:pointer;font-size:9px;padding:0;display:flex;align-items:center;justify-content:center}
 .orgpanel .sib-btn:hover:not(:disabled){background:var(--orange);border-color:var(--orange)}
 .orgpanel .sib-btn:disabled{opacity:.35;cursor:not-allowed}
+
+/* Opções de escopo no modal de exportação */
+.orgpanel .scope-row{display:flex;flex-direction:column;gap:6px}
+.orgpanel .scope-opt{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--gray1);border:1.5px solid var(--gray2);border-radius:8px;cursor:pointer;font-size:12px;font-weight:500;transition:all .15s}
+.orgpanel .scope-opt:has(input:checked){border-color:var(--orange);background:#FDF4EC}
+.orgpanel .scope-opt input[type="radio"]{cursor:pointer;accent-color:var(--orange);margin:0}
+.orgpanel .area-helper{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px;background:var(--gray1);border:1px dashed var(--gray2);border-radius:7px}
+.orgpanel .area-helper #area-status{font-size:11.5px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+
+/* Modo de seleção de área no canvas */
+.orgpanel .canvas-wrap.area-selecting{cursor:crosshair}
+.orgpanel .canvas-wrap.area-selecting .org-node{pointer-events:none}
+.orgpanel .area-selection-overlay{position:absolute;inset:0;background:rgba(15,30,60,0.2);z-index:100;cursor:crosshair}
+.orgpanel .area-selection-rect{position:absolute;display:none;border:2px solid var(--orange);background:rgba(245,131,31,0.12);box-shadow:0 0 0 99999px rgba(15,30,60,0.5);pointer-events:none}
+.orgpanel .area-selection-hint{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.3);pointer-events:none;z-index:101}
+.orgpanel .area-selection-cancel{position:absolute;top:14px;right:14px;background:#fff;border:1.5px solid var(--gray2);border-radius:20px;padding:8px 18px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;z-index:102;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.orgpanel .area-selection-cancel:hover{background:var(--danger2);color:var(--danger);border-color:var(--danger)}
 .orgpanel .inspector-section{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--gray2);display:flex;align-items:center;gap:6px}
 .orgpanel .inspector-section:first-child{margin-top:0}
 .orgpanel .tag-input-wrap{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border:1px solid var(--gray2);border-radius:7px;min-height:36px}
@@ -5546,22 +5563,250 @@ function openWorkspaceMetaModal(){
 function openExportModal(){
   const ws=currentWs();
   if(!ws){ toast('Nenhum organograma ativo','warn'); return; }
-  const json=JSON.stringify(ws,null,2);
+  // Lista de possíveis líderes (todos os nós, ordenados hierarquicamente)
+  const leaders = _flattenForLeaderList(ws);
+  const leaderOptions = leaders.map(({node, depth, descCount}) => {
+    const indent = '&nbsp;&nbsp;'.repeat(depth);
+    const lbl = (node.person || node.title || '(sem nome)')
+              + (node.dept ? ' · ' + node.dept : '')
+              + (descCount > 0 ? ' — ' + descCount + ' subordinado(s)' : ' — sem subordinados');
+    return `<option value="${node.id}">${indent}${escHtml(lbl)}</option>`;
+  }).join('');
+
   openModal('Exportar organograma', `
-    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">Escolha o formato de exportação. JPG e PDF são ideais para apresentações e impressões. JSON preserva todas as propriedades e pode ser reimportado.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:16px">
-      <button class="org-btn-top orange" onclick="ORG.downloadJpg()" style="justify-content:center;height:40px"><span>🖼</span> <span class="lbl">JPG (imagem)</span></button>
-      <button class="org-btn-top orange" onclick="ORG.exportPdf()" style="justify-content:center;height:40px"><span>📄</span> <span class="lbl">PDF</span></button>
-      <button class="org-btn-top" onclick="ORG.downloadSvg()" style="justify-content:center;height:40px"><span>⬇</span> <span class="lbl">SVG (vetorial)</span></button>
-      <button class="org-btn-top" onclick="ORG.downloadJson()" style="justify-content:center;height:40px"><span>{ }</span> <span class="lbl">JSON</span></button>
-      <button class="org-btn-top" onclick="ORG.downloadCsv()" style="justify-content:center;height:40px"><span>📊</span> <span class="lbl">CSV</span></button>
-      <button class="org-btn-top" onclick="window.print()" style="justify-content:center;height:40px"><span>🖨</span> <span class="lbl">Imprimir</span></button>
-    </div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.5">Escolha o escopo, depois o formato de exportação.</p>
+
+    <div class="inspector-section" style="margin-top:0">Escopo da exportação</div>
     <div class="field">
-      <label>Preview (JSON)</label>
-      <textarea readonly style="width:100%;min-height:180px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;color:var(--text);background:var(--gray1);border:1px solid var(--gray2);border-radius:7px;padding:12px">${escHtml(json)}</textarea>
+      <label>O que exportar</label>
+      <div class="scope-row">
+        <label class="scope-opt ${''}"><input type="radio" name="export-scope" value="all" checked><span>🌳 Organograma completo</span></label>
+        <label class="scope-opt"><input type="radio" name="export-scope" value="leader"><span>👤 A partir de um líder (subárvore)</span></label>
+        <label class="scope-opt"><input type="radio" name="export-scope" value="area"><span>⬚ Área selecionada no canvas</span></label>
+      </div>
     </div>
+    <div class="field" id="leader-field" style="display:none">
+      <label>Líder (exporta ele + todos os descendentes)</label>
+      <select id="export-leader-select" style="width:100%;height:36px;padding:0 10px;border:1px solid var(--gray2);border-radius:7px;font-size:12px;background:#fff">
+        ${leaderOptions}
+      </select>
+    </div>
+    <div class="field" id="area-field" style="display:none">
+      <div class="area-helper">
+        <span id="area-status">Nenhuma área definida.</span>
+        <button type="button" class="org-btn-top orange" id="btn-select-area">📐 Selecionar área no canvas</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px">Clique no botão acima, depois arraste com o mouse no canvas para desenhar o retângulo de exportação.</div>
+    </div>
+
+    <div class="inspector-section">Formato</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:16px">
+      <button class="org-btn-top orange" id="exp-btn-jpg" style="justify-content:center;height:40px"><span>🖼</span> <span class="lbl">JPG (imagem)</span></button>
+      <button class="org-btn-top orange" id="exp-btn-pdf" style="justify-content:center;height:40px"><span>📄</span> <span class="lbl">PDF</span></button>
+      <button class="org-btn-top" id="exp-btn-svg" style="justify-content:center;height:40px"><span>⬇</span> <span class="lbl">SVG (vetorial)</span></button>
+      <button class="org-btn-top" id="exp-btn-json" style="justify-content:center;height:40px"><span>{ }</span> <span class="lbl">JSON</span></button>
+      <button class="org-btn-top" id="exp-btn-csv" style="justify-content:center;height:40px"><span>📊</span> <span class="lbl">CSV</span></button>
+    </div>
+    <div style="font-size:10px;color:var(--muted);text-align:center">JSON e CSV sempre exportam o organograma completo (independente do escopo visual acima).</div>
   `,[{label:'Fechar',cls:'cancel',onClick:closeModal}],'lg');
+
+  // === COMPORTAMENTO DO MODAL ===
+  let selectedArea = null;       // {x,y,w,h} em coords do canvas, se o usuário desenhar uma área
+  let savedWindowState = null;   // {tx, ty, scale} para restaurar depois do modo "selecionar área"
+
+  const radioScope = () => {
+    const r = document.querySelector('input[name="export-scope"]:checked');
+    return r ? r.value : 'all';
+  };
+  const updateScopeFields = () => {
+    const v = radioScope();
+    document.getElementById('leader-field').style.display = (v === 'leader') ? '' : 'none';
+    document.getElementById('area-field').style.display   = (v === 'area')   ? '' : 'none';
+  };
+  document.querySelectorAll('input[name="export-scope"]').forEach(r => {
+    r.addEventListener('change', updateScopeFields);
+  });
+  updateScopeFields();
+
+  // Seleção de área: ao clicar no botão, fecha o modal temporariamente e ativa modo de seleção no canvas
+  document.getElementById('btn-select-area').addEventListener('click', () => {
+    closeModal();
+    startAreaSelectionMode((area) => {
+      // Callback chamado após o usuário desenhar (ou cancelar). 'area' null = cancelou
+      openExportModal();
+      // Restaura radio para "area" e o retângulo capturado
+      setTimeout(()=>{
+        const r = document.querySelector('input[name="export-scope"][value="area"]');
+        if(r){ r.checked = true; r.dispatchEvent(new Event('change')); }
+        if(area){
+          selectedArea = area;
+          const status = document.getElementById('area-status');
+          if(status) status.textContent = `Área: ${Math.round(area.w)} × ${Math.round(area.h)} px`;
+          // Como o modal foi recriado, precisamos guardar no escopo do novo modal
+          window.__lastSelectedArea = area;
+        } else {
+          window.__lastSelectedArea = null;
+        }
+      }, 50);
+    });
+  });
+  // Restaura área anterior se o usuário reabriu o modal
+  if(window.__lastSelectedArea){
+    selectedArea = window.__lastSelectedArea;
+    const status = document.getElementById('area-status');
+    if(status) status.textContent = `Área: ${Math.round(selectedArea.w)} × ${Math.round(selectedArea.h)} px`;
+  }
+
+  // Monta opts de exportação conforme o escopo escolhido
+  const buildOpts = () => {
+    const v = radioScope();
+    if(v === 'leader'){
+      const sel = document.getElementById('export-leader-select');
+      return { leaderId: sel ? sel.value : null };
+    }
+    if(v === 'area'){
+      const a = selectedArea || window.__lastSelectedArea;
+      if(!a){ toast('Defina a área clicando em "Selecionar área" primeiro','warn'); return null; }
+      return { area: a };
+    }
+    return {};
+  };
+
+  document.getElementById('exp-btn-jpg').addEventListener('click', ()=>{
+    const opts = buildOpts(); if(opts === null) return;
+    closeModal(); window.__lastSelectedArea = null;
+    downloadJpg(opts);
+  });
+  document.getElementById('exp-btn-pdf').addEventListener('click', ()=>{
+    const opts = buildOpts(); if(opts === null) return;
+    closeModal(); window.__lastSelectedArea = null;
+    exportPdf(opts);
+  });
+  document.getElementById('exp-btn-svg').addEventListener('click', ()=>{
+    closeModal(); window.__lastSelectedArea = null;
+    downloadSvg();
+  });
+  document.getElementById('exp-btn-json').addEventListener('click', ()=>{
+    closeModal(); window.__lastSelectedArea = null;
+    downloadJson();
+  });
+  document.getElementById('exp-btn-csv').addEventListener('click', ()=>{
+    closeModal(); window.__lastSelectedArea = null;
+    downloadCsv();
+  });
+}
+
+// Lista plana de nós em ordem hierárquica (para o select de líder)
+function _flattenForLeaderList(ws){
+  const out = [];
+  const visit = (node, depth) => {
+    const descCount = descendants(node.id).length;
+    out.push({node, depth, descCount});
+    const kids = regularChildrenOf(node.id);
+    kids.forEach(k => visit(k, depth + 1));
+    // Inclui assessores também
+    const asst = assistantsOf(node.id);
+    asst.forEach(a => visit(a, depth + 1));
+  };
+  ws.nodes.filter(n => !n.parentId).forEach(r => visit(r, 0));
+  return out;
+}
+
+// ═══ MODO DE SELEÇÃO DE ÁREA NO CANVAS ═══
+function startAreaSelectionMode(onDone){
+  const wrap = document.getElementById('org-canvas-wrap');
+  const inner = document.getElementById('org-canvas-inner');
+  if(!wrap || !inner){ onDone(null); return; }
+
+  // Ativa overlay e cursor especial
+  wrap.classList.add('area-selecting');
+  const overlay = document.createElement('div');
+  overlay.className = 'area-selection-overlay';
+  overlay.innerHTML = `
+    <div class="area-selection-rect" id="area-rect"></div>
+    <div class="area-selection-hint">Arraste para definir a área de exportação. ESC para cancelar.</div>
+    <button class="area-selection-cancel" id="area-cancel">Cancelar</button>
+  `;
+  wrap.appendChild(overlay);
+
+  let startX=0, startY=0, currentRect=null, dragging=false;
+  const rect = overlay.querySelector('#area-rect');
+
+  const getCanvasCoords = (clientX, clientY) => {
+    const bbox = wrap.getBoundingClientRect();
+    // Converte do viewport para coordenadas do canvas (considerando pan e zoom)
+    const cx = (clientX - bbox.left - tx) / scale;
+    const cy = (clientY - bbox.top - ty) / scale;
+    return {x: cx, y: cy};
+  };
+
+  const onPointerDown = (e) => {
+    if(e.target.closest('.area-selection-cancel')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragging = true;
+    const bbox = wrap.getBoundingClientRect();
+    startX = e.clientX - bbox.left;
+    startY = e.clientY - bbox.top;
+    rect.style.display = 'block';
+    rect.style.left = startX + 'px';
+    rect.style.top = startY + 'px';
+    rect.style.width = '0';
+    rect.style.height = '0';
+  };
+  const onPointerMove = (e) => {
+    if(!dragging) return;
+    const bbox = wrap.getBoundingClientRect();
+    const cx = e.clientX - bbox.left;
+    const cy = e.clientY - bbox.top;
+    const x = Math.min(startX, cx);
+    const y = Math.min(startY, cy);
+    const w = Math.abs(cx - startX);
+    const h = Math.abs(cy - startY);
+    rect.style.left = x + 'px';
+    rect.style.top = y + 'px';
+    rect.style.width = w + 'px';
+    rect.style.height = h + 'px';
+  };
+  const onPointerUp = (e) => {
+    if(!dragging) return;
+    dragging = false;
+    const bbox = wrap.getBoundingClientRect();
+    const cx = e.clientX - bbox.left;
+    const cy = e.clientY - bbox.top;
+    // Converte dimensões em pixels do viewport para coordenadas do canvas
+    const p1 = getCanvasCoords(Math.min(startX, cx) + bbox.left, Math.min(startY, cy) + bbox.top);
+    const p2 = getCanvasCoords(Math.max(startX, cx) + bbox.left, Math.max(startY, cy) + bbox.top);
+    const area = {
+      x: p1.x, y: p1.y,
+      w: p2.x - p1.x, h: p2.y - p1.y
+    };
+    // Valida tamanho mínimo
+    if(area.w < 20 || area.h < 20){
+      toast('Área muito pequena. Arraste novamente.','warn');
+      rect.style.display = 'none';
+      return;
+    }
+    cleanup();
+    onDone(area);
+  };
+  const onKey = (e) => { if(e.key === 'Escape'){ cleanup(); onDone(null); } };
+  const onCancelClick = (e) => { e.stopPropagation(); cleanup(); onDone(null); };
+
+  const cleanup = () => {
+    wrap.classList.remove('area-selecting');
+    overlay.removeEventListener('pointerdown', onPointerDown);
+    window.removeEventListener('pointermove', onPointerMove);
+    window.removeEventListener('pointerup', onPointerUp);
+    window.removeEventListener('keydown', onKey);
+    if(overlay.parentNode) overlay.parentNode.removeChild(overlay);
+  };
+
+  overlay.addEventListener('pointerdown', onPointerDown);
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('keydown', onKey);
+  overlay.querySelector('#area-cancel').addEventListener('click', onCancelClick);
 }
 function downloadJson(){
   const ws=currentWs(); if(!ws) return;
@@ -5687,28 +5932,69 @@ function loadHtml2Canvas(){
 
 // Captura fiel do canvas do organograma usando html2canvas — renderiza tudo que está no DOM
 // (incluindo shape roster, cores customizadas, siglas, hierarquia de texto).
-function captureOrgAsCanvas(ws, scale){
+function captureOrgAsCanvas(ws, scale, opts){
   scale = scale || 2;
+  opts = opts || {};
+  // opts.leaderId — se fornecido: só exporta esse líder e seus descendentes
+  // opts.area     — {x,y,w,h} em coordenadas do canvas: só inclui nós que interceptam essa área
   return new Promise(async (resolve, reject)=>{
     try {
       const h2c = await loadHtml2Canvas();
 
-      // Clona o canvas-inner inteiro em um wrapper auxiliar OFFSCREEN
-      // (para não interferir com o pan/zoom atual nem aplicar transform: scale())
       const innerReal = document.getElementById('org-canvas-inner');
       if(!innerReal){ reject(new Error('Canvas não encontrado')); return; }
 
-      // Garante que todos os nós estão posicionados (auto-layout se necessário)
+      // Garante que todos os nós estão posicionados
       if(!ws.nodes.some(n=>Number.isFinite(n.x) && Number.isFinite(n.y))){
         autoLayout(ws);
         render();
         await new Promise(r=>setTimeout(r,150));
       }
 
-      // Calcula os limites reais dos nós medidos (usando _w/_h reais, não NODE_H fixo)
+      // Filtra os nós de acordo com as opções
       const hidden=new Set();
       ws.nodes.forEach(n=>{ if(n.collapsed) descendants(n.id).forEach(d=>hidden.add(d.id)); });
-      const visible=ws.nodes.filter(n=>!hidden.has(n.id));
+
+      // Determina o conjunto de nós a exportar
+      let exportIds = null;  // null = todos visíveis
+
+      if(opts.leaderId){
+        // Subárvore: o líder + todos os seus descendentes
+        const leader = ws.nodes.find(x => x.id === opts.leaderId);
+        if(!leader){ reject(new Error('Líder não encontrado')); return; }
+        exportIds = new Set([leader.id]);
+        const stack = [leader.id];
+        while(stack.length){
+          const cur = stack.pop();
+          ws.nodes.filter(x => x.parentId === cur).forEach(c => {
+            if(!hidden.has(c.id)){
+              exportIds.add(c.id);
+              stack.push(c.id);
+            }
+          });
+        }
+      }
+
+      let visible;
+      if(opts.area){
+        // Filtra por área: inclui nós que interceptam o retângulo informado
+        const A = opts.area;
+        visible = ws.nodes.filter(n => {
+          if(hidden.has(n.id)) return false;
+          const w = n._w || NODE_W;
+          const h = n._h || NODE_H;
+          // Intersecção retângulo-retângulo
+          return !(n.x + w < A.x || n.x > A.x + A.w || n.y + h < A.y || n.y > A.y + A.h);
+        });
+      } else if(exportIds){
+        visible = ws.nodes.filter(n => exportIds.has(n.id) && !hidden.has(n.id));
+      } else {
+        visible = ws.nodes.filter(n => !hidden.has(n.id));
+      }
+
+      if(!visible.length){ reject(new Error('Nenhum nó para exportar')); return; }
+
+      // Calcula os limites reais dos nós
       let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
       visible.forEach(n=>{
         const w = n._w || NODE_W;
@@ -5721,13 +6007,11 @@ function captureOrgAsCanvas(ws, scale){
       const totalW = (maxX-minX) + pad*2;
       const totalH = (maxY-minY) + pad*2 + headerH;
 
-      // Cria container temporário fora da tela com fundo branco
       const tmp = document.createElement('div');
       tmp.style.cssText = `position:fixed;left:-99999px;top:0;width:${totalW}px;height:${totalH}px;background:#F4F7FC;overflow:hidden;padding:0;margin:0;z-index:-1`;
       tmp.className = 'orgpanel';
       document.body.appendChild(tmp);
 
-      // Header com logo (opcional)
       if(ws.meta && ws.meta.logo){
         const header = document.createElement('div');
         header.style.cssText = `position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:14px;padding:12px 24px;background:#fff;border:1px solid #E3E8EF;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05)`;
@@ -5740,18 +6024,57 @@ function captureOrgAsCanvas(ws, scale){
         tmp.appendChild(header);
       }
 
-      // Camada dos nós + SVG de conexões, posicionada absolutamente com deslocamento (-minX+pad, -minY+pad+headerH)
       const innerClone = document.createElement('div');
       innerClone.style.cssText = `position:absolute;top:${headerH}px;left:0;width:${totalW}px;height:${totalH - headerH}px;transform:translate(${-minX + pad}px, ${-minY + pad}px);transform-origin:0 0`;
 
-      // SVG de links clonado
-      const svgReal = document.getElementById('org-canvas-svg');
-      if(svgReal){
-        const svgClone = svgReal.cloneNode(true);
-        svgClone.removeAttribute('style');
-        svgClone.style.cssText = `position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:visible`;
-        innerClone.appendChild(svgClone);
-      }
+      // SVG de links — desenhamos apenas os links entre nós que estão em 'visible'
+      const visibleIds = new Set(visible.map(n => n.id));
+      const svgNS = 'http://www.w3.org/2000/svg';
+      const svgClone = document.createElementNS(svgNS, 'svg');
+      svgClone.setAttribute('xmlns', svgNS);
+      svgClone.setAttribute('width', '100%');
+      svgClone.setAttribute('height', '100%');
+      svgClone.style.cssText = `position:absolute;top:0;left:0;pointer-events:none;overflow:visible`;
+      visible.forEach(n => {
+        if(!n.parentId || !visibleIds.has(n.parentId)) return;
+        const parent = ws.nodes.find(x => x.id === n.parentId);
+        if(!parent) return;
+        const pW = parent._w || NODE_W;
+        const pH = parent._h || NODE_H;
+        const cW = n._w || NODE_W;
+        const cH = n._h || NODE_H;
+        const pal = getPalette(parent.color);
+        const ls = parent.lineStyle;
+        const dash = ls==='dashed' ? '5 4' : ls==='dotted' ? '1 4' : '';
+
+        if(n.isAssistant){
+          const pCy = parent.y + pH/2;
+          const pEdgeX = n.assistantSide === 'left' ? parent.x : parent.x + pW;
+          const cCy = n.y + cH/2;
+          const cEdgeX = n.assistantSide === 'left' ? n.x + cW : n.x;
+          const midX = (pEdgeX + cEdgeX) / 2;
+          const path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', `M ${pEdgeX} ${pCy} L ${midX} ${pCy} L ${midX} ${cCy} L ${cEdgeX} ${cCy}`);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', pal.accent || '#8FA3BE');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('stroke-dasharray', '4 4');
+          svgClone.appendChild(path);
+        } else {
+          const pCx = parent.x + pW/2, pCyB = parent.y + pH;
+          const cCx = n.x + cW/2, cCyT = n.y;
+          const midY = pCyB + (cCyT - pCyB) / 2;
+          const path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', `M ${pCx} ${pCyB} V ${midY} H ${cCx} V ${cCyT}`);
+          path.setAttribute('fill', 'none');
+          path.setAttribute('stroke', pal.accent || '#8FA3BE');
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('stroke-linejoin', 'round');
+          if(dash) path.setAttribute('stroke-dasharray', dash);
+          svgClone.appendChild(path);
+        }
+      });
+      innerClone.appendChild(svgClone);
 
       // Clona os nós
       visible.forEach(n => {
@@ -5759,7 +6082,6 @@ function captureOrgAsCanvas(ws, scale){
         el.style.position = 'absolute';
         el.style.left = (n.x||0) + 'px';
         el.style.top  = (n.y||0) + 'px';
-        // remove interações / toolbars / selected state
         el.classList.remove('selected','dragging');
         el.querySelectorAll('.node-toolbar, .collapse-indicator, .node-coment-badge').forEach(x => x.remove());
         innerClone.appendChild(el);
@@ -5767,11 +6089,9 @@ function captureOrgAsCanvas(ws, scale){
 
       tmp.appendChild(innerClone);
 
-      // Espera fontes/imagens
       await (document.fonts ? document.fonts.ready : Promise.resolve());
       await new Promise(r => setTimeout(r, 80));
 
-      // html2canvas — com alta resolução
       const canvas = await h2c(tmp, {
         scale: scale,
         backgroundColor: '#F4F7FC',
@@ -5801,13 +6121,15 @@ function downloadSvg(){
   toast('SVG exportado (vetorial simplificado)','success');
 }
 
-function downloadJpg(){
+function downloadJpg(opts){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
+  opts = opts || {};
   toast('Gerando JPG em alta resolução…','success');
-  captureOrgAsCanvas(ws, 2.5).then(({canvas}) => {
+  captureOrgAsCanvas(ws, 2.5, opts).then(({canvas}) => {
     canvas.toBlob(blob => {
       if(!blob){ toast('Falha ao gerar JPG','error'); return; }
-      triggerDownload(blob, sanitizeFilename(ws.name)+'.jpg');
+      const suffix = _exportSuffix(ws, opts);
+      triggerDownload(blob, sanitizeFilename(ws.name + suffix)+'.jpg');
       toast('JPG exportado','success');
     }, 'image/jpeg', 0.95);
   }).catch(e => {
@@ -5816,19 +6138,21 @@ function downloadJpg(){
   });
 }
 
-function exportPdf(){
+function exportPdf(opts){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
+  opts = opts || {};
   toast('Gerando PDF em alta resolução…','success');
-  captureOrgAsCanvas(ws, 2.5).then(({canvas, width, height}) => {
+  captureOrgAsCanvas(ws, 2.5, opts).then(({canvas, width, height}) => {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     const isLandscape = width >= height;
     const SCRIPT_OPEN = '<' + 'script>';
     const SCRIPT_CLOSE = '<' + '/script>';
+    const suffix = _exportSuffix(ws, opts);
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>${escHtml(ws.name)}</title>
+<title>${escHtml(ws.name + suffix)}</title>
 <style>
   @page { size: A4 ${isLandscape?'landscape':'portrait'}; margin: 8mm; }
   * { box-sizing: border-box; }
@@ -5850,7 +6174,7 @@ function exportPdf(){
   <button class="go" onclick="window.print()">🖨 Salvar como PDF</button>
   <button class="cancel" onclick="window.close()">Fechar</button>
 </div>
-<div class="page"><img src="${dataUrl}" alt="${escHtml(ws.name)}"></div>
+<div class="page"><img src="${dataUrl}" alt="${escHtml(ws.name + suffix)}"></div>
 ${SCRIPT_OPEN}
   window.addEventListener('load', ()=>{ setTimeout(()=>window.print(), 400); });
 ${SCRIPT_CLOSE}
@@ -5866,6 +6190,21 @@ ${SCRIPT_CLOSE}
     console.error(e);
     toast('Falha ao gerar PDF: '+(e.message||''),'error');
   });
+}
+
+// Sufixo do nome de arquivo conforme as opções de exportação
+function _exportSuffix(ws, opts){
+  if(opts && opts.leaderId){
+    const leader = ws.nodes.find(x => x.id === opts.leaderId);
+    if(leader){
+      const lbl = leader.person || leader.title || '';
+      return lbl ? ' - ' + lbl : '';
+    }
+  }
+  if(opts && opts.area){
+    return ' - área selecionada';
+  }
+  return '';
 }
 
 // Mantém a função antiga buildSvgString funcional — só é usada pelo botão de SVG (vetorial simplificado)
