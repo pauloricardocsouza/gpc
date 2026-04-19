@@ -903,10 +903,6 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
       <span class="nav-icon">⌨️</span> Atalhos
     </div>
   </div>
-  <div class="nav-item" id="nav-trash" onclick="showView('trash')">
-    <span class="nav-icon">🗑️</span> Lixeira
-    <span class="nav-badge" id="trash-badge" style="display:none">0</span>
-  </div>
 
   <div class="sidebar-section">Colaboração</div>
   <div class="nav-item" id="nav-coments" onclick="showView('coments')">
@@ -915,10 +911,6 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
   </div>
   <div class="nav-item" id="nav-coments-trash" onclick="showView('coments-trash')">
     <span class="nav-icon">♻️</span> Lixeira de comentários
-  </div>
-  <div class="sidebar-section">Ferramentas</div>
-  <div class="nav-item" onclick="openExportModal()">
-    <span class="nav-icon">📤</span> Exportar
   </div>
   <div class="sidebar-spacer"></div>
   <div class="sidebar-footer">
@@ -1424,8 +1416,16 @@ const fmtTs = ts => new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month
                   + new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 
 function syncBadge(){
+  // Sidebar badge (pode ter sido removido)
   const b=document.getElementById('trash-badge');
-  trash.length ? (b.textContent=trash.length, b.style.display='inline-block') : b.style.display='none';
+  if(b) {
+    trash.length ? (b.textContent=trash.length, b.style.display='inline-block') : b.style.display='none';
+  }
+  // Topbar badge (botão de lixeira dentro da Divisão de Tarefas)
+  const tb=document.getElementById('topbar-trash-count');
+  if(tb) {
+    tb.textContent = trash.length ? ` (${trash.length})` : '';
+  }
 }
 
 // ════════════════════════════════════════
@@ -1457,7 +1457,11 @@ function showView(v){
   document.getElementById('topbar-actions').innerHTML = v==='board'
     ? `<span id="conn-status"></span>
        <button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
+       <button class="btn-top" onclick="showView('trash')">🗑️ Lixeira<span id="topbar-trash-count"></span></button>
        <button class="btn-top orange" onclick="openExportModal()">📤 Exportar</button>`
+    : v==='trash'
+    ? `<span id="conn-status"></span>
+       <button class="btn-top" onclick="showView('board')">← Voltar</button>`
     : v==='coments'
     ? `<span id="conn-status"></span>
        <button class="btn-top orange" onclick="openNewComentModal()">+ Comentário</button>`
@@ -1465,6 +1469,7 @@ function showView(v){
   if(v==='trash')          renderTrash();
   if(v==='coments')        renderComents();
   if(v==='coments-trash')  renderComentsTrash();
+  if(v==='board')          { try{ syncBadge(); }catch(e){} }
   if(v==='organograma'){
     bootOrgModuleIfNeeded();
     // Força redraw depois de painel ficar visível (sizes dependem de layout)
@@ -3220,17 +3225,42 @@ function isAncestor(maybeAncestor,nodeId){
 
 /* ========= CORES E FORMAS padrão ========= */
 const PALETTES = [
-  {id:'navy',  border:'#2B4A7A', bg:'#FFFFFF', accent:'#2B4A7A', text:'#1A2E4A'},
-  {id:'orange',border:'#F5831F', bg:'#FFFFFF', accent:'#F5831F', text:'#1A2E4A'},
-  {id:'green', border:'#1E7B4B', bg:'#FFFFFF', accent:'#1E7B4B', text:'#1A2E4A'},
-  {id:'purple',border:'#6B46C1', bg:'#FFFFFF', accent:'#6B46C1', text:'#1A2E4A'},
-  {id:'teal',  border:'#0E7C86', bg:'#FFFFFF', accent:'#0E7C86', text:'#1A2E4A'},
-  {id:'danger',border:'#C0392B', bg:'#FFFFFF', accent:'#C0392B', text:'#1A2E4A'},
-  {id:'amber', border:'#854F0B', bg:'#FFFFFF', accent:'#F5B041', text:'#1A2E4A'},
-  {id:'dark',  border:'#1A2D4F', bg:'#1A2D4F', accent:'#F5831F', text:'#FFFFFF'},
-  {id:'navy-solid', border:'#2B4A7A', bg:'#2B4A7A', accent:'#F5831F', text:'#FFFFFF'},
-  {id:'orange-solid',border:'#F5831F', bg:'#F5831F', accent:'#1A2D4F', text:'#FFFFFF'},
-  {id:'gray',  border:'#8FA3BE', bg:'#FFFFFF', accent:'#8FA3BE', text:'#1A2E4A'},
+  // Linha 1: Outline (fundo branco com borda colorida)
+  {id:'navy',    border:'#2B4A7A', bg:'#FFFFFF', accent:'#2B4A7A', text:'#1A2E4A'},
+  {id:'orange',  border:'#F5831F', bg:'#FFFFFF', accent:'#F5831F', text:'#1A2E4A'},
+  {id:'green',   border:'#1E7B4B', bg:'#FFFFFF', accent:'#1E7B4B', text:'#1A2E4A'},
+  {id:'purple',  border:'#6B46C1', bg:'#FFFFFF', accent:'#6B46C1', text:'#1A2E4A'},
+  {id:'teal',    border:'#0E7C86', bg:'#FFFFFF', accent:'#0E7C86', text:'#1A2E4A'},
+  {id:'danger',  border:'#C0392B', bg:'#FFFFFF', accent:'#C0392B', text:'#1A2E4A'},
+  {id:'amber',   border:'#854F0B', bg:'#FFFFFF', accent:'#F5B041', text:'#1A2E4A'},
+  {id:'gray',    border:'#8FA3BE', bg:'#FFFFFF', accent:'#8FA3BE', text:'#1A2E4A'},
+  // Linha 2: Cores adicionais outline
+  {id:'pink',    border:'#D63384', bg:'#FFFFFF', accent:'#D63384', text:'#1A2E4A'},
+  {id:'cyan',    border:'#0891B2', bg:'#FFFFFF', accent:'#0891B2', text:'#1A2E4A'},
+  {id:'lime',    border:'#65A30D', bg:'#FFFFFF', accent:'#65A30D', text:'#1A2E4A'},
+  {id:'indigo',  border:'#4F46E5', bg:'#FFFFFF', accent:'#4F46E5', text:'#1A2E4A'},
+  {id:'rose',    border:'#E11D48', bg:'#FFFFFF', accent:'#E11D48', text:'#1A2E4A'},
+  {id:'emerald', border:'#059669', bg:'#FFFFFF', accent:'#059669', text:'#1A2E4A'},
+  {id:'brown',   border:'#78350F', bg:'#FFFFFF', accent:'#78350F', text:'#1A2E4A'},
+  {id:'slate',   border:'#475569', bg:'#FFFFFF', accent:'#475569', text:'#1A2E4A'},
+  // Linha 3: Fundo suave colorido (soft backgrounds)
+  {id:'navy-soft',   border:'#2B4A7A', bg:'#EAF0F8', accent:'#2B4A7A', text:'#1A2E4A'},
+  {id:'orange-soft', border:'#F5831F', bg:'#FDF1E3', accent:'#F5831F', text:'#1A2E4A'},
+  {id:'green-soft',  border:'#1E7B4B', bg:'#E3F2EA', accent:'#1E7B4B', text:'#1A2E4A'},
+  {id:'purple-soft', border:'#6B46C1', bg:'#F0EAFB', accent:'#6B46C1', text:'#1A2E4A'},
+  {id:'teal-soft',   border:'#0E7C86', bg:'#E3F4F5', accent:'#0E7C86', text:'#1A2E4A'},
+  {id:'rose-soft',   border:'#E11D48', bg:'#FCE7EB', accent:'#E11D48', text:'#1A2E4A'},
+  {id:'amber-soft',  border:'#854F0B', bg:'#FEF3CD', accent:'#854F0B', text:'#1A2E4A'},
+  {id:'gray-soft',   border:'#8FA3BE', bg:'#F0F2F6', accent:'#5A7090', text:'#1A2E4A'},
+  // Linha 4: Fundo sólido (solid backgrounds) — texto branco
+  {id:'dark',          border:'#1A2D4F', bg:'#1A2D4F', accent:'#F5831F', text:'#FFFFFF'},
+  {id:'navy-solid',    border:'#2B4A7A', bg:'#2B4A7A', accent:'#F5831F', text:'#FFFFFF'},
+  {id:'orange-solid',  border:'#F5831F', bg:'#F5831F', accent:'#1A2D4F', text:'#FFFFFF'},
+  {id:'green-solid',   border:'#1E7B4B', bg:'#1E7B4B', accent:'#FFFFFF', text:'#FFFFFF'},
+  {id:'purple-solid',  border:'#6B46C1', bg:'#6B46C1', accent:'#FCE96A', text:'#FFFFFF'},
+  {id:'teal-solid',    border:'#0E7C86', bg:'#0E7C86', accent:'#FFFFFF', text:'#FFFFFF'},
+  {id:'danger-solid',  border:'#C0392B', bg:'#C0392B', accent:'#FFE0DE', text:'#FFFFFF'},
+  {id:'slate-solid',   border:'#475569', bg:'#475569', accent:'#F5B041', text:'#FFFFFF'},
 ];
 function getPalette(id){ return PALETTES.find(p=>p.id===id)||PALETTES[0]; }
 const SHAPES = ['rect','rounded','pill','hexagon','circle','diamond','roster'];
@@ -3250,8 +3280,8 @@ function makeNode(opts={}){
     notes:opts.notes||'',
     tags:opts.tags||[],
     image:opts.image||null,  // dataURL base64 (foto/logo do nó)
-    // Mostrar sigla (iniciais) ao lado do nome? padrão: true
-    showInitials: opts.showInitials !== false,
+    // Mostrar sigla (iniciais) ao lado do nome? padrão: FALSE (usuário ativa quando quiser)
+    showInitials: opts.showInitials === true,
     // Ordem manual entre irmãos (menor = mais à esquerda). Undefined = auto (ordem de criação)
     order: (typeof opts.order === 'number') ? opts.order : undefined,
     // Assessor: não entra na fila horizontal dos irmãos, fica ao lado do pai
@@ -3295,7 +3325,7 @@ function removeNode(id, cascade=true){
 /* ========= AUTO-LAYOUT (Reingold-Tilford simplificado por roots) ========= */
 const NODE_W = 210;       // largura de referência para layout
 const NODE_H = 64;        // altura de referência (ajustada para nós compactos)
-const H_GAP = 14;         // gap horizontal entre irmãos (compacto)
+const H_GAP = 10;         // gap horizontal entre irmãos (reduzido 25% para compactação)
 const V_GAP = 48;         // gap vertical entre níveis
 const ROOT_GAP = 50;      // gap entre árvores (múltiplos roots)
 
@@ -3367,9 +3397,10 @@ function layoutSubtree(node,left,depth,positions,rowY){
   // Usa apenas filhos regulares (não-assessores) para o layout horizontal
   const kids=(node.collapsed?[]:regularChildrenOf(node.id));
   const yHere = rowY ? rowY[depth] : depth*(NODE_H+V_GAP);
+  const myW = node._w || NODE_W;   // largura real do nó (pode ser maior em rosters)
   if(kids.length===0){
     positions[node.id]={x:left,y:yHere};
-    return NODE_W;
+    return Math.max(myW, NODE_W);
   }
   let childLeft=left;
   let totalWidth=0;
@@ -3379,13 +3410,40 @@ function layoutSubtree(node,left,depth,positions,rowY){
     totalWidth+=w;
   });
   totalWidth+=(kids.length-1)*H_GAP;
-  // centra o pai sobre os filhos
-  const first=positions[kids[0].id].x;
-  const last=positions[kids[kids.length-1].id].x;
-  const centerX=(first+last)/2;
-  positions[node.id]={x:centerX,y:yHere};
-  // se totalWidth < NODE_W, expande para no mínimo NODE_W
-  return Math.max(totalWidth,NODE_W);
+  // Calcula o centro visual REAL do bloco de filhos (usando larguras reais)
+  const firstKid = kids[0];
+  const lastKid = kids[kids.length-1];
+  const firstKidW = firstKid._w || NODE_W;
+  const lastKidW  = lastKid._w  || NODE_W;
+  const firstCenter = positions[firstKid.id].x + firstKidW/2;
+  const lastCenter  = positions[lastKid.id].x  + lastKidW/2;
+  const kidsCenter  = (firstCenter + lastCenter) / 2;
+  // Posiciona o pai (borda esquerda) para que seu CENTRO fique sobre kidsCenter
+  positions[node.id]={x: kidsCenter - myW/2, y:yHere};
+  // Se o pai for mais largo que o bloco de filhos, a subárvore precisa refletir essa largura maior
+  // (para não deixar o pai "invadir" o espaço dos irmãos do próximo nó na mesma linha)
+  const actualLeft  = Math.min(left, kidsCenter - myW/2);
+  const actualRight = Math.max(left + totalWidth, kidsCenter + myW/2);
+  // Se o pai foi desalinhado para fora do bloco (pai maior), reajusta posições dos filhos
+  // deslocando-os para manter alinhamento entre pai e filhos
+  if(kidsCenter - myW/2 < left){
+    const shift = left - (kidsCenter - myW/2);
+    // Desloca o pai e todos os descendentes em 'shift' para direita
+    positions[node.id].x += shift;
+    _shiftDescendants(node.id, shift, positions, kids);
+    // O novo kidsCenter muda; mas como todos os filhos se deslocaram igualmente, o pai continua centralizado.
+  }
+  return Math.max(actualRight - actualLeft, Math.max(totalWidth, myW));
+}
+
+// helper: desloca X de todos os descendentes de um nó no mapa de posições
+function _shiftDescendants(parentId, dx, positions, directKids){
+  const stack = (directKids || regularChildrenOf(parentId)).slice();
+  while(stack.length){
+    const cur = stack.pop();
+    if(positions[cur.id]) positions[cur.id].x += dx;
+    (regularChildrenOf(cur.id) || []).forEach(c => stack.push(c));
+  }
 }
 
 function autoLayoutCurrent(){
@@ -3923,7 +3981,7 @@ function buildNodeEl(n){
     const titleColor = tc.title || pal.text;
     const deptColor = tc.dept || (n.color==='dark'||n.color==='navy-solid'||n.color==='orange-solid'?'rgba(255,255,255,0.7)':'var(--muted)');
     const personColor = tc.person || pal.text;
-    const showInitials = n.showInitials !== false;
+    const showInitials = n.showInitials === true;
 
     if(n.person){
       // NOVA HIERARQUIA: nome da pessoa em destaque, cargo/função abaixo em caixa alta
@@ -4255,7 +4313,7 @@ function renderInspector(id){
       ${n.person ? `
       <div class="field">
         <label class="toggle-label">
-          <input type="checkbox" id="toggle-show-initials" ${n.showInitials !== false ? 'checked' : ''}>
+          <input type="checkbox" id="toggle-show-initials" ${n.showInitials === true ? 'checked' : ''}>
           <span>Mostrar sigla (iniciais) antes do nome</span>
         </label>
       </div>
