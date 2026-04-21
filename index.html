@@ -1256,14 +1256,39 @@ function initFirebase(){
 // Carrega Firebase dinamicamente — funciona em servidor/GitHub Pages
 // Em file:// o script externo pode ser bloqueado, caindo no fallback offline
 function loadFirebase(){
-  const loaded = {app: false, db: false};
+  const loaded = {app: false, db: false, auth: false};
   function tryInit(){
-    if(!loaded.app || !loaded.db) return;
+    if(!loaded.app || !loaded.db || !loaded.auth) return;
     try{
       firebase.initializeApp(FIREBASE_CONFIG);
       db = firebase.database();
-      initFirebase();
+
+      // ═══ AUTENTICAÇÃO ANÔNIMA ═══
+      // Cada navegador ganha um ID único gerado pelo Firebase automaticamente.
+      // As regras do banco exigem auth != null, bloqueando acessos não autenticados.
+      const auth = firebase.auth();
+
+      // Observa mudanças no estado de autenticação
+      auth.onAuthStateChanged(user => {
+        if(user){
+          // Autenticado com sucesso — conecta ao banco
+          if(!_fbReady) initFirebase();
+        } else {
+          // Não autenticado — tenta login anônimo
+          auth.signInAnonymously().catch(err => {
+            console.error('Auth anônima falhou:', err);
+            // Se a auth anônima estiver desabilitada no projeto Firebase,
+            // mostra uma mensagem clara no console e cai no modo offline
+            if(err.code === 'auth/admin-restricted-operation' || err.code === 'auth/operation-not-allowed'){
+              console.error('[AVISO] Autenticação anônima não está habilitada no projeto Firebase. ' +
+                            'Vá em Firebase Console → Authentication → Sign-in method → "Anônimo" → Ativar.');
+            }
+            initOffline();
+          });
+        }
+      });
     } catch(e){
+      console.error('Erro ao iniciar Firebase:', e);
       initOffline();
     }
   }
@@ -1278,6 +1303,7 @@ function loadFirebase(){
 
   loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',      'app');
   loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js', 'db');
+  loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',     'auth');
 }
 
 // Detecta se está em file:// — nesse caso vai direto para offline
@@ -6028,13 +6054,23 @@ function captureOrgAsCanvas(ws, scale, opts){
       innerClone.style.cssText = `position:absolute;top:${headerH}px;left:0;width:${totalW}px;height:${totalH - headerH}px;transform:translate(${-minX + pad}px, ${-minY + pad}px);transform-origin:0 0`;
 
       // SVG de links — desenhamos apenas os links entre nós que estão em 'visible'
+      // IMPORTANTE: o SVG precisa abranger TODA a área onde os nós estão posicionados (em coords de canvas)
+      // Se limitarmos com 100%/viewBox pequeno, paths com coordenadas grandes são cortados pelo SVG.
       const visibleIds = new Set(visible.map(n => n.id));
       const svgNS = 'http://www.w3.org/2000/svg';
       const svgClone = document.createElementNS(svgNS, 'svg');
       svgClone.setAttribute('xmlns', svgNS);
-      svgClone.setAttribute('width', '100%');
-      svgClone.setAttribute('height', '100%');
-      svgClone.style.cssText = `position:absolute;top:0;left:0;pointer-events:none;overflow:visible`;
+      // Dimensões absolutas que cobrem toda a região onde os nós podem estar (incluindo margens)
+      // O SVG é posicionado em (minX - safety, minY - safety) para que as coordenadas originais dos nós caibam
+      const svgSafety = 200;
+      const svgX = minX - svgSafety;
+      const svgY = minY - svgSafety;
+      const svgW = (maxX - minX) + svgSafety * 2;
+      const svgH = (maxY - minY) + svgSafety * 2;
+      svgClone.setAttribute('width', svgW);
+      svgClone.setAttribute('height', svgH);
+      svgClone.setAttribute('viewBox', `${svgX} ${svgY} ${svgW} ${svgH}`);
+      svgClone.style.cssText = `position:absolute;left:${svgX}px;top:${svgY}px;pointer-events:none;overflow:visible`;
       visible.forEach(n => {
         if(!n.parentId || !visibleIds.has(n.parentId)) return;
         const parent = ws.nodes.find(x => x.id === n.parentId);
