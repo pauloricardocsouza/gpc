@@ -17,6 +17,7 @@
   --radius:12px;--radius-sm:8px;
   --shadow:0 2px 12px rgba(15,30,60,0.08);
   --shadow-md:0 4px 24px rgba(15,30,60,0.12);
+  --shadow-lg:0 8px 32px rgba(15,30,60,0.18);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Sora',sans-serif;background:var(--off);color:var(--text);min-height:100vh;font-size:14px;overflow-x:hidden}
@@ -1177,6 +1178,7 @@ const lsSet = (k,v) => { try{ localStorage.setItem(k,JSON.stringify(v)); }catch(
 
 let db = null;   // Firebase database instance (null = offline mode)
 let _fbReady = false;
+let _fbInitStarted = false;
 
 function setStatus(state){
   const el=document.getElementById('conn-status');
@@ -1191,12 +1193,25 @@ function setStatus(state){
 }
 
 function save(){
-  if(db){
-    db.ref('pessoas').set(pessoas);
-    db.ref('trash').set(trash);
-  } else {
+  // Sempre salva localmente como cache — não perde dados se Firebase falhar
+  try {
     lsSet(SK_LOCAL, pessoas);
     lsSet(SK_TRASH, trash);
+  } catch(e){ console.warn('Falha ao salvar localmente:', e); }
+
+  // Se disponível, sincroniza com Firebase (mas erros não afetam cache local)
+  if(db){
+    try {
+      db.ref('pessoas').set(pessoas).catch(err => {
+        console.warn('Falha ao sincronizar pessoas com Firebase:', err);
+        setStatus('offline');
+      });
+      db.ref('trash').set(trash).catch(err => {
+        console.warn('Falha ao sincronizar lixeira com Firebase:', err);
+      });
+    } catch(e){
+      console.warn('Erro no Firebase (.set):', e);
+    }
   }
 }
 
@@ -1234,17 +1249,29 @@ function initFirebase(){
           changed = true;
         }
       });
-      if(changed) db.ref('pessoas').set(pessoas);
+      if(changed) {
+        db.ref('pessoas').set(pessoas).catch(err => console.warn('Merge de funções falhou:', err));
+      }
     } else if(!_fbReady){
+      // Primeira carga e banco vazio — usa transaction para evitar race de múltiplas abas/usuários
       pessoas = JSON.parse(JSON.stringify(DEF_PESSOAS));
-      db.ref('pessoas').set(pessoas);
+      db.ref('pessoas').transaction(current => {
+        // só escreve se ainda estiver vazio
+        if(current === null || (Array.isArray(current) && current.length === 0)){
+          return pessoas;
+        }
+        return; // abandona — outro cliente já escreveu
+      }).catch(err => console.warn('Inicialização de pessoas falhou:', err));
     }
     pessoas.forEach(p=>{ if(!p.funcoes) p.funcoes=[]; p.funcoes.forEach(f=>{ if(!f.atividades) f.atividades=[]; }); });
     _fbReady = true;
     setStatus('online');
     render();
     syncBadge();
-  }, () => { if(!_fbReady) initOffline(); });
+  }, (err) => {
+    console.warn('Leitura de pessoas no Firebase falhou:', err);
+    if(!_fbReady) initOffline();
+  });
 
   db.ref('trash').on('value', snap => {
     const val = snap.val();
@@ -1271,21 +1298,24 @@ function loadFirebase(){
       // Observa mudanças no estado de autenticação
       auth.onAuthStateChanged(user => {
         if(user){
-          // Autenticado com sucesso — conecta ao banco
-          if(!_fbReady) initFirebase();
-        } else {
-          // Não autenticado — tenta login anônimo
+          // Autenticado com sucesso — conecta ao banco (só uma vez)
+          if(!_fbReady && !_fbInitStarted) {
+            _fbInitStarted = true;
+            initFirebase();
+          }
+        } else if(!_fbReady && !_fbInitStarted){
+          // Não autenticado E ainda não iniciamos — tenta login anônimo
           auth.signInAnonymously().catch(err => {
             console.error('Auth anônima falhou:', err);
-            // Se a auth anônima estiver desabilitada no projeto Firebase,
-            // mostra uma mensagem clara no console e cai no modo offline
             if(err.code === 'auth/admin-restricted-operation' || err.code === 'auth/operation-not-allowed'){
               console.error('[AVISO] Autenticação anônima não está habilitada no projeto Firebase. ' +
                             'Vá em Firebase Console → Authentication → Sign-in method → "Anônimo" → Ativar.');
             }
-            initOffline();
+            if(!_fbReady) initOffline();
           });
         }
+        // Se já estamos conectados e a auth mudou (ex.: perda de rede), não reinicia
+        // — os listeners do Firebase re-tentam sozinhos quando a rede volta
       });
     } catch(e){
       console.error('Erro ao iniciar Firebase:', e);
@@ -2175,8 +2205,8 @@ function copyExport(){
 // ════════════════════════════════════════
 // MODALS
 // ════════════════════════════════════════
-const openModal  = id => document.getElementById(id).classList.add('open');
-const closeModal = id => document.getElementById(id).classList.remove('open');
+const openModal  = id => { const el=document.getElementById(id); if(el) el.classList.add('open'); };
+const closeModal = id => { const el=document.getElementById(id); if(el) el.classList.remove('open'); };
 document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); }));
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(el=>el.classList.remove('open')); });
 
@@ -2187,14 +2217,17 @@ function toggleSidebar(){
   const s=document.getElementById('sidebar');
   const o=document.getElementById('sidebar-overlay');
   const h=document.getElementById('hamburger');
-  s.classList.toggle('open');
-  o.classList.toggle('open');
-  h.classList.toggle('open');
+  if(s) s.classList.toggle('open');
+  if(o) o.classList.toggle('open');
+  if(h) h.classList.toggle('open');
 }
 function closeSidebar(){
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('open');
-  document.getElementById('hamburger').classList.remove('open');
+  const s=document.getElementById('sidebar');
+  const o=document.getElementById('sidebar-overlay');
+  const h=document.getElementById('hamburger');
+  if(s) s.classList.remove('open');
+  if(o) o.classList.remove('open');
+  if(h) h.classList.remove('open');
 }
 // ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded',()=>{
@@ -2969,7 +3002,10 @@ function updateSyncBadge(status){
 
 function deleteWorkspaceRemote(id){
   if(typeof db === 'undefined' || !db) return;
-  try { db.ref('organogramas/' + id).remove(); } catch(e){ console.warn(e); }
+  try {
+    db.ref('organogramas/' + id).remove()
+      .catch(err => console.warn('Falha ao excluir organograma remoto:', err));
+  } catch(e){ console.warn(e); }
 }
 
 function initFirebaseSync(){
@@ -3395,26 +3431,45 @@ function autoLayout(ws){
 }
 
 function positionAssistants(ws, rowY){
-  ws.nodes.forEach(n=>{
+  // Agrupa assessores por pai (pode ter múltiplos à esquerda/direita do mesmo pai)
+  const byParent = {};
+  ws.nodes.forEach(n => {
     if(!n.isAssistant || !n.parentId) return;
-    const parent = ws.nodes.find(x=>x.id===n.parentId);
-    if(!parent || parent.x===undefined) return;
-    // Determina profundidade do pai
-    let depth = 0; let p = parent;
-    while(p && p.parentId){ depth++; p = ws.nodes.find(x=>x.id===p.parentId); }
-    const parentY = parent.y !== undefined ? parent.y : (rowY ? rowY[depth] : 0);
-    const parentH = parent._h || NODE_H;
-    const pw = parent._w || NODE_W;
-    const nw = n._w || NODE_W;
-    // posiciona à direita ou esquerda do pai, na altura entre pai e próxima linha
-    const sideGap = 30;
-    if(n.assistantSide === 'left'){
-      n.x = parent.x - nw - sideGap;
-    } else {
-      n.x = parent.x + pw + sideGap;
-    }
-    // alinha verticalmente entre o pai e metade do caminho até os filhos
-    n.y = parentY + parentH + Math.max(8, V_GAP/3);
+    (byParent[n.parentId] = byParent[n.parentId] || []).push(n);
+  });
+
+  Object.entries(byParent).forEach(([parentId, assistants]) => {
+    const parent = ws.nodes.find(x => x.id === parentId);
+    if(!parent || parent.x === undefined) return;
+    const pW = parent._w || NODE_W;
+    const pH = parent._h || NODE_H;
+    const sideGap = 36;   // gap entre pai e assessor
+    const stackGap = 12;  // gap entre múltiplos assessores empilhados
+
+    // Assessores do lado direito e esquerdo
+    const rightAssts = assistants.filter(a => a.assistantSide !== 'left');
+    const leftAssts  = assistants.filter(a => a.assistantSide === 'left');
+
+    // Posiciona cada assessor alinhado verticalmente com o CENTRO do pai
+    // Se houver mais de um do mesmo lado, empilha um acima do outro
+    const placeSide = (list, side) => {
+      list.forEach((n, i) => {
+        const nw = n._w || NODE_W;
+        const nh = n._h || NODE_H;
+        // alinha centro vertical do assessor com centro vertical do pai,
+        // empilhando se houver múltiplos (alternadamente acima/abaixo do centro)
+        const totalH = list.length * nh + (list.length - 1) * stackGap;
+        const startY = parent.y + pH/2 - totalH/2;
+        n.y = startY + i * (nh + stackGap);
+        if(side === 'left'){
+          n.x = parent.x - nw - sideGap;
+        } else {
+          n.x = parent.x + pW + sideGap;
+        }
+      });
+    };
+    placeSide(rightAssts, 'right');
+    placeSide(leftAssts, 'left');
   });
 }
 
@@ -3441,9 +3496,20 @@ function layoutSubtree(node,left,depth,positions,rowY){
   const kids=(node.collapsed?[]:regularChildrenOf(node.id));
   const yHere = rowY ? rowY[depth] : depth*(NODE_H+V_GAP);
   const myW = node._w || NODE_W;   // largura real do nó (pode ser maior em rosters)
+
+  // Calcula espaço extra que o nó precisa para seus assessores (se houver)
+  // para que nós irmãos não fiquem em cima deles
+  const assts = assistantsOf(node.id);
+  const sideGap = 36;
+  const rightExtra = assts.filter(a => a.assistantSide !== 'left')
+    .reduce((max, a) => Math.max(max, (a._w || NODE_W) + sideGap), 0);
+  const leftExtra = assts.filter(a => a.assistantSide === 'left')
+    .reduce((max, a) => Math.max(max, (a._w || NODE_W) + sideGap), 0);
+  const effectiveW = myW + leftExtra + rightExtra;
+
   if(kids.length===0){
-    positions[node.id]={x:left,y:yHere};
-    return Math.max(myW, NODE_W);
+    positions[node.id]={x:left + leftExtra, y:yHere};
+    return Math.max(effectiveW, NODE_W);
   }
   let childLeft=left;
   let totalWidth=0;
@@ -3465,18 +3531,18 @@ function layoutSubtree(node,left,depth,positions,rowY){
   positions[node.id]={x: kidsCenter - myW/2, y:yHere};
   // Se o pai for mais largo que o bloco de filhos, a subárvore precisa refletir essa largura maior
   // (para não deixar o pai "invadir" o espaço dos irmãos do próximo nó na mesma linha)
-  const actualLeft  = Math.min(left, kidsCenter - myW/2);
-  const actualRight = Math.max(left + totalWidth, kidsCenter + myW/2);
-  // Se o pai foi desalinhado para fora do bloco (pai maior), reajusta posições dos filhos
-  // deslocando-os para manter alinhamento entre pai e filhos
-  if(kidsCenter - myW/2 < left){
-    const shift = left - (kidsCenter - myW/2);
+  const parentLeftEdge  = kidsCenter - myW/2 - leftExtra;   // incluindo espaço para assessor esquerdo
+  const parentRightEdge = kidsCenter + myW/2 + rightExtra;  // incluindo espaço para assessor direito
+  const actualLeft  = Math.min(left, parentLeftEdge);
+  const actualRight = Math.max(left + totalWidth, parentRightEdge);
+  // Se o pai foi desalinhado para fora do bloco (pai + assessor maior), reajusta posições dos filhos
+  if(parentLeftEdge < left){
+    const shift = left - parentLeftEdge;
     // Desloca o pai e todos os descendentes em 'shift' para direita
     positions[node.id].x += shift;
     _shiftDescendants(node.id, shift, positions, kids);
-    // O novo kidsCenter muda; mas como todos os filhos se deslocaram igualmente, o pai continua centralizado.
   }
-  return Math.max(actualRight - actualLeft, Math.max(totalWidth, myW));
+  return Math.max(actualRight - actualLeft, Math.max(totalWidth, effectiveW));
 }
 
 // helper: desloca X de todos os descendentes de um nó no mapa de posições
@@ -3772,6 +3838,7 @@ function renderWsDropdown(){
 function toggleWsDropdown(ev){
   ev.stopPropagation();
   const dd = document.getElementById('ws-dropdown');
+  if(!dd) return; // elemento foi removido da UI — no-op
   dd.classList.toggle('open');
   if(dd.classList.contains('open')){
     renderWsDropdown();
@@ -6451,16 +6518,8 @@ document.addEventListener('keydown',e=>{
   else if(e.key==='ArrowRight'){ e.preventDefault(); navigateFromSelection('right'); }
 });
 
-/* ========= SIDEBAR TOGGLE ========= */
-function toggleSidebar(forceOpen){
-  const sb=$('#sidebar-deprecated');
-  const ov=$('#sidebar-overlay');
-  const h=$('#hamburger-deprecated');
-  const open = typeof forceOpen==='boolean'?forceOpen:!sb.classList.contains('open');
-  sb.classList.toggle('open',open);
-  ov.classList.toggle('open',open);
-  h.classList.toggle('open',open);
-}
+/* ========= SIDEBAR TOGGLE (legado — o controle real é feito pelo index) ========= */
+function toggleSidebar(forceOpen){ /* no-op: sidebar gerenciada pelo index */ }
 
 function toggleSidebarDesktop(){
   state.ui.sidebarCollapsed = !state.ui.sidebarCollapsed;
@@ -6470,17 +6529,10 @@ function toggleSidebarDesktop(){
   setTimeout(()=>{ if(typeof redrawLinksOnly==='function') redrawLinksOnly(); renderMinimap(); }, 280);
 }
 function applySidebarCollapsed(){
-  const sb=$('#sidebar-deprecated');
-  const main=document.querySelector('.main');
-  const btn=$('#sidebar-toggle-deprecated');
+  // Não manipula sidebar do index (ela tem controle próprio). Mantém para compatibilidade.
   const collapsed = !!state.ui.sidebarCollapsed;
-  if(sb) sb.classList.toggle('collapsed', collapsed);
+  const main = document.querySelector('.main');
   if(main) main.classList.toggle('sidebar-collapsed', collapsed);
-  if(btn){
-    btn.classList.toggle('collapsed', collapsed);
-    btn.title = collapsed ? 'Exibir painel lateral' : 'Ocultar painel lateral';
-    btn.innerHTML = collapsed ? '☰' : '⟨';
-  }
 }
 
 /* ========= BOOT ========= */
