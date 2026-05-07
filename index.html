@@ -6761,25 +6761,55 @@ function exportPdf(opts){
   captureOrgAsCanvas(ws, 2.5, opts).then(({canvas, width, height}) => {
     const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     const isLandscape = width >= height;
+    const aspect = width / height;
     const SCRIPT_OPEN = '<' + 'script>';
     const SCRIPT_CLOSE = '<' + '/script>';
     const suffix = _exportSuffix(ws, opts);
+
+    // Tamanho da página: define explicitamente em mm para preservar aspect ratio
+    // Limite máximo de A2 landscape (594×420mm) — se passar disso, escala proporcionalmente
+    // Para organogramas muito largos (aspect > 1.4), usa landscape; senão portrait
+    let pageW_mm, pageH_mm;
+    if(aspect > 1.4){
+      // Landscape — fixa altura, calcula largura
+      pageH_mm = 210; // altura A4
+      pageW_mm = Math.round(pageH_mm * aspect);
+      if(pageW_mm > 1189){ // limite A0 landscape
+        pageW_mm = 1189;
+        pageH_mm = Math.round(pageW_mm / aspect);
+      }
+    } else if(aspect < 0.7){
+      // Portrait — fixa largura, calcula altura
+      pageW_mm = 210; // largura A4
+      pageH_mm = Math.round(pageW_mm / aspect);
+      if(pageH_mm > 1189){
+        pageH_mm = 1189;
+        pageW_mm = Math.round(pageH_mm * aspect);
+      }
+    } else {
+      // Aspect próximo de quadrado — usa A4 padrão
+      pageW_mm = isLandscape ? 297 : 210;
+      pageH_mm = isLandscape ? 210 : 297;
+    }
+
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <title>${escHtml(ws.name + suffix)}</title>
 <style>
-  @page { size: A4 ${isLandscape?'landscape':'portrait'}; margin: 8mm; }
+  @page { size: ${pageW_mm}mm ${pageH_mm}mm; margin: 0; }
   * { box-sizing: border-box; }
-  html, body { margin:0; padding:0; font-family: Arial, sans-serif; background:#fff; }
-  .page { width:100%; display:flex; align-items:center; justify-content:center; padding:4mm }
-  .page img { width:100%; height:auto; max-height:100%; display:block; }
+  html, body { margin:0; padding:0; font-family: Arial, sans-serif; background:#fff; width:100%; height:100%; }
+  .page { width:${pageW_mm}mm; height:${pageH_mm}mm; display:flex; align-items:center; justify-content:center; overflow:hidden; padding:4mm; }
+  .page img { max-width:100%; max-height:100%; width:auto; height:auto; display:block; object-fit:contain }
   @media print {
     .noprint { display:none !important; }
-    .page { padding:0; }
+    .page { padding:4mm; page-break-after:avoid; }
+    body { width:${pageW_mm}mm; height:${pageH_mm}mm }
   }
-  .noprint{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999}
+  .noprint{position:fixed;top:12px;right:12px;display:flex;gap:8px;z-index:999;flex-direction:column}
+  .noprint .info{background:rgba(43,74,122,0.9);color:#fff;padding:10px 14px;border-radius:8px;font-size:11px;max-width:240px;line-height:1.5;backdrop-filter:blur(4px)}
   .noprint button{height:38px;padding:0 16px;border-radius:20px;border:none;font-weight:600;cursor:pointer;font-size:13px}
   .noprint .go{background:#F5831F;color:#fff}
   .noprint .cancel{background:#eee;color:#333}
@@ -6787,12 +6817,13 @@ function exportPdf(opts){
 </head>
 <body>
 <div class="noprint">
+  <div class="info">📄 Página: <b>${pageW_mm}×${pageH_mm}mm</b><br>No diálogo, escolha "Salvar como PDF" e <b>desmarque "Cabeçalhos e rodapés"</b>. Mantenha "Margens: Nenhuma".</div>
   <button class="go" onclick="window.print()">🖨 Salvar como PDF</button>
   <button class="cancel" onclick="window.close()">Fechar</button>
 </div>
 <div class="page"><img src="${dataUrl}" alt="${escHtml(ws.name + suffix)}"></div>
 ${SCRIPT_OPEN}
-  window.addEventListener('load', ()=>{ setTimeout(()=>window.print(), 400); });
+  window.addEventListener('load', ()=>{ setTimeout(()=>window.print(), 600); });
 ${SCRIPT_CLOSE}
 </body>
 </html>`;
@@ -6801,7 +6832,7 @@ ${SCRIPT_CLOSE}
     w.document.open();
     w.document.write(html);
     w.document.close();
-    toast('PDF pronto — use "Salvar como PDF" na janela que abriu','success');
+    toast('PDF pronto — escolha "Salvar como PDF" no diálogo','success');
   }).catch(e => {
     console.error(e);
     toast('Falha ao gerar PDF: '+(e.message||''),'error');
