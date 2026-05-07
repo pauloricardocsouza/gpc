@@ -473,15 +473,15 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .org-node.shape-circle{border-radius:50%;min-width:140px;min-height:140px;display:flex;align-items:center;justify-content:center;padding:14px}
 
 /* shape: roster (caixa com múltiplas pessoas lado a lado) */
-.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:900px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff;border:2px solid var(--navy);width:max-content}
+.orgpanel .org-node.shape-roster{border-radius:10px;min-width:280px;max-width:1400px;padding:0;text-align:left;overflow:hidden;background:var(--dark);color:#fff;border:2px solid var(--navy);width:max-content}
 .orgpanel .org-node.shape-roster .roster-header{padding:10px 16px 8px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.12)}
 .orgpanel .org-node.shape-roster .roster-header-dept{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px;opacity:.9}
 .orgpanel .org-node.shape-roster .roster-header-title{font-size:15px;font-weight:700;line-height:1.2}
 .orgpanel .org-node.shape-roster .roster-wrap{display:flex;align-items:stretch;gap:0}
-.orgpanel .org-node.shape-roster .roster-item{flex:1 1 0;padding:12px 16px;border-right:1px solid rgba(255,255,255,0.18);display:flex;flex-direction:column;gap:3px;min-width:130px;text-align:center}
+.orgpanel .org-node.shape-roster .roster-item{flex:1 1 auto;padding:12px 18px;border-right:1px solid rgba(255,255,255,0.18);display:flex;flex-direction:column;gap:3px;min-width:max-content;text-align:center}
 .orgpanel .org-node.shape-roster .roster-item:last-child{border-right:0}
-.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.3}
-.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;line-height:1.25;word-wrap:break-word;overflow-wrap:break-word;hyphens:auto}
+.orgpanel .org-node.shape-roster .roster-role{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;line-height:1.3;white-space:nowrap}
+.orgpanel .org-node.shape-roster .roster-name{font-size:14px;font-weight:700;line-height:1.25;white-space:nowrap}
 .orgpanel .org-node.shape-roster .roster-empty{font-size:11px;color:rgba(255,255,255,0.4);font-style:italic;padding:18px 20px;text-align:center;width:100%}
 .orgpanel .org-node.shape-roster.selected{box-shadow:0 0 0 3px var(--orange),var(--shadow-md)}
 
@@ -615,6 +615,63 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
 .orgpanel .area-selection-hint{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:var(--dark);color:#fff;padding:8px 16px;border-radius:20px;font-size:12px;font-weight:500;box-shadow:0 4px 16px rgba(0,0,0,0.3);pointer-events:none;z-index:101}
 .orgpanel .area-selection-cancel{position:absolute;top:14px;right:14px;background:#fff;border:1.5px solid var(--gray2);border-radius:20px;padding:8px 18px;font-size:12px;font-weight:600;color:var(--text);cursor:pointer;z-index:102;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
 .orgpanel .area-selection-cancel:hover{background:var(--danger2);color:var(--danger);border-color:var(--danger)}
+
+/* ═══ MODO APRESENTAÇÃO (estilo Prezi) ═══ */
+body.org-presenting{overflow:hidden}
+body.org-presenting .sidebar,
+body.org-presenting .topbar,
+body.org-presenting .org-coment-fab,
+body.org-presenting .inspector,
+body.org-presenting .canvas-controls,
+body.org-presenting .minimap,
+body.org-presenting .sidebar-hide{display:none !important}
+body.org-presenting .main{margin-left:0 !important}
+body.org-presenting #panel-organograma{padding:0 !important}
+body.org-presenting #org-canvas-wrap{position:fixed;inset:0;width:100vw;height:100vh;background:#0F1B30 !important;cursor:default !important}
+
+/* Spotlight: escurece tudo exceto o nó focado */
+body.org-presenting .org-node{opacity:.18;transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1),box-shadow .6s}
+body.org-presenting .org-node.presenting-focus{opacity:1;box-shadow:0 0 0 4px var(--orange),0 12px 48px rgba(245,131,31,.45),0 0 80px rgba(245,131,31,.25);z-index:50;transform:scale(1.02)}
+body.org-presenting .org-node.presenting-context{opacity:.55}
+body.org-presenting #org-canvas-svg path{opacity:.25;transition:opacity .5s}
+body.org-presenting #org-canvas-svg path.presenting-active{opacity:.85;stroke-width:2.5}
+body.org-presenting .canvas-inner{transition:transform .85s cubic-bezier(.4,0,.2,1)}
+
+/* Controles do modo apresentação */
+.presentation-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(15,27,48,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.12);border-radius:50px;padding:8px 12px;display:flex;align-items:center;gap:10px;z-index:9999;box-shadow:0 12px 48px rgba(0,0,0,.4);font-family:'Sora',sans-serif}
+.presentation-bar button{background:rgba(255,255,255,0.08);border:none;color:#fff;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.presentation-bar button:hover{background:var(--orange);transform:scale(1.06)}
+.presentation-bar button:disabled{opacity:.3;cursor:not-allowed}
+.presentation-bar button:disabled:hover{background:rgba(255,255,255,0.08);transform:none}
+.presentation-bar .pres-counter{color:rgba(255,255,255,0.85);font-size:12px;font-weight:600;font-family:'JetBrains Mono',monospace;padding:0 10px;min-width:60px;text-align:center}
+.presentation-bar .pres-divider{width:1px;height:24px;background:rgba(255,255,255,0.15)}
+.presentation-bar .pres-exit{background:rgba(245,131,31,0.2)}
+.presentation-bar .pres-exit:hover{background:var(--danger)}
+
+.presentation-info{position:fixed;top:24px;left:50%;transform:translateX(-50%);background:rgba(15,27,48,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px 22px;z-index:9999;text-align:center;color:#fff;max-width:600px;box-shadow:0 12px 48px rgba(0,0,0,.4);font-family:'Sora',sans-serif;animation:presFadeIn .5s}
+.presentation-info .pres-dept{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--orange);margin-bottom:4px}
+.presentation-info .pres-name{font-size:18px;font-weight:700;margin-bottom:2px}
+.presentation-info .pres-role{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,0.7)}
+.presentation-info .pres-notes{font-size:11.5px;color:rgba(255,255,255,0.85);margin-top:8px;line-height:1.4;font-weight:400}
+@keyframes presFadeIn{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+.presentation-progress{position:fixed;top:0;left:0;width:100%;height:3px;background:rgba(255,255,255,0.08);z-index:9999}
+.presentation-progress .bar{height:100%;background:var(--orange);transition:width .85s cubic-bezier(.4,0,.2,1)}
+
+/* Dropdown do botão Auto-layout */
+.orgpanel .org-btn-dropdown-wrap{position:relative;display:inline-flex}
+.orgpanel .org-btn-dropdown-wrap .org-btn-top{border-top-right-radius:0;border-bottom-right-radius:0;padding-right:8px}
+.orgpanel .org-btn-dropdown-arrow{height:32px;padding:0 8px;border:1px solid var(--gray2);border-left:none;background:#fff;cursor:pointer;border-radius:0 7px 7px 0;color:var(--muted);font-size:10px;display:flex;align-items:center;justify-content:center;transition:all .12s}
+.orgpanel .org-btn-dropdown-arrow:hover{background:var(--gray1);color:var(--navy)}
+.orgpanel .org-btn-dropdown-menu{position:absolute;top:calc(100% + 4px);right:0;background:#fff;border:1px solid var(--gray2);border-radius:10px;box-shadow:var(--shadow-md);padding:6px;min-width:280px;z-index:80;display:none}
+.orgpanel .org-btn-dropdown-menu.open{display:block;animation:dropdownIn .18s ease-out}
+@keyframes dropdownIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.orgpanel .layout-mode-opt{display:flex;align-items:flex-start;gap:10px;width:100%;padding:10px 12px;border:none;background:transparent;border-radius:7px;cursor:pointer;text-align:left;transition:background .12s;font-family:'Sora',sans-serif}
+.orgpanel .layout-mode-opt:hover{background:var(--gray1)}
+.orgpanel .layout-mode-opt .opt-icon{font-size:18px;line-height:1.2;flex-shrink:0}
+.orgpanel .layout-mode-opt .opt-text{display:flex;flex-direction:column;gap:2px;min-width:0}
+.orgpanel .layout-mode-opt .opt-title{font-size:12.5px;font-weight:600;color:var(--text)}
+.orgpanel .layout-mode-opt .opt-sub{font-size:10.5px;color:var(--muted);line-height:1.3}
 .orgpanel .inspector-section{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--gray2);display:flex;align-items:center;gap:6px}
 .orgpanel .inspector-section:first-child{margin-top:0}
 .orgpanel .tag-input-wrap{display:flex;flex-wrap:wrap;gap:4px;padding:6px;border:1px solid var(--gray2);border-radius:7px;min-height:36px}
@@ -1025,7 +1082,27 @@ pre#export-content{font-size:11px;line-height:1.8;color:var(--text);background:v
       <button class="org-btn-icon" title="Desfazer (Ctrl+Z)" onclick="ORG.undo()">↶</button>
       <button class="org-btn-icon" title="Refazer (Ctrl+Y)" onclick="ORG.redo()">↷</button>
       <div class="org-sep"></div>
-      <button class="org-btn-top" onclick="ORG.autoLayoutCurrent()" title="Auto-organizar (L)"><span>🎯</span><span class="lbl">Auto-layout</span></button>
+      <div class="org-btn-dropdown-wrap">
+        <button class="org-btn-top" onclick="ORG.autoLayoutCurrent()" title="Auto-organizar (L)"><span>🎯</span><span class="lbl">Auto-layout</span></button>
+        <button class="org-btn-dropdown-arrow" onclick="ORG.toggleLayoutMenu(event)" title="Modo de espaçamento">▾</button>
+        <div class="org-btn-dropdown-menu" id="layout-menu">
+          <button class="layout-mode-opt" onclick="ORG.autoLayoutCurrent('normal')">
+            <span class="opt-icon">🎯</span>
+            <span class="opt-text">
+              <span class="opt-title">Normal</span>
+              <span class="opt-sub">Espaçamento padrão (uso diário)</span>
+            </span>
+          </button>
+          <button class="layout-mode-opt" onclick="ORG.autoLayoutCurrent('compact')">
+            <span class="opt-icon">📐</span>
+            <span class="opt-text">
+              <span class="opt-title">Compacto</span>
+              <span class="opt-sub">Reduzido pela metade (apresentação/impressão)</span>
+            </span>
+          </button>
+        </div>
+      </div>
+      <button class="org-btn-top" onclick="ORG.startPresentation()" title="Apresentar (P)"><span>▶</span><span class="lbl">Apresentar</span></button>
       <button class="org-btn-top orange" onclick="ORG.addRootIfEmptyOrChild()" title="Adicionar cargo (N)"><span>+</span><span class="lbl">Cargo</span></button>
     </div>
   </div>
@@ -3404,11 +3481,37 @@ function removeNode(id, cascade=true){
 /* ========= AUTO-LAYOUT (Reingold-Tilford simplificado por roots) ========= */
 const NODE_W = 210;       // largura de referência para layout
 const NODE_H = 64;        // altura de referência (ajustada para nós compactos)
-const H_GAP = 28;         // gap horizontal entre irmãos (espaçamento equilibrado)
-const V_GAP = 48;         // gap vertical entre níveis
-const ROOT_GAP = 50;      // gap entre árvores (múltiplos roots)
+// Espaçamentos NORMAIS (modo padrão)
+const H_GAP_NORMAL = 28;       // gap horizontal entre irmãos
+const V_GAP_NORMAL = 48;       // gap vertical entre níveis
+const ROOT_GAP_NORMAL = 50;    // gap entre árvores (múltiplos roots)
+// Espaçamentos COMPACTOS (metade dos normais — para apresentação ou impressão)
+const H_GAP_COMPACT = 14;
+const V_GAP_COMPACT = 24;
+const ROOT_GAP_COMPACT = 25;
+
+// Variáveis efetivas usadas pelo layout — alteradas dinamicamente conforme o modo do workspace
+let H_GAP = H_GAP_NORMAL;
+let V_GAP = V_GAP_NORMAL;
+let ROOT_GAP = ROOT_GAP_NORMAL;
+
+// Aplica o modo de espaçamento ao workspace ativo
+function applyLayoutSpacing(mode){
+  if(mode === 'compact'){
+    H_GAP = H_GAP_COMPACT;
+    V_GAP = V_GAP_COMPACT;
+    ROOT_GAP = ROOT_GAP_COMPACT;
+  } else {
+    H_GAP = H_GAP_NORMAL;
+    V_GAP = V_GAP_NORMAL;
+    ROOT_GAP = ROOT_GAP_NORMAL;
+  }
+}
 
 function autoLayout(ws){
+  // Aplica os espaçamentos conforme o modo do workspace (normal ou compact)
+  applyLayoutSpacing(ws.layoutMode || 'normal');
+
   const roots=ws.nodes.filter(n=>!n.parentId);
   let cursorX=0;
   const positions={};
@@ -3555,8 +3658,17 @@ function _shiftDescendants(parentId, dx, positions, directKids){
   }
 }
 
-function autoLayoutCurrent(){
+function autoLayoutCurrent(mode){
   const ws=currentWs(); if(!ws||!ws.nodes.length){ toast('Vazio','warn'); return; }
+  // Fecha o menu de modos se estiver aberto
+  const menu = document.getElementById('layout-menu');
+  if(menu) menu.classList.remove('open');
+
+  // Determina o modo: explícito por parâmetro, ou salvo no workspace, ou padrão 'normal'
+  const layoutMode = mode || ws.layoutMode || 'normal';
+  ws.layoutMode = layoutMode;
+  applyLayoutSpacing(layoutMode);
+
   snapshot();
   // Mede nós atuais antes do layout (para usar alturas reais)
   const hiddenSet = new Set(); // sem colapsados escondidos nesta operação
@@ -3576,7 +3688,26 @@ function autoLayoutCurrent(){
     render();
     fitToScreen();
   }, 40);
-  toast('Organograma reorganizado','success');
+  toast(layoutMode === 'compact' ? 'Organograma reorganizado (modo compacto)' : 'Organograma reorganizado','success');
+}
+
+function toggleLayoutMenu(ev){
+  ev.stopPropagation();
+  const menu = document.getElementById('layout-menu');
+  if(!menu) return;
+  const isOpen = menu.classList.contains('open');
+  // Fecha qualquer outro menu aberto antes
+  document.querySelectorAll('.org-btn-dropdown-menu.open').forEach(m => m.classList.remove('open'));
+  if(!isOpen){
+    menu.classList.add('open');
+    const closer = (e) => {
+      if(!menu.contains(e.target) && !e.target.classList.contains('org-btn-dropdown-arrow')){
+        menu.classList.remove('open');
+        document.removeEventListener('click', closer);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closer), 50);
+  }
 }
 
 /* ========= RENDER: transform / pan / zoom ========= */
@@ -3653,6 +3784,277 @@ function centerOnRoot(){
   const topPadding = (ws.meta && ws.meta.logo) ? 90 : 60;
   tx = wrap.width/2 - (root.x + nw/2 + ox)*scale;
   ty = topPadding - ((root.y||0) + oy)*scale;
+  applyTransform();
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * MODO APRESENTAÇÃO (estilo Prezi)
+ * Percorre nós em ordem hierárquica com câmera animada e spotlight
+ * ════════════════════════════════════════════════════════════════ */
+let _presentation = {
+  active: false,
+  nodes: [],
+  index: 0,
+  autoTimer: null,
+  autoplay: false,
+  autoDelay: 4000,
+  savedTx: 0, savedTy: 0, savedScale: 1,
+  savedSelectedId: null,
+};
+
+function startPresentation(){
+  const ws = currentWs();
+  if(!ws || !ws.nodes.length){ toast('Organograma vazio','warn'); return; }
+
+  // Guarda o estado da câmera atual para restaurar ao sair
+  _presentation.savedTx = tx;
+  _presentation.savedTy = ty;
+  _presentation.savedScale = scale;
+  _presentation.savedSelectedId = selectedNodeId;
+
+  // Constrói a sequência: percurso em largura (BFS) por nível
+  // Inclui assessores logo após o pai
+  _presentation.nodes = _buildPresentationOrder(ws);
+  if(!_presentation.nodes.length){ toast('Sem cargos para apresentar','warn'); return; }
+
+  _presentation.active = true;
+  _presentation.index = 0;
+  _presentation.autoplay = false;
+
+  // Limpa seleção (não queremos inspector aberto)
+  if(typeof deselect === 'function') deselect();
+
+  document.body.classList.add('org-presenting');
+  _renderPresentationUi();
+  _focusPresentationNode(0);
+
+  // Tecla ESC sai (capture: true para rodar antes dos atalhos do canvas)
+  window.addEventListener('keydown', _presentationKey, true);
+}
+
+function _buildPresentationOrder(ws){
+  const out = [];
+  const visited = new Set();
+  // BFS começando dos roots
+  const queue = ws.nodes.filter(n => !n.parentId && !n.isAssistant).slice();
+  while(queue.length){
+    const cur = queue.shift();
+    if(visited.has(cur.id)) continue;
+    visited.add(cur.id);
+    out.push(cur);
+    // Inclui assessores deste nó logo em seguida
+    assistantsOf(cur.id).forEach(a => {
+      if(!visited.has(a.id)){
+        visited.add(a.id);
+        out.push(a);
+      }
+    });
+    // Empilha filhos regulares para próxima rodada (BFS por nível)
+    regularChildrenOf(cur.id).forEach(c => queue.push(c));
+  }
+  return out;
+}
+
+function _focusPresentationNode(idx){
+  if(idx < 0 || idx >= _presentation.nodes.length) return;
+  _presentation.index = idx;
+  const node = _presentation.nodes[idx];
+
+  // Atualiza spotlight nos elementos DOM dos nós
+  document.querySelectorAll('.org-node').forEach(el => {
+    el.classList.remove('presenting-focus','presenting-context');
+  });
+  document.querySelectorAll('#org-canvas-svg path').forEach(p => p.classList.remove('presenting-active'));
+
+  const focusEl = document.querySelector(`.org-node[data-id="${node.id}"]`);
+  if(focusEl) focusEl.classList.add('presenting-focus');
+
+  // Marca o ancestral imediato como "context" para dar referência visual
+  if(node.parentId){
+    const parentEl = document.querySelector(`.org-node[data-id="${node.parentId}"]`);
+    if(parentEl) parentEl.classList.add('presenting-context');
+  }
+  // Marca filhos como context também
+  regularChildrenOf(node.id).forEach(c => {
+    const el = document.querySelector(`.org-node[data-id="${c.id}"]`);
+    if(el) el.classList.add('presenting-context');
+  });
+
+  // Anima câmera para focar o nó
+  _flyCameraTo(node);
+
+  // Atualiza UI (info + progresso)
+  _updatePresentationUi();
+
+  // Programa próximo se autoplay
+  clearTimeout(_presentation.autoTimer);
+  if(_presentation.autoplay){
+    _presentation.autoTimer = setTimeout(() => {
+      if(_presentation.index < _presentation.nodes.length - 1){
+        _focusPresentationNode(_presentation.index + 1);
+      } else {
+        _presentation.autoplay = false;
+        _renderPresentationUi();
+      }
+    }, _presentation.autoDelay);
+  }
+}
+
+function _flyCameraTo(node){
+  const wrap = document.getElementById('org-canvas-wrap');
+  if(!wrap) return;
+  const wrapRect = wrap.getBoundingClientRect();
+  const nw = node._w || NODE_W;
+  const nh = node._h || NODE_H;
+  const ox = (typeof getLayerOx==='function') ? getLayerOx() : 0;
+  const oy = (typeof getLayerOy==='function') ? getLayerOy() : 0;
+
+  // Calcula um zoom adequado: o nó deve ocupar ~30-40% da viewport
+  const targetNodeWidth = Math.min(wrapRect.width * 0.45, 380);
+  const newScale = Math.max(0.6, Math.min(2.2, targetNodeWidth / nw));
+
+  // Centro do nó na viewport
+  const nodeCx = node.x + nw/2 + ox;
+  const nodeCy = node.y + nh/2 + oy;
+
+  scale = newScale;
+  tx = wrapRect.width/2 - nodeCx * newScale;
+  ty = wrapRect.height/2 - nodeCy * newScale;
+  applyTransform();
+}
+
+function _renderPresentationUi(){
+  // Remove UI anterior se existir
+  document.querySelectorAll('.presentation-bar, .presentation-info, .presentation-progress').forEach(e => e.remove());
+
+  const total = _presentation.nodes.length;
+  const idx = _presentation.index;
+  const node = _presentation.nodes[idx];
+
+  // Barra de progresso topo
+  const prog = document.createElement('div');
+  prog.className = 'presentation-progress';
+  prog.innerHTML = `<div class="bar" style="width:${((idx+1)/total)*100}%"></div>`;
+  document.body.appendChild(prog);
+
+  // Info do nó atual (nome, depto, observações)
+  const info = document.createElement('div');
+  info.className = 'presentation-info';
+  const peopleHtml = (node.shape === 'roster' && node.people && node.people.length)
+    ? `<div class="pres-name">${escHtml(node.title || '')}</div>
+       <div class="pres-role">${node.people.map(p => escHtml(p.name||'') + (p.role?' ('+escHtml(p.role)+')':'')).join(' · ')}</div>`
+    : `${node.dept ? `<div class="pres-dept">${escHtml(node.dept)}</div>` : ''}
+       <div class="pres-name">${escHtml(node.person || node.title || '(sem nome)')}</div>
+       ${node.person ? `<div class="pres-role">${escHtml(node.title || '')}</div>` : ''}`;
+  info.innerHTML = `
+    ${peopleHtml}
+    ${node.notes ? `<div class="pres-notes">${escHtml(node.notes)}</div>` : ''}
+  `;
+  document.body.appendChild(info);
+
+  // Barra de controles inferior
+  const bar = document.createElement('div');
+  bar.className = 'presentation-bar';
+  const playIcon = _presentation.autoplay ? '⏸' : '▶';
+  bar.innerHTML = `
+    <button id="pres-prev" title="Anterior (←)" ${idx===0?'disabled':''}>◀</button>
+    <button id="pres-play" title="Play/Pausa (espaço)">${playIcon}</button>
+    <button id="pres-next" title="Próximo (→)" ${idx===total-1?'disabled':''}>▶</button>
+    <span class="pres-counter">${idx+1} / ${total}</span>
+    <span class="pres-divider"></span>
+    <button id="pres-restart" title="Reiniciar (R)">↺</button>
+    <button id="pres-fit" title="Ver tudo">⤢</button>
+    <span class="pres-divider"></span>
+    <button id="pres-exit" class="pres-exit" title="Sair (ESC)">✕</button>
+  `;
+  document.body.appendChild(bar);
+
+  bar.querySelector('#pres-prev').addEventListener('click', () => _focusPresentationNode(idx-1));
+  bar.querySelector('#pres-next').addEventListener('click', () => _focusPresentationNode(idx+1));
+  bar.querySelector('#pres-play').addEventListener('click', () => {
+    _presentation.autoplay = !_presentation.autoplay;
+    if(_presentation.autoplay && idx >= total-1) _presentation.index = -1; // recomeça do zero
+    _focusPresentationNode(_presentation.autoplay && idx >= total-1 ? 0 : _presentation.index);
+    _renderPresentationUi();
+  });
+  bar.querySelector('#pres-restart').addEventListener('click', () => _focusPresentationNode(0));
+  bar.querySelector('#pres-fit').addEventListener('click', () => {
+    fitToScreen();
+    document.querySelectorAll('.org-node').forEach(el => el.classList.remove('presenting-focus','presenting-context'));
+  });
+  bar.querySelector('#pres-exit').addEventListener('click', exitPresentation);
+}
+
+function _updatePresentationUi(){
+  // Atualização rápida só do conteúdo, sem reanimar a entrada inteira
+  const total = _presentation.nodes.length;
+  const idx = _presentation.index;
+  const bar = document.querySelector('.presentation-progress .bar');
+  if(bar) bar.style.width = (((idx+1)/total)*100) + '%';
+  const counter = document.querySelector('.presentation-bar .pres-counter');
+  if(counter) counter.textContent = `${idx+1} / ${total}`;
+  const prevBtn = document.querySelector('#pres-prev');
+  const nextBtn = document.querySelector('#pres-next');
+  if(prevBtn) prevBtn.disabled = (idx === 0);
+  if(nextBtn) nextBtn.disabled = (idx === total - 1);
+
+  // Atualiza painel de info (com animação de entrada)
+  const oldInfo = document.querySelector('.presentation-info');
+  if(oldInfo){
+    const node = _presentation.nodes[idx];
+    const peopleHtml = (node.shape === 'roster' && node.people && node.people.length)
+      ? `<div class="pres-name">${escHtml(node.title || '')}</div>
+         <div class="pres-role">${node.people.map(p => escHtml(p.name||'') + (p.role?' ('+escHtml(p.role)+')':'')).join(' · ')}</div>`
+      : `${node.dept ? `<div class="pres-dept">${escHtml(node.dept)}</div>` : ''}
+         <div class="pres-name">${escHtml(node.person || node.title || '(sem nome)')}</div>
+         ${node.person ? `<div class="pres-role">${escHtml(node.title || '')}</div>` : ''}`;
+    oldInfo.style.animation = 'none';
+    oldInfo.offsetWidth; // força reflow
+    oldInfo.style.animation = 'presFadeIn .5s';
+    oldInfo.innerHTML = `${peopleHtml}${node.notes ? `<div class="pres-notes">${escHtml(node.notes)}</div>` : ''}`;
+  }
+}
+
+function _presentationKey(e){
+  if(!_presentation.active) return;
+  if(e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); exitPresentation(); return; }
+  if(e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter'){
+    e.preventDefault(); e.stopPropagation();
+    if(e.key === ' '){
+      _presentation.autoplay = !_presentation.autoplay;
+      _focusPresentationNode(_presentation.index);
+      _renderPresentationUi();
+    } else if(_presentation.index < _presentation.nodes.length - 1){
+      _focusPresentationNode(_presentation.index + 1);
+    }
+    return;
+  }
+  if(e.key === 'ArrowLeft'){
+    e.preventDefault(); e.stopPropagation();
+    if(_presentation.index > 0) _focusPresentationNode(_presentation.index - 1);
+    return;
+  }
+  if(e.key === 'r' || e.key === 'R'){ e.preventDefault(); e.stopPropagation(); _focusPresentationNode(0); return; }
+  // Engole TODAS as outras teclas durante apresentação para não disparar atalhos
+  e.preventDefault(); e.stopPropagation();
+}
+
+function exitPresentation(){
+  if(!_presentation.active) return;
+  _presentation.active = false;
+  _presentation.autoplay = false;
+  clearTimeout(_presentation.autoTimer);
+
+  document.body.classList.remove('org-presenting');
+  document.querySelectorAll('.presentation-bar, .presentation-info, .presentation-progress').forEach(e => e.remove());
+  document.querySelectorAll('.org-node').forEach(el => el.classList.remove('presenting-focus','presenting-context'));
+  document.querySelectorAll('#org-canvas-svg path').forEach(p => p.classList.remove('presenting-active'));
+  window.removeEventListener('keydown', _presentationKey, true);
+
+  // Restaura câmera anterior
+  tx = _presentation.savedTx;
+  ty = _presentation.savedTy;
+  scale = _presentation.savedScale;
   applyTransform();
 }
 
@@ -6511,6 +6913,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='f' || e.key==='F'){ fitToScreen(); return; }
   if(e.key==='l' || e.key==='L'){ autoLayoutCurrent(); return; }
   if(e.key==='n' || e.key==='N'){ addRootIfEmptyOrChild(); return; }
+  if(e.key==='p' || e.key==='P'){ startPresentation(); return; }
   if(e.key==='Home'){ centerOnRoot(); return; }
   if(e.key==='ArrowUp') { e.preventDefault(); navigateFromSelection('up'); }
   else if(e.key==='ArrowDown'){ e.preventDefault(); navigateFromSelection('down'); }
@@ -6595,6 +6998,9 @@ return {
   hideSearchResults: typeof hideSearchResults !== "undefined" ? hideSearchResults : null,
   fitToScreen: typeof fitToScreen !== "undefined" ? fitToScreen : null,
   centerOnRoot: typeof centerOnRoot !== "undefined" ? centerOnRoot : null,
+  startPresentation: typeof startPresentation !== "undefined" ? startPresentation : null,
+  exitPresentation: typeof exitPresentation !== "undefined" ? exitPresentation : null,
+  toggleLayoutMenu: typeof toggleLayoutMenu !== "undefined" ? toggleLayoutMenu : null,
   zoomBy: typeof zoomBy !== "undefined" ? zoomBy : null,
   createRootNode: typeof createRootNode !== "undefined" ? createRootNode : null,
   onMinimapClick: typeof onMinimapClick !== "undefined" ? onMinimapClick : null,
