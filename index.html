@@ -3922,49 +3922,71 @@ function _flyCameraTo(node){
   const ox = (typeof getLayerOx==='function') ? getLayerOx() : 0;
   const oy = (typeof getLayerOy==='function') ? getLayerOy() : 0;
 
-  // Calcula o bounding box: o nó focado + filhos imediatos (se tiver) + assessores
-  // Isso enquadra naturalmente uma "diretoria" mostrando a líder e seu time visível
+  const nw = node._w || NODE_W;
+  const nh = node._h || NODE_H;
   const ws = currentWs();
-  const groupNodes = [node];
-  if(ws){
-    regularChildrenOf(node.id).forEach(c => groupNodes.push(c));
-    assistantsOf(node.id).forEach(a => groupNodes.push(a));
+
+  // Estratégia de enquadramento:
+  // - Se o nó tem filhos diretos OU assessores: enquadra o nó + esses subordinados
+  // - Se for "folha" (sem filhos): enquadra apenas o próprio nó com zoom forte
+  // Em ambos os casos, o nó focado deve ser BEM grande na tela (audiência precisa enxergar)
+  const kids = ws ? regularChildrenOf(node.id) : [];
+  const assts = ws ? assistantsOf(node.id) : [];
+  const hasGroup = kids.length > 0 || assts.length > 0;
+
+  let minX, minY, maxX, maxY;
+  if(hasGroup){
+    // Bounding box: nó focado + filhos + assessores
+    const groupNodes = [node, ...kids, ...assts];
+    minX = Infinity; minY = Infinity; maxX = -Infinity; maxY = -Infinity;
+    groupNodes.forEach(n => {
+      const w = n._w || NODE_W;
+      const h = n._h || NODE_H;
+      if(n.x < minX) minX = n.x;
+      if(n.y < minY) minY = n.y;
+      if(n.x + w > maxX) maxX = n.x + w;
+      if(n.y + h > maxY) maxY = n.y + h;
+    });
+  } else {
+    // Folha: só o nó, com zoom bem grande
+    minX = node.x;
+    minY = node.y;
+    maxX = node.x + nw;
+    maxY = node.y + nh;
   }
 
-  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
-  groupNodes.forEach(n => {
-    const w = n._w || NODE_W;
-    const h = n._h || NODE_H;
-    if(n.x < minX) minX = n.x;
-    if(n.y < minY) minY = n.y;
-    if(n.x + w > maxX) maxX = n.x + w;
-    if(n.y + h > maxY) maxY = n.y + h;
-  });
   const groupW = maxX - minX;
   const groupH = maxY - minY;
 
-  // Margem: 12% de cada lado para respiro visual
-  const padX = wrapRect.width * 0.12;
-  const padY = wrapRect.height * 0.12 + 80; // +80 para evitar painel de info no topo
-  const padBottom = 110; // espaço para a barra de controles
+  // Margem de respiro (menor = mais zoom no conjunto)
+  const padX = wrapRect.width * 0.06;
+  const padTop = 110;     // espaço para painel de info no topo
+  const padBottom = 100;  // espaço para barra de controles
 
   const availW = wrapRect.width - padX * 2;
-  const availH = wrapRect.height - padY - padBottom;
+  const availH = wrapRect.height - padTop - padBottom;
 
-  // Zoom que faz o grupo caber confortavelmente
-  // Mas com piso e teto: nunca menos que 0.55 (não muito longe) nem mais que 1.4 (não muito perto)
+  // Zoom calculado para o conjunto caber confortavelmente
   const scaleX = availW / Math.max(groupW, 100);
   const scaleY = availH / Math.max(groupH, 100);
-  const newScale = Math.max(0.55, Math.min(1.4, Math.min(scaleX, scaleY)));
+  let newScale = Math.min(scaleX, scaleY);
 
-  // Centro do grupo na viewport
+  // Limite mínimo: o NÓ FOCADO deve ter pelo menos 32% da largura da tela
+  // (garante visibilidade para apresentação ao público)
+  const minScaleForFocus = (wrapRect.width * 0.32) / nw;
+  newScale = Math.max(newScale, minScaleForFocus);
+
+  // Limites absolutos: não muito zoom out (perde detalhe) nem zoom in absurdo
+  newScale = Math.max(0.6, Math.min(2.4, newScale));
+
+  // Centro do grupo
   const groupCx = (minX + maxX) / 2 + ox;
   const groupCy = (minY + maxY) / 2 + oy;
 
   scale = newScale;
   tx = wrapRect.width / 2 - groupCx * newScale;
-  // Se há painel de info no topo, desloca um pouco para baixo para não sobrepor
-  ty = (wrapRect.height / 2 + 30) - groupCy * newScale;
+  // Centra verticalmente entre o painel info e a barra inferior
+  ty = (padTop + (wrapRect.height - padTop - padBottom) / 2) - groupCy * newScale;
   applyTransform();
 }
 
