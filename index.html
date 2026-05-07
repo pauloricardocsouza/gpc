@@ -6510,11 +6510,23 @@ function captureOrgAsCanvas(ws, scale, opts){
       const innerReal = document.getElementById('org-canvas-inner');
       if(!innerReal){ reject(new Error('Canvas não encontrado')); return; }
 
-      // Garante que todos os nós estão posicionados
-      if(!ws.nodes.some(n=>Number.isFinite(n.x) && Number.isFinite(n.y))){
+      // Garante que todos os nós estão posicionados E com alturas reais medidas
+      // (se as posições foram salvas com _h antigo, as linhas podem ficar desalinhadas)
+      const hidden0 = new Set();
+      ws.nodes.forEach(n=>{ if(n.collapsed) descendants(n.id).forEach(d=>hidden0.add(d.id)); });
+      try { measureNodes(ws, hidden0); } catch(e){}
+
+      const needsLayout = !ws.nodes.some(n=>Number.isFinite(n.x) && Number.isFinite(n.y));
+      if(needsLayout){
         autoLayout(ws);
         render();
         await new Promise(r=>setTimeout(r,150));
+        try { measureNodes(ws, hidden0); } catch(e){}
+        // Re-layout com alturas reais agora medidas (alguns nós podem ter ficado deslocados)
+        ws.nodes.forEach(n => { if(n.x === undefined || n.y === undefined){ n.x = undefined; n.y = undefined; } });
+        autoLayout(ws);
+        render();
+        await new Promise(r=>setTimeout(r,80));
       }
 
       // Filtra os nós de acordo com as opções
@@ -6623,32 +6635,60 @@ function captureOrgAsCanvas(ws, scale, opts){
         const ls = parent.lineStyle;
         const dash = ls==='dashed' ? '5 4' : ls==='dotted' ? '1 4' : '';
 
+        const path = document.createElementNS(svgNS, 'path');
+        path.setAttribute('fill', 'none');
+        path.setAttribute('stroke', pal.accent || '#8FA3BE');
+        path.setAttribute('stroke-width', '2');
+        path.setAttribute('stroke-linejoin', 'round');
+        path.setAttribute('stroke-linecap', 'round');
+
         if(n.isAssistant){
+          // Linha lateral tracejada para assessor (mesmo cálculo do canvas drawLinks)
           const pCy = parent.y + pH/2;
           const pEdgeX = n.assistantSide === 'left' ? parent.x : parent.x + pW;
           const cCy = n.y + cH/2;
           const cEdgeX = n.assistantSide === 'left' ? n.x + cW : n.x;
           const midX = (pEdgeX + cEdgeX) / 2;
-          const path = document.createElementNS(svgNS, 'path');
           path.setAttribute('d', `M ${pEdgeX} ${pCy} L ${midX} ${pCy} L ${midX} ${cCy} L ${cEdgeX} ${cCy}`);
-          path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', pal.accent || '#8FA3BE');
-          path.setAttribute('stroke-width', '2');
           path.setAttribute('stroke-dasharray', '4 4');
           svgClone.appendChild(path);
-        } else {
-          const pCx = parent.x + pW/2, pCyB = parent.y + pH;
-          const cCx = n.x + cW/2, cCyT = n.y;
-          const midY = pCyB + (cCyT - pCyB) / 2;
-          const path = document.createElementNS(svgNS, 'path');
-          path.setAttribute('d', `M ${pCx} ${pCyB} V ${midY} H ${cCx} V ${cCyT}`);
-          path.setAttribute('fill', 'none');
-          path.setAttribute('stroke', pal.accent || '#8FA3BE');
-          path.setAttribute('stroke-width', '2');
-          path.setAttribute('stroke-linejoin', 'round');
-          if(dash) path.setAttribute('stroke-dasharray', dash);
-          svgClone.appendChild(path);
+          return;
         }
+
+        // Link normal (mesma lógica de canvas drawLinks)
+        const pCx = parent.x + pW/2;
+        const pCyBottom = parent.y + pH;
+        const cCx = n.x + cW/2;
+        const cCyTop = n.y;
+        const gap = cCyTop - pCyBottom;
+
+        let d;
+        if(gap <= 0){
+          // filho acima ou sobreposto ao pai (caso degenerado): linha reta
+          d = `M ${pCx} ${pCyBottom} L ${cCx} ${cCyTop}`;
+        } else if(Math.abs(cCx - pCx) < 0.5){
+          // filho alinhado verticalmente: linha reta
+          d = `M ${pCx} ${pCyBottom} L ${cCx} ${cCyTop}`;
+        } else {
+          const midY = pCyBottom + gap/2;
+          const r = Math.min(8, gap/2, Math.abs(cCx-pCx)/2);
+          if(r < 2){
+            // gap ou offset muito pequeno: caminho ortogonal sem arredondamento
+            d = `M ${pCx} ${pCyBottom} V ${midY} H ${cCx} V ${cCyTop}`;
+          } else {
+            // caminho ortogonal com cantos arredondados
+            const dir = cCx > pCx ? 1 : -1;
+            d = `M ${pCx} ${pCyBottom}` +
+                ` V ${midY - r}` +
+                ` Q ${pCx} ${midY} ${pCx + dir*r} ${midY}` +
+                ` H ${cCx - dir*r}` +
+                ` Q ${cCx} ${midY} ${cCx} ${midY + r}` +
+                ` V ${cCyTop}`;
+          }
+        }
+        path.setAttribute('d', d);
+        if(dash) path.setAttribute('stroke-dasharray', dash);
+        svgClone.appendChild(path);
       });
       innerClone.appendChild(svgClone);
 
