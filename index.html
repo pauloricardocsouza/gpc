@@ -630,8 +630,8 @@ body.org-presenting #panel-organograma{padding:0 !important}
 body.org-presenting #org-canvas-wrap{position:fixed;inset:0;width:100vw;height:100vh;background:#0F1B30 !important;cursor:default !important}
 
 /* Spotlight: escurece tudo exceto o nó focado */
-body.org-presenting .org-node{opacity:.18;transition:opacity .6s cubic-bezier(.4,0,.2,1),transform .6s cubic-bezier(.4,0,.2,1),box-shadow .6s}
-body.org-presenting .org-node.presenting-focus{opacity:1;box-shadow:0 0 0 4px var(--orange),0 12px 48px rgba(245,131,31,.45),0 0 80px rgba(245,131,31,.25);z-index:50;transform:scale(1.02)}
+body.org-presenting .org-node{opacity:.18;transition:opacity .6s cubic-bezier(.4,0,.2,1),box-shadow .6s !important;transform:none !important}
+body.org-presenting .org-node.presenting-focus{opacity:1;box-shadow:0 0 0 4px var(--orange),0 12px 48px rgba(245,131,31,.45),0 0 80px rgba(245,131,31,.25);z-index:50}
 body.org-presenting .org-node.presenting-context{opacity:.55}
 body.org-presenting #org-canvas-svg path{opacity:.25;transition:opacity .5s}
 body.org-presenting #org-canvas-svg path.presenting-active{opacity:.85;stroke-width:2.5}
@@ -3833,25 +3833,29 @@ function startPresentation(){
 }
 
 function _buildPresentationOrder(ws){
+  // Percurso em PROFUNDIDADE (DFS pré-ordem):
+  // - Apresenta uma diretoria completa antes de passar para a próxima
+  // - Para cada nó: primeiro ele, depois seus assessores, depois mergulha em cada filho regular
   const out = [];
   const visited = new Set();
-  // BFS começando dos roots
-  const queue = ws.nodes.filter(n => !n.parentId && !n.isAssistant).slice();
-  while(queue.length){
-    const cur = queue.shift();
-    if(visited.has(cur.id)) continue;
-    visited.add(cur.id);
-    out.push(cur);
-    // Inclui assessores deste nó logo em seguida
-    assistantsOf(cur.id).forEach(a => {
+  function visit(node){
+    if(!node || visited.has(node.id)) return;
+    visited.add(node.id);
+    out.push(node);
+    // Assessores logo após o pai
+    assistantsOf(node.id).forEach(a => {
       if(!visited.has(a.id)){
         visited.add(a.id);
         out.push(a);
+        // Se o assessor tiver descendentes, também os apresenta (raro mas possível)
+        regularChildrenOf(a.id).forEach(visit);
       }
     });
-    // Empilha filhos regulares para próxima rodada (BFS por nível)
-    regularChildrenOf(cur.id).forEach(c => queue.push(c));
+    // Filhos regulares — cada um leva sua subárvore inteira antes do próximo irmão
+    regularChildrenOf(node.id).forEach(visit);
   }
+  // Roots (cada root é uma "diretoria"; sua subárvore completa é apresentada antes do próximo root)
+  ws.nodes.filter(n => !n.parentId && !n.isAssistant).forEach(visit);
   return out;
 }
 
@@ -3869,14 +3873,25 @@ function _focusPresentationNode(idx){
   const focusEl = document.querySelector(`.org-node[data-id="${node.id}"]`);
   if(focusEl) focusEl.classList.add('presenting-focus');
 
-  // Marca o ancestral imediato como "context" para dar referência visual
+  // Marca o pai imediato e os assessores do pai como "context"
   if(node.parentId){
     const parentEl = document.querySelector(`.org-node[data-id="${node.parentId}"]`);
     if(parentEl) parentEl.classList.add('presenting-context');
+    // Assessores do pai (estão visualmente próximos)
+    assistantsOf(node.parentId).forEach(a => {
+      if(a.id === node.id) return;
+      const el = document.querySelector(`.org-node[data-id="${a.id}"]`);
+      if(el) el.classList.add('presenting-context');
+    });
   }
-  // Marca filhos como context também
+  // Marca filhos regulares como context
   regularChildrenOf(node.id).forEach(c => {
     const el = document.querySelector(`.org-node[data-id="${c.id}"]`);
+    if(el) el.classList.add('presenting-context');
+  });
+  // Marca os próprios assessores como context
+  assistantsOf(node.id).forEach(a => {
+    const el = document.querySelector(`.org-node[data-id="${a.id}"]`);
     if(el) el.classList.add('presenting-context');
   });
 
@@ -3904,22 +3919,52 @@ function _flyCameraTo(node){
   const wrap = document.getElementById('org-canvas-wrap');
   if(!wrap) return;
   const wrapRect = wrap.getBoundingClientRect();
-  const nw = node._w || NODE_W;
-  const nh = node._h || NODE_H;
   const ox = (typeof getLayerOx==='function') ? getLayerOx() : 0;
   const oy = (typeof getLayerOy==='function') ? getLayerOy() : 0;
 
-  // Calcula um zoom adequado: o nó deve ocupar ~30-40% da viewport
-  const targetNodeWidth = Math.min(wrapRect.width * 0.45, 380);
-  const newScale = Math.max(0.6, Math.min(2.2, targetNodeWidth / nw));
+  // Calcula o bounding box: o nó focado + filhos imediatos (se tiver) + assessores
+  // Isso enquadra naturalmente uma "diretoria" mostrando a líder e seu time visível
+  const ws = currentWs();
+  const groupNodes = [node];
+  if(ws){
+    regularChildrenOf(node.id).forEach(c => groupNodes.push(c));
+    assistantsOf(node.id).forEach(a => groupNodes.push(a));
+  }
 
-  // Centro do nó na viewport
-  const nodeCx = node.x + nw/2 + ox;
-  const nodeCy = node.y + nh/2 + oy;
+  let minX=Infinity, minY=Infinity, maxX=-Infinity, maxY=-Infinity;
+  groupNodes.forEach(n => {
+    const w = n._w || NODE_W;
+    const h = n._h || NODE_H;
+    if(n.x < minX) minX = n.x;
+    if(n.y < minY) minY = n.y;
+    if(n.x + w > maxX) maxX = n.x + w;
+    if(n.y + h > maxY) maxY = n.y + h;
+  });
+  const groupW = maxX - minX;
+  const groupH = maxY - minY;
+
+  // Margem: 12% de cada lado para respiro visual
+  const padX = wrapRect.width * 0.12;
+  const padY = wrapRect.height * 0.12 + 80; // +80 para evitar painel de info no topo
+  const padBottom = 110; // espaço para a barra de controles
+
+  const availW = wrapRect.width - padX * 2;
+  const availH = wrapRect.height - padY - padBottom;
+
+  // Zoom que faz o grupo caber confortavelmente
+  // Mas com piso e teto: nunca menos que 0.55 (não muito longe) nem mais que 1.4 (não muito perto)
+  const scaleX = availW / Math.max(groupW, 100);
+  const scaleY = availH / Math.max(groupH, 100);
+  const newScale = Math.max(0.55, Math.min(1.4, Math.min(scaleX, scaleY)));
+
+  // Centro do grupo na viewport
+  const groupCx = (minX + maxX) / 2 + ox;
+  const groupCy = (minY + maxY) / 2 + oy;
 
   scale = newScale;
-  tx = wrapRect.width/2 - nodeCx * newScale;
-  ty = wrapRect.height/2 - nodeCy * newScale;
+  tx = wrapRect.width / 2 - groupCx * newScale;
+  // Se há painel de info no topo, desloca um pouco para baixo para não sobrepor
+  ty = (wrapRect.height / 2 + 30) - groupCy * newScale;
   applyTransform();
 }
 
@@ -3969,12 +4014,16 @@ function _renderPresentationUi(){
   `;
   document.body.appendChild(bar);
 
-  bar.querySelector('#pres-prev').addEventListener('click', () => _focusPresentationNode(idx-1));
-  bar.querySelector('#pres-next').addEventListener('click', () => _focusPresentationNode(idx+1));
+  bar.querySelector('#pres-prev').addEventListener('click', () => _focusPresentationNode(_presentation.index - 1));
+  bar.querySelector('#pres-next').addEventListener('click', () => _focusPresentationNode(_presentation.index + 1));
   bar.querySelector('#pres-play').addEventListener('click', () => {
     _presentation.autoplay = !_presentation.autoplay;
-    if(_presentation.autoplay && idx >= total-1) _presentation.index = -1; // recomeça do zero
-    _focusPresentationNode(_presentation.autoplay && idx >= total-1 ? 0 : _presentation.index);
+    const total = _presentation.nodes.length;
+    if(_presentation.autoplay && _presentation.index >= total - 1){
+      _focusPresentationNode(0);
+    } else {
+      _focusPresentationNode(_presentation.index);
+    }
     _renderPresentationUi();
   });
   bar.querySelector('#pres-restart').addEventListener('click', () => _focusPresentationNode(0));
