@@ -65,6 +65,14 @@ tbody tr.starred{background:#fffbea}
 tbody tr.starred:hover{background:#fff5d0}
 .scroll-tbl{max-height:calc(100vh - 460px);overflow-y:auto;overflow-x:auto}
 .scroll-tbl-dest{max-height:calc(100vh - 300px);overflow-y:auto;overflow-x:auto}
+/* Modo compacto: oculta KPIs e filtros, expande tabelas */
+body.compact .kpis,body.compact .filters{display:none!important}
+body.compact .scroll-tbl{max-height:calc(100vh - 180px)}
+body.compact .scroll-tbl-dest{max-height:calc(100vh - 180px)}
+body.compact #view-destacados .timeline-wrap{display:none}
+.tab.toggle{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.25)}
+.tab.toggle:hover{background:rgba(255,255,255,0.18)}
+.tab.toggle.on{background:#f39c12;color:white;border-color:#f39c12}
 .status{padding:3px 9px;border-radius:11px;font-size:11px;font-weight:600;display:inline-block}
 .status-ativo{background:#d4edda;color:#155724}
 .status-deslig{background:#f8d7da;color:#721c24}
@@ -212,6 +220,7 @@ tbody tr.starred:hover{background:#fff5d0}
     <button class="tab active" data-view="todos">Todos</button>
     <button class="tab" data-view="movs">Movimentações</button>
     <button class="tab" data-view="destacados">★ Destacados <span class="badge" id="badgeDest">0</span></button>
+    <button class="tab toggle" id="btnCompact" type="button" onclick="toggleCompact()" title="Ocultar cards e filtros para ampliar a tabela">⛶ Modo compacto</button>
   </div>
 </div>
 
@@ -2029,14 +2038,34 @@ function removerColaboradorManual(id) {
 }
 
 // === INIT ===
+function toggleCompact(){
+  const on = !document.body.classList.contains('compact');
+  document.body.classList.toggle('compact', on);
+  const btn = document.getElementById('btnCompact');
+  if (btn) {
+    btn.classList.toggle('on', on);
+    btn.innerHTML = on ? '⛶ Mostrar cards' : '⛶ Modo compacto';
+  }
+  try { localStorage.setItem('be_compact', on ? '1' : '0'); } catch(e) {}
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   popularSelects();
   popularSelectsMovs();
   atualizarBadge();
   
-  document.querySelectorAll('.tab').forEach(t => {
+  document.querySelectorAll('.tab[data-view]').forEach(t => {
     t.addEventListener('click', () => trocarView(t.dataset.view));
   });
+
+  // Restaura estado do modo compacto
+  try {
+    if (localStorage.getItem('be_compact') === '1') {
+      document.body.classList.add('compact');
+      const btn = document.getElementById('btnCompact');
+      if (btn) { btn.classList.add('on'); btn.innerHTML = '⛶ Mostrar cards'; }
+    }
+  } catch(e) {}
   
   ['fBusca','fEmpresa','fStatus','fTipoDeslig','fAdmDe','fAdmAte'].forEach(id => {
     const el = document.getElementById(id);
