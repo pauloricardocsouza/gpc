@@ -523,6 +523,20 @@ body.compact #view-destacados .timeline-wrap{display:none}
           </select>
         </div>
       </div>
+
+      <div style="margin:18px 0 8px;padding-top:14px;border-top:1px solid #eceff3;font-size:11px;text-transform:uppercase;color:#7f8c8d;letter-spacing:0.4px;font-weight:600">Desligamento (opcional)</div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>Data de desligamento</label>
+          <input type="date" id="fcDataDeslig">
+        </div>
+        <div class="form-field">
+          <label>Tipo de desligamento</label>
+          <input type="text" id="fcTipoDeslig" placeholder="Ex: Pedido de demissão">
+        </div>
+      </div>
+      <div style="font-size:11px;color:#95a5a6;margin-bottom:6px">Preenchendo estes campos, uma movimentação de desligamento será criada automaticamente para este colaborador.</div>
+
       <div class="form-actions">
         <button class="btn btn-secondary" onclick="fecharFormColaborador()">Cancelar</button>
         <button class="btn btn-primary" onclick="salvarColaborador()">Salvar colaborador</button>
@@ -1840,7 +1854,7 @@ function abrirFormColaborador() {
   };
   
   // limpar
-  ['fcNome','fcCpf','fcCargo','fcAdmissao','fcSalario','fcEmpresaNova','fcCnpjNovo'].forEach(id => {
+  ['fcNome','fcCpf','fcCargo','fcAdmissao','fcSalario','fcEmpresaNova','fcCnpjNovo','fcDataDeslig','fcTipoDeslig'].forEach(id => {
     document.getElementById(id).value = '';
   });
   document.getElementById('fcSexo').value = '';
@@ -1923,6 +1937,25 @@ function salvarColaborador() {
   
   colabManuais.push(novo);
   saveManuais();
+
+  // Desligamento opcional informado no formulário → cria movimentação automaticamente
+  const dataDesligYMD = document.getElementById('fcDataDeslig').value;
+  const tipoDeslig = document.getElementById('fcTipoDeslig').value.trim();
+  if (dataDesligYMD) {
+    const [yd,mod,dad] = dataDesligYMD.split('-');
+    const desligBR = `${dad}/${mod}/${yd}`;
+    const movDeslig = {
+      id: 'mov_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      tipo: 'desligamento',
+      data: desligBR,
+      descricao: tipoDeslig || 'Desligamento',
+      manual: true
+    };
+    if (!movsManuais[id]) movsManuais[id] = [];
+    movsManuais[id].push(movDeslig);
+    saveMovsManuais();
+  }
+
   reconstruirDados();
   
   // re-popular selects e re-renderizar
