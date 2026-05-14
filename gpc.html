@@ -845,6 +845,10 @@ canvas{max-width:100%;display:block}
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 3"/></svg>
       Análise 2026
     </div>
+    <div class="nav-item" onclick="showPanel('empregados',this)">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5" r="2.2"/><circle cx="11" cy="6" r="1.8"/><path d="M1.5 13c0-2.2 1.8-3.6 4-3.6s4 1.4 4 3.6"/><path d="M9.5 12.5c.2-1.7 1.7-2.7 3.3-2.7s3 1 3.2 2.7"/></svg>
+      Base de Empregados
+    </div>
     <div class="nav-item" onclick="showPanel('alertas',this)">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2L15 13H1Z"/><line x1="8" y1="7" x2="8" y2="10"/><circle cx="8" cy="12" r=".5" fill="currentColor"/></svg>
       Alertas & Oportunidades
@@ -2634,6 +2638,9 @@ canvas{max-width:100%;display:block}
     <div class="alert success"><div class="alert-title">[INH] PERECÍVEIS: MARGEM + CRESCIMENTO SIMULTÂNEOS</div>Mar/26: R$671k (+20,1% vs Mar/25). Perecíveis INH mantém crescimento forte no 1º trim/26 — melhor combinação margem × crescimento da loja. Priorizar gestão de perdas, mix premium e abastecimento contínuo para sustentar o resultado.</div>
     <div class="alert success"><div class="alert-title">[ATK] AÇOUGUE E HIPEL: CRESCIMENTO EM 2026 — AMPLIAR MIX B2B</div>Açougue ATK e Hipel em alta em Jan-Mar/26 — dados confirmados. ATK total Mar/26: R$2,49M (-6,1% vs Mar/25, melhora vs acumulado). Potencial para ampliar clientes B2B (restaurantes, mercearias locais) e criar pacotes de abastecimento periódico nesses departamentos.</div>
     <div class="alert info"><div class="alert-title">[CES + ATP + INH] CONSUMO SAUDÁVEL E FUNCIONAL</div>Tendência transversal nas três lojas. Ampliar corredor de produtos integrais, sem glúten, funcionais e orgânicos. Posicionamento diferenciado frente ao atacadista tradicional.</div></div>
+<div class="panel" id="panel-empregados" style="padding:0;margin:0">
+    <iframe src="Base_Empregados.html" title="Base de Empregados" style="width:100%;height:calc(100vh - 58px);border:0;display:block;background:#fff"></iframe>
+  </div>
 <div class="panel" id="panel-inh">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
       <div style="width:44px;height:36px;background:#F5831F;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:.02em">INH</div>
