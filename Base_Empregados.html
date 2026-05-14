@@ -132,7 +132,7 @@ body.compact #view-destacados .timeline-wrap{display:none}
 .presentation{position:fixed;inset:0;background:radial-gradient(ellipse at center, #2c3e50 0%, #0a1929 100%);z-index:1000;display:none;overflow:hidden}
 .presentation.open{display:block}
 .pres-canvas{position:absolute;inset:0;overflow:hidden}
-.pres-stage{position:absolute;left:0;top:50%;height:0;transition:transform 1.4s cubic-bezier(0.65,0.05,0.36,1)}
+.pres-stage{position:absolute;left:0;top:50%;height:0;transition:transform 2.4s cubic-bezier(0.65,0.05,0.36,1)}
 /* Eixo central horizontal */
 .pres-axis{position:absolute;left:0;top:50%;height:3px;background:linear-gradient(to right,rgba(255,255,255,0),rgba(255,255,255,0.35) 5%,rgba(255,255,255,0.35) 95%,rgba(255,255,255,0));transform:translateY(-50%);box-shadow:0 0 12px rgba(255,255,255,0.2)}
 /* Marca do ano flutuante no eixo */
@@ -399,6 +399,11 @@ body.compact #view-destacados .timeline-wrap{display:none}
   <div class="timeline-wrap">
     <div class="timeline-header">
       <h2>Linha do Tempo das Movimentações</h2>
+      <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#5a6c7d">
+        <label for="tlStartInput" style="white-space:nowrap">Início da linha:</label>
+        <input type="date" id="tlStartInput" onchange="setTlStart(this.value)" style="padding:4px 6px;border:1px solid #dde3ea;border-radius:5px;font-size:11px">
+        <button onclick="setTlStart('')" title="Limpar data" style="background:#ecf0f1;color:#34495e;border:none;border-radius:5px;padding:3px 8px;font-size:11px;cursor:pointer">×</button>
+      </div>
       <div class="timeline-legend">
         <div class="legend-item"><span class="legend-dot" style="background:#27ae60"></span>Entrada</div>
         <div class="legend-item"><span class="legend-dot" style="background:#e74c3c"></span>Saída</div>
@@ -454,9 +459,10 @@ body.compact #view-destacados .timeline-wrap{display:none}
   </div>
   <div class="pres-speed">
     Velocidade:
-    <button data-speed="2200" onclick="setPresSpeed(2200, this)">Lenta</button>
-    <button data-speed="1400" class="on" onclick="setPresSpeed(1400, this)">Normal</button>
-    <button data-speed="800" onclick="setPresSpeed(800, this)">Rápida</button>
+    <button data-speed="5000" onclick="setPresSpeed(5000, this)">Muito Lenta</button>
+    <button data-speed="3500" class="on" onclick="setPresSpeed(3500, this)">Lenta</button>
+    <button data-speed="2400" onclick="setPresSpeed(2400, this)">Normal</button>
+    <button data-speed="1400" onclick="setPresSpeed(1400, this)">Rápida</button>
   </div>
   <div class="pres-controls">
     <button class="pres-btn" id="presPrev" onclick="presPrev()" title="Anterior (←)">◀</button>
@@ -1066,6 +1072,12 @@ function trocarView(v) {
 }
 
 function renderDestacados() {
+  // Espelha o valor persistido no input visível
+  const tlInp = document.getElementById('tlStartInput');
+  if (tlInp && tlStartDate) {
+    const iso = tlStartDate.toISOString().slice(0,10);
+    if (tlInp.value !== iso) tlInp.value = iso;
+  }
   renderLinhaTempo();
   const list = DADOS.filter(d => starred.has(d.id));
   document.getElementById('contadorDest').textContent = list.length;
@@ -1474,11 +1486,33 @@ function getPrimeiroUltimo(nomeCompleto) {
   return partes[0] + ' ' + partes[partes.length - 1];
 }
 
+// Data inicial da linha do tempo (Date | null). Filtra movs anteriores em todas as visualizações.
+let tlStartDate = null;
+const TL_START_KEY = 'r2_base_emp_tl_start_v1';
+try {
+  const _raw = localStorage.getItem(TL_START_KEY);
+  if (_raw) tlStartDate = new Date(_raw + 'T00:00:00');
+} catch(e) {}
+
+function setTlStart(ymd) {
+  if (ymd) {
+    tlStartDate = new Date(ymd + 'T00:00:00');
+    try { localStorage.setItem(TL_START_KEY, ymd); } catch(e) {}
+  } else {
+    tlStartDate = null;
+    try { localStorage.removeItem(TL_START_KEY); } catch(e) {}
+    const inp = document.getElementById('tlStartInput');
+    if (inp) inp.value = '';
+  }
+  if (currentView === 'destacados') renderLinhaTempo();
+}
+
 // Constrói lista de movimentações apenas dos destacados, ordenadas por data
 function movsDestacados() {
   const todas = construirMovs();
   return todas
     .filter(m => starred.has(DADOS[m.idxColab].id))
+    .filter(m => !tlStartDate || m.dataObj >= tlStartDate)
     .sort((a,b) => a.dataObj - b.dataObj);
 }
 
@@ -1534,7 +1568,7 @@ let presMovs = [];
 let presCurrentIdx = 0;
 let presPlaying = false;
 let presTimer = null;
-let presSpeed = 1400;
+let presSpeed = 3500;
 const PRES_POSITIONS = []; // (x,y) de cada card no stage
 
 function iniciarApresentacao() {
