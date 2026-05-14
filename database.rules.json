@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "pessoas":         { ".read": "auth != null", ".write": "auth != null" },
+    "trash":           { ".read": "auth != null", ".write": "auth != null" },
+    "coments":         { ".read": "auth != null", ".write": "auth != null" },
+    "organogramas":    { ".read": "auth != null", ".write": "auth != null" },
+    "base_empregados": {
+      ".read":  "auth != null",
+      ".write": "auth != null",
+      "destacados":    { ".validate": "newData.hasChildren() || newData.val() == null" },
+      "notas":         { ".validate": "newData.hasChildren() || newData.val() == null" },
+      "colab_manuais": { ".validate": "newData.hasChildren() || newData.val() == null" },
+      "movs_manuais":  { ".validate": "newData.hasChildren() || newData.val() == null" }
+    }
+  }
+}

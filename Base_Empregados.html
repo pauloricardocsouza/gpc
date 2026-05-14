@@ -617,15 +617,19 @@ try {
 
 function saveStarred() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify([...starred])); } catch(e) {}
+  fbPush('destacados', [...starred]);
 }
 function saveNotas() {
   try { localStorage.setItem(NOTES_KEY, JSON.stringify(notas)); } catch(e) {}
+  fbPush('notas', notas);
 }
 function saveManuais() {
   try { localStorage.setItem(MANUAIS_KEY, JSON.stringify(colabManuais)); } catch(e) {}
+  fbPush('colab_manuais', colabManuais);
 }
 function saveMovsManuais() {
   try { localStorage.setItem(MOVS_MANUAIS_KEY, JSON.stringify(movsManuais)); } catch(e) {}
+  fbPush('movs_manuais', movsManuais);
 }
 
 // DADOS = originais + manuais. Recriado quando manuais mudam.
@@ -2116,7 +2120,128 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   aplicarFiltros();
+
+  // Inicia sincronização Firebase (compartilha destaques/notas/manuais entre usuários)
+  loadFirebaseSync();
 });
+
+// ════════════════════════════════════════
+// FIREBASE SYNC — compartilha estado entre todos os usuários autenticados
+// Path raiz: base_empregados/{destacados,notas,colab_manuais,movs_manuais}
+// ════════════════════════════════════════
+const FB_CONFIG_BE = {
+  apiKey: "AIzaSyCC1eN7UpKjiWzama7jmjxlLiwP4vb2p6o",
+  authDomain: "gpc---atividades.firebaseapp.com",
+  databaseURL: "https://gpc---atividades-default-rtdb.firebaseio.com",
+  projectId: "gpc---atividades",
+  storageBucket: "gpc---atividades.firebasestorage.app",
+  messagingSenderId: "1052592422530",
+  appId: "1:1052592422530:web:57b58c29e15eefd65d3e9b"
+};
+const FB_PATH = 'base_empregados';
+let _fbDb = null;
+let _fbReady = false;
+let _fbApplyingRemote = false; // evita loop write→read→write
+
+function fbPush(key, value) {
+  if (!_fbDb || !_fbReady || _fbApplyingRemote) return;
+  try { _fbDb.ref(FB_PATH + '/' + key).set(value).catch(()=>{}); } catch(e) {}
+}
+
+function loadFirebaseSync() {
+  const loaded = {app:false, db:false, auth:false};
+  function tryInit() {
+    if (!loaded.app || !loaded.db || !loaded.auth) return;
+    try {
+      if (!firebase.apps || !firebase.apps.length) firebase.initializeApp(FB_CONFIG_BE);
+      _fbDb = firebase.database();
+      const auth = firebase.auth();
+      auth.onAuthStateChanged(user => {
+        if (user) { if (!_fbReady) initSync(); }
+        else { auth.signInAnonymously().catch(e => console.warn('Auth anônima Base Empregados falhou:', e)); }
+      });
+    } catch(e) { console.warn('Firebase init Base Empregados falhou:', e); }
+  }
+  function loadScript(url, key) {
+    const s = document.createElement('script');
+    s.src = url;
+    s.onload = () => { loaded[key]=true; tryInit(); };
+    s.onerror = () => console.warn('Falha ao carregar Firebase SDK:', url);
+    document.head.appendChild(s);
+  }
+  loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',      'app');
+  loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js', 'db');
+  loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js',     'auth');
+}
+
+function initSync() {
+  _fbReady = true;
+
+  // destacados: array de IDs
+  _fbDb.ref(FB_PATH + '/destacados').on('value', snap => {
+    const val = snap.val();
+    if (Array.isArray(val)) {
+      _fbApplyingRemote = true;
+      starred = new Set(val);
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(val)); } catch(e) {}
+      _fbApplyingRemote = false;
+      atualizarBadge();
+      renderTabela();
+      if (currentView === 'destacados') renderDestacados();
+    } else if (starred.size) {
+      // seed inicial: db vazio mas usuário tem destaques locais
+      fbPush('destacados', [...starred]);
+    }
+  });
+
+  // notas: objeto id→texto
+  _fbDb.ref(FB_PATH + '/notas').on('value', snap => {
+    const val = snap.val();
+    if (val && typeof val === 'object') {
+      _fbApplyingRemote = true;
+      notas = val;
+      try { localStorage.setItem(NOTES_KEY, JSON.stringify(val)); } catch(e) {}
+      _fbApplyingRemote = false;
+      if (currentView === 'destacados') renderDestacados();
+    } else if (Object.keys(notas).length) {
+      fbPush('notas', notas);
+    }
+  });
+
+  // colab_manuais: array
+  _fbDb.ref(FB_PATH + '/colab_manuais').on('value', snap => {
+    const val = snap.val();
+    if (Array.isArray(val)) {
+      _fbApplyingRemote = true;
+      colabManuais = val;
+      try { localStorage.setItem(MANUAIS_KEY, JSON.stringify(val)); } catch(e) {}
+      reconstruirDados();
+      _fbApplyingRemote = false;
+      popularSelects();
+      atualizarBadge();
+      aplicarFiltros();
+      if (currentView === 'movs') aplicarFiltrosMovs();
+    } else if (colabManuais.length) {
+      fbPush('colab_manuais', colabManuais);
+    }
+  });
+
+  // movs_manuais: objeto id_colab→array de movs
+  _fbDb.ref(FB_PATH + '/movs_manuais').on('value', snap => {
+    const val = snap.val();
+    if (val && typeof val === 'object') {
+      _fbApplyingRemote = true;
+      movsManuais = val;
+      try { localStorage.setItem(MOVS_MANUAIS_KEY, JSON.stringify(val)); } catch(e) {}
+      reconstruirDados();
+      _fbApplyingRemote = false;
+      aplicarFiltros();
+      if (currentView === 'movs') aplicarFiltrosMovs();
+    } else if (Object.keys(movsManuais).length) {
+      fbPush('movs_manuais', movsManuais);
+    }
+  });
+}
 </script>
 </body>
 </html>
