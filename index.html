@@ -987,6 +987,12 @@ body.org-presenting .canvas-inner{transition:transform .85s cubic-bezier(.4,0,.2
   <div class="nav-item" id="nav-coments-trash" onclick="showView('coments-trash')">
     <span class="nav-icon">♻️</span> Lixeira de comentários
   </div>
+
+  <div class="sidebar-section">Colaboradores</div>
+  <div class="nav-item" id="nav-empregados" onclick="showView('empregados')">
+    <span class="nav-icon">👥</span> Base de Empregados
+  </div>
+
   <div class="sidebar-spacer"></div>
   <div class="sidebar-footer">
     Grupo Pinto Cerqueira<br>
@@ -1204,6 +1210,10 @@ body.org-presenting .canvas-inner{transition:transform .85s cubic-bezier(.4,0,.2
       </div>
       <div id="coments-trash-content"></div>
     </div>
+  </div>
+
+  <div class="panel" id="panel-empregados" style="padding:0;margin:0">
+    <iframe src="Base_Empregados.html" title="Base de Empregados" style="width:100%;height:calc(100vh - 56px);border:0;display:block;background:#fff"></iframe>
   </div>
 
 </div>
@@ -1603,7 +1613,7 @@ function showView(v){
   }
 
   document.getElementById('topbar-title-text').textContent=
-    {board:'Divisão de Atividades',trash:'Lixeira',organograma:'Organograma',coments:'Comentários','coments-trash':'Lixeira de comentários'}[v]||'';
+    {board:'Divisão de Atividades',trash:'Lixeira',organograma:'Organograma',coments:'Comentários','coments-trash':'Lixeira de comentários',empregados:'Base de Empregados'}[v]||'';
   document.getElementById('topbar-actions').innerHTML = v==='board'
     ? `<span id="conn-status"></span>
        <button class="btn-top" onclick="openAddPessoaModal()">+ Pessoa</button>
